@@ -7,11 +7,11 @@ import {
   startOfMonth,
 } from "date-fns";
 import { useMemo, useState } from "react";
-import { frontlineMaps, frontlineRotation } from "../../data/frontline";
+import { frontlineMaps } from "../../data/frontline";
 import { getFrontlineByDateKey } from "../../domain/frontline/getTodayFrontline";
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
 import { addDaysToDateKey, getKstDateKey } from "../../lib/date";
-import type { HousingPhaseResult } from "../../types";
+import type { FrontlineMap, HousingPhaseResult } from "../../types";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -21,19 +21,26 @@ const phaseLabel = {
 };
 
 const phasePillClassName = {
-  entry: "border-emerald-200 bg-mint text-emerald-800",
-  result: "border-orange-200 bg-peach text-orange-800",
+  entry: "border-[rgb(199_217_196)] bg-[rgb(235_243_231)] text-[rgb(88_124_82)]",
+  result: "border-[rgb(225_205_174)] bg-[rgb(249_240_226)] text-[rgb(139_109_64)]",
+};
+
+const frontlineCellClassName: Record<FrontlineMap["id"], string> = {
+  "seal-rock": "border-[rgb(205_220_202)] bg-[rgb(239_246_236)] text-[rgb(92_121_85)]",
+  "borderland-ruins": "border-[rgb(218_211_202)] bg-[rgb(246_242_236)] text-[rgb(121_108_94)]",
+  onsal: "border-[rgb(197_219_216)] bg-[rgb(235_246_244)] text-[rgb(82_120_116)]",
+  "worqor-chitte": "border-[rgb(203_216_226)] bg-[rgb(238_245_250)] text-[rgb(84_109_128)]",
+  "fields-of-glory": "border-[rgb(212_209_225)] bg-[rgb(243_241_248)] text-[rgb(103_96_126)]",
+};
+
+const housingCellClassName: Record<HousingPhaseResult["phase"], string> = {
+  entry: "border-[rgb(205_220_202)] bg-[rgb(239_246_236)] text-[rgb(92_121_85)]",
+  result: "border-[rgb(225_205_174)] bg-[rgb(249_240_226)] text-[rgb(139_109_64)]",
 };
 
 const toKstDate = (dateKey: string) => new Date(`${dateKey}T00:00:00+09:00`);
 
 const formatMonthDay = (dateKey: string) => format(parseISO(dateKey), "MM.dd");
-
-const formatListDate = (dateKey: string) => {
-  const date = parseISO(dateKey);
-
-  return `${format(date, "MM.dd")} ${weekdays[getDay(date)]}`;
-};
 
 const getNextPhaseCopy = (phase: HousingPhaseResult) => {
   const nextLabel = phase.nextPhaseLabel === "신청 기간" ? "신청" : "발표";
@@ -42,24 +49,12 @@ const getNextPhaseCopy = (phase: HousingPhaseResult) => {
 };
 
 export const CalendarPage = () => {
-  const [isMonthlyOpen, setIsMonthlyOpen] = useState(false);
+  const [isMonthlyOpen, setIsMonthlyOpen] = useState(true);
   const [monthlyMode, setMonthlyMode] = useState<"frontline" | "housing">("frontline");
   const todayKey = getKstDateKey();
   const todayHousing = getHousingPhase();
   const todayFrontline = getFrontlineByDateKey(todayKey);
   const tomorrowFrontline = getFrontlineByDateKey(addDaysToDateKey(todayKey, 1));
-
-  const upcomingDays = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, index) => {
-        const dateKey = addDaysToDateKey(todayKey, index);
-        const housing = getHousingPhase(toKstDate(dateKey));
-        const frontline = getFrontlineByDateKey(dateKey);
-
-        return { dateKey, housing, frontline };
-      }),
-    [todayKey],
-  );
 
   const monthCells = useMemo(() => {
     const monthStart = startOfMonth(parseISO(todayKey));
@@ -77,7 +72,6 @@ export const CalendarPage = () => {
   return (
     <div className="space-y-3">
       <div className="px-1">
-        <p className="muted-label">calendar</p>
         <h1 className="text-lg font-bold text-ink">하우징 / 전장 달력</h1>
       </div>
 
@@ -86,7 +80,7 @@ export const CalendarPage = () => {
         <div className="grid grid-cols-2 gap-2.5 max-[360px]:grid-cols-1">
           <article className="memo-card bg-card/86 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="muted-label">HOUSING</p>
+              <p className="muted-label">하우징</p>
               <span
                 className={[
                   "rounded-full border px-2 py-0.5 text-[11px] font-bold",
@@ -117,52 +111,17 @@ export const CalendarPage = () => {
 
           <article className="memo-card bg-sky/70 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="muted-label">FRONTLINE</p>
+              <p className="muted-label">전장</p>
               <span className="sticker bg-card/80">{todayFrontline.shortName}</span>
             </div>
-            <p className="text-xs font-bold text-ink-muted">오늘 {todayFrontline.shortName}</p>
-            <h2 className="mt-1 text-base font-bold leading-tight">{todayFrontline.displayName}</h2>
-            <p className="mt-4 rounded-[14px] bg-card/70 px-2.5 py-1.5 text-xs font-bold text-ink">
-              내일 {tomorrowFrontline.shortName}
+            <h2 className="text-xl font-black leading-tight text-ink">
+              {todayFrontline.displayName}
+            </h2>
+            <p className="mt-4 flex items-center justify-between gap-2 rounded-[14px] bg-card/70 px-2.5 py-1.5 text-xs font-bold text-ink">
+              <span className="text-ink-muted">내일 전장은?</span>
+              <span className="truncate text-right text-ink">{tomorrowFrontline.displayName}</span>
             </p>
           </article>
-        </div>
-      </section>
-
-      <section className="memo-card overflow-hidden bg-card/86">
-        <div className="border-b border-[rgb(var(--color-line-soft))] px-3 py-2.5">
-          <p className="muted-label">next 7 days</p>
-          <h2 className="text-sm font-bold">앞으로 7일</h2>
-        </div>
-        <div className="divide-y divide-[rgb(var(--color-line-soft))]">
-          {upcomingDays.map(({ dateKey, housing, frontline }) => {
-            const isToday = dateKey === todayKey;
-
-            return (
-              <div
-                key={dateKey}
-                className={[
-                  "grid grid-cols-[4.8rem_1fr_auto] items-center gap-2 px-3 py-2 text-xs",
-                  isToday ? "bg-primary-soft/45" : "bg-card/40",
-                ].join(" ")}
-              >
-                <span className={isToday ? "font-bold text-primary" : "font-bold text-ink"}>
-                  {formatListDate(dateKey)}
-                </span>
-                <span
-                  className={[
-                    "w-fit rounded-full border px-2 py-0.5 font-bold",
-                    phasePillClassName[housing.phase],
-                  ].join(" ")}
-                >
-                  {phaseLabel[housing.phase]} {housing.day}/{housing.totalDays}
-                </span>
-                <span className="rounded-full border border-[rgb(var(--color-line-muted))] bg-card-soft/80 px-2 py-0.5 font-bold text-primary">
-                  {frontline.shortName}
-                </span>
-              </div>
-            );
-          })}
         </div>
       </section>
 
@@ -173,7 +132,7 @@ export const CalendarPage = () => {
           onClick={() => setIsMonthlyOpen((value) => !value)}
         >
           <span>
-            <span className="muted-label block">monthly</span>
+            <span className="muted-label block">월간 달력</span>
             <span className="text-sm font-bold">{monthLabel} 달력 보기</span>
           </span>
           <span className="sticker">{isMonthlyOpen ? "접기" : "펼치기"}</span>
@@ -220,19 +179,22 @@ export const CalendarPage = () => {
                 const housing = getHousingPhase(toKstDate(dateKey));
                 const label =
                   monthlyMode === "frontline" ? frontline.shortName : phaseLabel[housing.phase];
+                const toneClassName =
+                  monthlyMode === "frontline"
+                    ? frontlineCellClassName[frontline.id]
+                    : housingCellClassName[housing.phase];
 
                 return (
                   <div
                     key={dateKey}
                     className={[
-                      "min-h-14 rounded-[14px] border px-1.5 py-1.5 text-center",
-                      isToday
-                        ? "border-primary bg-primary-soft/55"
-                        : "border-[rgb(var(--color-line-muted))] bg-card-soft/60",
+                      "min-h-14 rounded-[14px] border px-1.5 py-1.5 text-center transition",
+                      toneClassName,
+                      isToday ? "ring-2 ring-primary/40" : "",
                     ].join(" ")}
                   >
                     <p className="text-[11px] font-bold text-ink">{format(parseISO(dateKey), "d")}</p>
-                    <p className="mt-1 truncate text-xs font-bold text-primary">{label}</p>
+                    <p className="mt-1 truncate text-xs font-black">{label}</p>
                   </div>
                 );
               })}
@@ -242,21 +204,35 @@ export const CalendarPage = () => {
       </section>
 
       <section className="memo-card bg-card/80 p-3">
-        <p className="muted-label">legend</p>
         <h2 className="text-sm font-bold">범례</h2>
         <div className="mt-2 grid gap-1.5 text-xs">
           {frontlineMaps.map((map) => (
             <div key={map.id} className="grid grid-cols-[2.4rem_1fr] gap-2">
-              <span className="font-bold text-primary">{map.shortName}</span>
+              <span
+                className={[
+                  "w-fit rounded-full border px-2 py-0.5 text-[11px] font-bold",
+                  frontlineCellClassName[map.id],
+                ].join(" ")}
+              >
+                {map.shortName}
+              </span>
               <span className="text-ink-muted">{map.displayName}</span>
             </div>
           ))}
         </div>
         <p className="mt-2 text-[11px] text-ink-muted">
-          {frontlineRotation.seedDate} 봉인된 바위섬 기준 8일 패턴
+          점검이나 패치로 실제 일정이 달라질 수 있어요.
         </p>
         <p className="mt-1 text-[11px] text-ink-muted">
-          점검이나 패치로 실제 일정이 달라질 수 있어요.
+          하우징 정보 제공:{" "}
+          <a
+            href="https://x.com/ff14gingerS"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-primary underline-offset-2 hover:underline"
+          >
+            @ff14gingerS
+          </a>
         </p>
       </section>
     </div>

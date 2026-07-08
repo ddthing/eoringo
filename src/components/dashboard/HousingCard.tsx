@@ -16,7 +16,7 @@ export const HousingCard = () => {
   return (
     <section className="memo-card bg-card-soft/80 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="muted-label">housing</p>
+        <p className="muted-label">하우징</p>
         <span
           className={[
             "rounded-full border border-[rgb(var(--color-line-soft))] px-2.5 py-1 text-xs font-bold",

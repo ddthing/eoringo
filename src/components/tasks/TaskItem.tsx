@@ -31,7 +31,7 @@ export const TaskItem = ({
   return (
     <div
       className={[
-        "flex min-h-11 items-center gap-2 border-b border-[rgb(var(--color-line-muted))] px-1.5 py-1.5 last:border-b-0",
+        "flex min-h-10 items-center gap-2 border-b border-[rgb(var(--color-line-muted))] px-1.5 py-1.5 last:border-b-0",
         checked ? "opacity-70" : "",
       ].join(" ")}
     >
@@ -43,13 +43,13 @@ export const TaskItem = ({
       >
         <span
           className={[
-            "grid h-8 w-8 shrink-0 place-items-center rounded-full border transition",
+            "grid h-5 w-5 shrink-0 place-items-center rounded-full border transition",
             checked
-              ? "border-primary bg-primary-soft text-primary"
+              ? "border-primary bg-primary text-white"
               : "border-[rgb(var(--color-line-soft))] bg-card text-ink-muted",
           ].join(" ")}
         >
-          {checked ? <Check aria-hidden size={15} strokeWidth={3} /> : null}
+          {checked ? <Check aria-hidden size={12} strokeWidth={3} /> : null}
         </span>
         <span className="min-w-0 flex-1">
           <span
@@ -58,7 +58,7 @@ export const TaskItem = ({
               checked ? "line-through" : "",
             ].join(" ")}
           >
-            <span className="mr-1.5 rounded-full bg-card-soft px-2 py-0.5 text-[10px] font-bold text-primary">
+            <span className="mr-1.5 rounded-full bg-card-soft px-1.5 py-0.5 text-[10px] font-bold text-primary">
               {taskGroupLabels[task.group]}
             </span>
             {task.title}
@@ -87,7 +87,7 @@ export const TaskItem = ({
           >
             <Minus aria-hidden size={14} />
           </button>
-          <span className="min-w-10 text-center text-[11px] font-bold text-ink">
+          <span className="min-w-8 text-center text-[11px] font-bold text-ink">
             {cappedCount}/{task.maxCount}
           </span>
           <button
@@ -104,7 +104,7 @@ export const TaskItem = ({
       {onRemove ? (
         <button
           type="button"
-          className="min-h-10 shrink-0 rounded-full px-3 py-1 text-xs font-bold text-[rgb(var(--color-danger))]"
+          className="min-h-10 shrink-0 rounded-full px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-danger))]"
           onClick={onRemove}
         >
           삭제

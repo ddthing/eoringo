@@ -1,6 +1,7 @@
 import { ChangeEvent, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { deleteCharacterImage, saveCharacterImage } from "../../lib/imageStorage";
+import { resizeImage } from "../../lib/resizeImage";
 import { CharacterAvatar } from "./CharacterAvatar";
 
 type CharacterImagePickerProps = {
@@ -16,6 +17,7 @@ export const CharacterImagePicker = ({
 }: CharacterImagePickerProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -25,15 +27,21 @@ export const CharacterImagePicker = ({
     }
 
     setIsSaving(true);
+    setErrorMessage("");
 
     try {
-      const nextImageId = await saveCharacterImage(file);
+      const resizedImage = await resizeImage(file);
+      const nextImageId = await saveCharacterImage(resizedImage);
 
       if (imageId) {
         await deleteCharacterImage(imageId);
       }
 
       onChange(nextImageId);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "이미지를 저장할 수 없습니다.",
+      );
     } finally {
       setIsSaving(false);
       event.target.value = "";
@@ -75,6 +83,11 @@ export const CharacterImagePicker = ({
             </button>
           ) : null}
         </div>
+        {errorMessage ? (
+          <p className="mt-1.5 text-[11px] font-bold text-[rgb(var(--color-danger))]">
+            {errorMessage}
+          </p>
+        ) : null}
       </div>
       <input
         ref={inputRef}

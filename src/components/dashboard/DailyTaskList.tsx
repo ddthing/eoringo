@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
 import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
@@ -16,35 +17,47 @@ export const DailyTaskList = ({ limit }: DailyTaskListProps) => {
   const customTaskTemplates = useTaskStore((state) => state.customTaskTemplates);
   const toggleTask = useTaskStore((state) => state.toggleTask);
   const setTaskCount = useTaskStore((state) => state.setTaskCount);
-  const tasks = getVisibleTaskTemplatesByCategory(
-    disabledDefaultTaskIds,
-    customTaskTemplates,
-    "daily",
+  const tasks = useMemo(
+    () =>
+      getVisibleTaskTemplatesByCategory(
+        disabledDefaultTaskIds,
+        customTaskTemplates,
+        "daily",
+      ),
+    [customTaskTemplates, disabledDefaultTaskIds],
   );
-  const completed = Object.fromEntries(
-    tasks.map((task) => [
-      task.id,
-      completedByCharacter[getTaskScopeId(task, activeCharacterId)]?.[task.id],
-    ]),
+  const completed = useMemo(
+    () =>
+      Object.fromEntries(
+        tasks.map((task) => [
+          task.id,
+          completedByCharacter[getTaskScopeId(task, activeCharacterId)]?.[task.id],
+        ]),
+      ),
+    [activeCharacterId, completedByCharacter, tasks],
   );
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const aDone = getTaskCount(completed[a.id]) >= a.maxCount;
-    const bDone = getTaskCount(completed[b.id]) >= b.maxCount;
+  const sortedTasks = useMemo(
+    () =>
+      [...tasks].sort((a, b) => {
+        const aDone = getTaskCount(completed[a.id]) >= a.maxCount;
+        const bDone = getTaskCount(completed[b.id]) >= b.maxCount;
 
-    if (aDone === bDone) {
-      return a.priority - b.priority;
-    }
+        if (aDone === bDone) {
+          return a.priority - b.priority;
+        }
 
-    return aDone ? 1 : -1;
-  });
+        return aDone ? 1 : -1;
+      }),
+    [completed, tasks],
+  );
   const displayedTasks = limit ? sortedTasks.slice(0, limit) : sortedTasks;
-  const progress = getTaskProgress(tasks, completed);
+  const progress = useMemo(() => getTaskProgress(tasks, completed), [completed, tasks]);
 
   return (
     <section className="memo-card overflow-hidden bg-card/82">
       <div className="flex items-center justify-between border-b border-[rgb(var(--color-line-soft))] px-3 py-2">
         <div>
-          <p className="muted-label">todo</p>
+          <p className="muted-label">할 일</p>
           <h2 className="text-sm font-bold">오늘의 체크 메모</h2>
         </div>
         <span className="sticker">

@@ -25,19 +25,31 @@ type CharacterState = {
   setActiveCharacter: (id: string) => void;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const normalizeCharacter = (character: Partial<Character>, index = 0): Character => ({
-  id: character.id ?? createId("character"),
-  name: character.name?.trim() || (index === 0 ? defaultCharacter.name : "새 모험가"),
+  id: typeof character.id === "string" ? character.id : createId("character"),
+  name:
+    typeof character.name === "string" && character.name.trim()
+      ? character.name.trim()
+      : index === 0
+        ? defaultCharacter.name
+        : "새 모험가",
   server:
-    character.server && character.server !== "서버 미설정"
+    typeof character.server === "string" &&
+    character.server &&
+    character.server !== "서버 미설정"
       ? character.server
       : DEFAULT_KOREAN_SERVER,
-  isMain: character.isMain ?? index === 0,
-  profileImageId: character.profileImageId,
+  isMain: typeof character.isMain === "boolean" ? character.isMain : index === 0,
+  profileImageId:
+    typeof character.profileImageId === "string" ? character.profileImageId : undefined,
 });
 
-const normalizeCharacters = (characters: Partial<Character>[] = []) => {
-  const normalized = characters.length > 0 ? characters.map(normalizeCharacter) : [defaultCharacter];
+const normalizeCharacters = (characters: unknown = []) => {
+  const list = Array.isArray(characters) ? characters.filter(isRecord) : [];
+  const normalized = list.length > 0 ? list.map(normalizeCharacter) : [defaultCharacter];
   const hasMain = normalized.some((character) => character.isMain);
 
   return (hasMain ? normalized : normalized.map((character, index) => ({
@@ -101,17 +113,23 @@ export const useCharacterStore = create<CharacterState>()(
                 : state.activeCharacterId,
           };
         }),
-      setActiveCharacter: (id) => set({ activeCharacterId: id }),
+      setActiveCharacter: (id) =>
+        set((state) => ({
+          activeCharacterId: state.characters.some((character) => character.id === id)
+            ? id
+            : state.characters[0]?.id ?? defaultCharacter.id,
+        })),
     }),
     {
       name: storageKeys.characters,
       storage: createJSONStorage(() => localStorage),
       version: 2,
       migrate: (persistedState): PersistedCharacterState => {
-        const state = persistedState as PersistedCharacterState;
+        const state = isRecord(persistedState) ? persistedState : {};
         const characters = normalizeCharacters(state.characters);
         const activeCharacterId =
-          state.activeCharacterId && characters.some((character) => character.id === state.activeCharacterId)
+          typeof state.activeCharacterId === "string" &&
+          characters.some((character) => character.id === state.activeCharacterId)
             ? state.activeCharacterId
             : characters[0].id;
 

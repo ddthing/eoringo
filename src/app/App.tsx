@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
+import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { AppShell } from "../components/layout/AppShell";
 import { useTaskStore } from "../stores/useTaskStore";
 
@@ -15,7 +16,9 @@ export const App = () => {
 
   return (
     <AppShell>
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
     </AppShell>
   );
 };

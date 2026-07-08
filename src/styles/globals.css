@@ -4,21 +4,21 @@
 
 :root {
   color-scheme: light;
-  --color-bg: 255 247 251;
-  --color-card: 255 253 253;
-  --color-card-soft: 255 242 247;
-  --color-primary: 238 155 193;
-  --color-primary-soft: 255 227 239;
-  --color-mint: 228 247 238;
-  --color-sky: 235 247 255;
-  --color-peach: 255 246 232;
-  --color-lavender: 247 240 255;
-  --color-text: 74 63 70;
-  --color-muted: 139 123 134;
-  --color-faint: 184 169 179;
-  --color-line-soft: 243 217 230;
-  --color-line-muted: 234 221 230;
-  --color-danger: 239 122 138;
+  --color-bg: 232 232 230;
+  --color-card: 255 255 253;
+  --color-card-soft: 246 248 244;
+  --color-primary: 142 191 130;
+  --color-primary-soft: 220 238 213;
+  --color-mint: 232 244 225;
+  --color-sky: 240 246 248;
+  --color-peach: 249 246 238;
+  --color-lavender: 244 243 248;
+  --color-text: 31 39 48;
+  --color-muted: 112 119 126;
+  --color-faint: 164 168 170;
+  --color-line-soft: 213 214 211;
+  --color-line-muted: 226 226 222;
+  --color-danger: 220 92 105;
   --color-surface: var(--color-card);
   --color-surface-muted: var(--color-bg);
   --color-ink: var(--color-text);
@@ -58,8 +58,8 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: rgb(var(--color-text));
   background:
-    radial-gradient(circle at 12% 4%, rgb(var(--color-primary-soft) / 0.52), transparent 18rem),
-    radial-gradient(circle at 88% 8%, rgb(var(--color-lavender) / 0.68), transparent 18rem),
+    linear-gradient(180deg, rgb(242 242 240 / 0.78), rgb(232 232 230)),
+    radial-gradient(circle at 20% 0%, rgb(255 255 255 / 0.72), transparent 18rem),
     rgb(var(--color-bg));
 }
 
@@ -72,30 +72,30 @@ textarea {
 
 @layer components {
   .card {
-    @apply rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card/80 p-3 shadow-soft;
+    @apply rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft;
   }
 
   .memo-card {
-    @apply rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card/80 shadow-soft;
+    @apply rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 shadow-soft;
   }
 
   .muted-label {
-    @apply text-[11px] font-bold uppercase tracking-[0.08em] text-primary;
+    @apply text-[11px] font-black uppercase tracking-[0.14em] text-primary;
   }
 
   .primary-button {
-    @apply inline-flex min-h-10 items-center justify-center rounded-full border border-[rgb(var(--color-line-soft))] bg-primary-soft px-3 py-1.5 text-xs font-bold text-primary transition active:scale-[0.98];
+    @apply inline-flex min-h-9 items-center justify-center rounded-full border border-[rgb(var(--color-line-soft))] bg-primary px-3 py-1.5 text-xs font-black text-white transition active:scale-[0.98];
   }
 
   .secondary-button {
-    @apply inline-flex min-h-10 items-center justify-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card/70 px-3 py-1.5 text-xs font-bold text-ink-muted transition active:scale-[0.98];
+    @apply inline-flex min-h-9 items-center justify-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card/95 px-3 py-1.5 text-xs font-bold text-ink-muted transition active:scale-[0.98];
   }
 
   .field {
-    @apply w-full rounded-2xl border border-[rgb(var(--color-line-muted))] bg-card/80 px-3 py-2 text-sm text-ink outline-none focus:border-primary;
+    @apply w-full rounded-[12px] border border-[rgb(var(--color-line-muted))] bg-card/95 px-3 py-2 text-sm text-ink outline-none focus:border-primary;
   }
 
   .sticker {
-    @apply rounded-full border border-[rgb(var(--color-line-soft))] bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary;
+    @apply rounded-full border border-[rgb(var(--color-line-soft))] bg-primary-soft px-2 py-0.5 text-[11px] font-black text-primary;
   }
 }

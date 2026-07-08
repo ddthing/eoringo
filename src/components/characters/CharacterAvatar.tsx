@@ -26,14 +26,20 @@ export const CharacterAvatar = ({ imageId, name, size = "md" }: CharacterAvatarP
       return undefined;
     }
 
-    getCharacterImage(imageId).then((blob) => {
-      if (!mounted || !blob) {
-        return;
-      }
+    getCharacterImage(imageId)
+      .then((blob) => {
+        if (!mounted || !blob) {
+          return;
+        }
 
-      objectUrl = URL.createObjectURL(blob);
-      setImageUrl(objectUrl);
-    });
+        objectUrl = URL.createObjectURL(blob);
+        setImageUrl(objectUrl);
+      })
+      .catch(() => {
+        if (mounted) {
+          setImageUrl(null);
+        }
+      });
 
     return () => {
       mounted = false;

@@ -44,7 +44,7 @@ export const TodayHeader = () => {
   return (
     <section className="memo-card bg-card/82 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="muted-label">profile memo</p>
+        <p className="muted-label">프로필</p>
         <span className="sticker">
           today {progress.completed}/{progress.total}
         </span>
@@ -64,7 +64,7 @@ export const TodayHeader = () => {
           </p>
           <div className="mt-2 grid gap-1 text-xs text-ink-muted">
             <p>{formatKoreanDate(now)}</p>
-            <p>reset {formatDurationKo(remaining)}</p>
+            <p>초기화까지 {formatDurationKo(remaining)}</p>
           </div>
         </div>
       </div>

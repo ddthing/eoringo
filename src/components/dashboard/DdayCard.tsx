@@ -35,7 +35,7 @@ export const DdayCard = () => {
     <section className="memo-card bg-card/82 p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div>
-          <p className="muted-label">anniversary</p>
+          <p className="muted-label">기념일</p>
           <h2 className="text-sm font-bold">기념일 노트</h2>
         </div>
         <button

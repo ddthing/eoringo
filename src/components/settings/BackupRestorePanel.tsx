@@ -16,7 +16,7 @@ export const BackupRestorePanel = () => {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `ff14-daily-board-${payload.exportedAt.slice(0, 10)}.json`;
+    anchor.download = `eoringo-${payload.exportedAt.slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
     setMessage("백업 파일을 만들었습니다.");

@@ -102,7 +102,7 @@ export const CharacterSwitcher = ({
             size="sm"
           />
           <div className="min-w-0">
-            <p className="muted-label">current</p>
+            <p className="muted-label">현재</p>
             <h2 className="truncate text-sm font-bold">{activeCharacter?.name ?? "나의 모험가"}</h2>
             <p className="text-xs text-ink-muted">
               {activeCharacter?.server ?? DEFAULT_KOREAN_SERVER}
@@ -120,7 +120,7 @@ export const CharacterSwitcher = ({
               setIsFormOpen((value) => !value);
             }}
           >
-            {isFormOpen ? "닫기" : "+ 캐릭터 메모 추가"}
+            {isFormOpen ? "닫기" : "+ 캐릭터 추가"}
           </button>
         ) : null}
       </div>

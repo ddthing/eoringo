@@ -46,9 +46,9 @@ const createImageId = () => {
   return `character-image-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 };
 
-export const saveCharacterImage = async (file: File) => {
+export const saveCharacterImage = async (blob: Blob) => {
   const imageId = createImageId();
-  await withImageStore("readwrite", (store) => store.put(file, imageId));
+  await withImageStore("readwrite", (store) => store.put(blob, imageId));
 
   return imageId;
 };

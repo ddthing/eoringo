@@ -2,10 +2,10 @@ import type { TaskProgress, TaskTemplate } from "../../types";
 
 export const getTaskCount = (value: boolean | number | undefined) => {
   if (typeof value === "number") {
-    return value;
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
   }
 
-  return value ? 1 : 0;
+  return value === true ? 1 : 0;
 };
 
 export const getTaskProgress = (
