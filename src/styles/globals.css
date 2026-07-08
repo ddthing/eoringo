@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-bg: 255 247 251;
+  --color-card: 255 253 253;
+  --color-card-soft: 255 242 247;
+  --color-primary: 238 155 193;
+  --color-primary-soft: 255 227 239;
+  --color-mint: 228 247 238;
+  --color-sky: 235 247 255;
+  --color-peach: 255 246 232;
+  --color-lavender: 247 240 255;
+  --color-text: 74 63 70;
+  --color-muted: 139 123 134;
+  --color-faint: 184 169 179;
+  --color-line-soft: 243 217 230;
+  --color-line-muted: 234 221 230;
+  --color-danger: 239 122 138;
+  --color-surface: var(--color-card);
+  --color-surface-muted: var(--color-bg);
+  --color-ink: var(--color-text);
+  --color-ink-muted: var(--color-muted);
+  --color-brand: var(--color-primary);
+  --color-brand-soft: var(--color-primary-soft);
+}
+
+.dark {
+  color-scheme: dark;
+  --color-bg: 31 25 32;
+  --color-card: 43 35 44;
+  --color-card-soft: 54 43 55;
+  --color-primary: 241 172 205;
+  --color-primary-soft: 74 52 66;
+  --color-mint: 35 61 50;
+  --color-sky: 37 55 67;
+  --color-peach: 67 53 42;
+  --color-lavender: 52 43 66;
+  --color-text: 246 238 243;
+  --color-muted: 197 181 191;
+  --color-faint: 151 135 145;
+  --color-line-soft: 82 64 76;
+  --color-line-muted: 72 60 70;
+}
+
+html {
+  min-height: 100%;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  background: rgb(var(--color-bg));
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: rgb(var(--color-text));
+  background:
+    radial-gradient(circle at 12% 4%, rgb(var(--color-primary-soft) / 0.52), transparent 18rem),
+    radial-gradient(circle at 88% 8%, rgb(var(--color-lavender) / 0.68), transparent 18rem),
+    rgb(var(--color-bg));
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@layer components {
+  .card {
+    @apply rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card/80 p-3 shadow-soft;
+  }
+
+  .memo-card {
+    @apply rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card/80 shadow-soft;
+  }
+
+  .muted-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.08em] text-primary;
+  }
+
+  .primary-button {
+    @apply inline-flex min-h-10 items-center justify-center rounded-full border border-[rgb(var(--color-line-soft))] bg-primary-soft px-3 py-1.5 text-xs font-bold text-primary transition active:scale-[0.98];
+  }
+
+  .secondary-button {
+    @apply inline-flex min-h-10 items-center justify-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card/70 px-3 py-1.5 text-xs font-bold text-ink-muted transition active:scale-[0.98];
+  }
+
+  .field {
+    @apply w-full rounded-2xl border border-[rgb(var(--color-line-muted))] bg-card/80 px-3 py-2 text-sm text-ink outline-none focus:border-primary;
+  }
+
+  .sticker {
+    @apply rounded-full border border-[rgb(var(--color-line-soft))] bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary;
+  }
+}
