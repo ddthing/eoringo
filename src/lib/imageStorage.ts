@@ -53,8 +53,25 @@ export const saveCharacterImage = async (blob: Blob) => {
   return imageId;
 };
 
+export const saveCharacterImageById = async (imageId: string, blob: Blob) =>
+  withImageStore<IDBValidKey>("readwrite", (store) => store.put(blob, imageId));
+
 export const getCharacterImage = async (imageId: string) =>
   withImageStore<Blob | undefined>("readonly", (store) => store.get(imageId));
 
 export const deleteCharacterImage = async (imageId: string) =>
   withImageStore<undefined>("readwrite", (store) => store.delete(imageId));
+
+export const clearCharacterImages = async () =>
+  withImageStore<undefined>("readwrite", (store) => store.clear());
+
+export const getAllCharacterImages = async () => {
+  const keys = await withImageStore<IDBValidKey[]>("readonly", (store) => store.getAllKeys());
+  const blobs = await withImageStore<Blob[]>("readonly", (store) => store.getAll());
+
+  return Object.fromEntries(
+    keys
+      .map((key, index) => [String(key), blobs[index]] as const)
+      .filter((entry): entry is readonly [string, Blob] => entry[1] instanceof Blob),
+  );
+};

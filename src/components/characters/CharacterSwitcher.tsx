@@ -4,6 +4,7 @@ import { DEFAULT_KOREAN_SERVER, KOREAN_FF14_SERVERS } from "../../data/servers";
 import { deleteCharacterImage } from "../../lib/imageStorage";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import type { Character } from "../../types";
+import { useConfirmDialog } from "../common/ConfirmDialog";
 import { CharacterAvatar } from "./CharacterAvatar";
 import { CharacterImagePicker } from "./CharacterImagePicker";
 
@@ -35,6 +36,7 @@ export const CharacterSwitcher = ({
   const removeCharacter = useCharacterStore((state) => state.removeCharacter);
   const setActiveCharacter = useCharacterStore((state) => state.setActiveCharacter);
   const updateCharacter = useCharacterStore((state) => state.updateCharacter);
+  const confirm = useConfirmDialog();
   const [draft, setDraft] = useState<CharacterDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -85,6 +87,17 @@ export const CharacterSwitcher = ({
   };
 
   const handleRemoveCharacter = async (character: Character) => {
+    const confirmed = await confirm({
+      title: `${character.name} 캐릭터를 삭제할까요?`,
+      description: "캐릭터와 연결된 사진, 캐릭터별 체크 상태가 함께 정리됩니다.",
+      confirmLabel: "삭제",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     if (character.profileImageId) {
       await deleteCharacterImage(character.profileImageId);
     }
@@ -156,6 +169,9 @@ export const CharacterSwitcher = ({
               />
               <input
                 className="field"
+                name="character-name"
+                aria-label="캐릭터 이름"
+                autoComplete="off"
                 value={draft.name}
                 onChange={(event) =>
                   setDraft((value) => ({ ...value, name: event.target.value }))
@@ -164,6 +180,8 @@ export const CharacterSwitcher = ({
               />
               <select
                 className="field"
+                name="character-server"
+                aria-label="서버"
                 value={draft.server}
                 onChange={(event) =>
                   setDraft((value) => ({ ...value, server: event.target.value }))

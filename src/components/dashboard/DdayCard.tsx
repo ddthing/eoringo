@@ -3,6 +3,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useDdayStore } from "../../stores/useDdayStore";
+import { useConfirmDialog } from "../common/ConfirmDialog";
 
 export const DdayCard = () => {
   const [title, setTitle] = useState("");
@@ -13,6 +14,7 @@ export const DdayCard = () => {
   const events = useDdayStore((state) => state.events);
   const addEvent = useDdayStore((state) => state.addEvent);
   const removeEvent = useDdayStore((state) => state.removeEvent);
+  const confirm = useConfirmDialog();
   const characterNameById = useMemo(
     () => Object.fromEntries(characters.map((character) => [character.id, character.name])),
     [characters],
@@ -29,6 +31,21 @@ export const DdayCard = () => {
     setTitle("");
     setDate("");
     setIsFormOpen(false);
+  };
+
+  const handleRemoveEvent = async (eventId: string, title: string) => {
+    const confirmed = await confirm({
+      title: `${title} 기념일을 삭제할까요?`,
+      description: "홈 화면의 D-day 위젯에서도 함께 사라집니다.",
+      confirmLabel: "삭제",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    removeEvent(eventId);
   };
 
   return (
@@ -51,6 +68,9 @@ export const DdayCard = () => {
         <form onSubmit={handleSubmit} className="mb-3 grid gap-2">
           <input
             className="field"
+            name="anniversary-title"
+            aria-label="기념일 이름"
+            autoComplete="off"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="기념일 이름"
@@ -58,6 +78,8 @@ export const DdayCard = () => {
           <input
             className="field"
             type="date"
+            name="anniversary-date"
+            aria-label="기념일 날짜"
             value={date}
             onChange={(event) => setDate(event.target.value)}
           />
@@ -92,7 +114,7 @@ export const DdayCard = () => {
               <button
                 type="button"
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-muted"
-                onClick={() => removeEvent(event.id)}
+                onClick={() => handleRemoveEvent(event.id, event.title)}
                 aria-label={`${event.title} 삭제`}
                 title="삭제"
               >

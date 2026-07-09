@@ -3,6 +3,7 @@ export const storageKeys = {
   tasks: "ff14-daily-board/tasks",
   dday: "ff14-daily-board/dday",
   weeklyMemo: "ff14-daily-board/weekly-memo",
+  theme: "ff14-daily-board/theme",
 } as const;
 
 export const createId = (prefix: string) =>

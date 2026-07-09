@@ -32,21 +32,21 @@ export const TaskItem = ({
   return (
     <div
       className={[
-        "flex min-h-10 items-center gap-2 border-b border-[rgb(var(--color-line-muted))] px-1.5 py-1.5 last:border-b-0",
+        "flex min-h-12 items-center gap-2.5 border-b border-[rgb(var(--color-line-muted))] px-3 py-2 last:border-b-0",
         checked ? "opacity-70" : "",
       ].join(" ")}
     >
       <button
         type="button"
         onClick={onToggle}
-        className="flex min-h-10 min-w-0 flex-1 items-center gap-2 text-left transition active:scale-[0.99]"
+        className="flex min-h-10 min-w-0 flex-1 items-center gap-2.5 text-left transition active:scale-[0.99]"
         aria-pressed={checked}
       >
         <span
           className={[
-            "grid h-5 w-5 shrink-0 place-items-center rounded-full border transition",
+            "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[6px] border transition",
             checked
-              ? "border-primary bg-primary text-white"
+              ? "border-primary bg-primary text-white shadow-[0_1px_4px_rgb(30_35_40/0.08)]"
               : "border-[rgb(var(--color-line-soft))] bg-card text-ink-muted",
           ].join(" ")}
         >
@@ -78,7 +78,7 @@ export const TaskItem = ({
         </span>
       </button>
       {task.maxCount > 1 ? (
-        <div className="flex shrink-0 items-center rounded-full border border-[rgb(var(--color-line-soft))] bg-card/80 p-0.5">
+        <div className="flex shrink-0 items-center self-center rounded-full border border-[rgb(var(--color-line-soft))] bg-card/80 p-0.5">
           <button
             type="button"
             className="grid h-10 w-10 place-items-center rounded-full text-ink-muted disabled:opacity-35"
@@ -105,7 +105,7 @@ export const TaskItem = ({
       {onRemove ? (
         <button
           type="button"
-          className="min-h-10 shrink-0 rounded-full px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-danger))]"
+          className="min-h-10 shrink-0 self-center rounded-full px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-danger))]"
           onClick={onRemove}
         >
           삭제

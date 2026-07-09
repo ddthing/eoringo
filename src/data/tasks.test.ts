@@ -14,4 +14,25 @@ describe("default task templates", () => {
       group: "event",
     });
   });
+
+  it("includes weekly Gold Saucer tasks in lifestyle group", () => {
+    expect(
+      defaultTaskTemplates.find((task) => task.id === "weekly-gold-saucer-jumbo-cactpot"),
+    ).toMatchObject({
+      title: "골드소서 주간 복권",
+      category: "weekly",
+      resetType: "weekly",
+      characterScoped: true,
+      group: "lifestyle",
+    });
+    expect(defaultTaskTemplates.find((task) => task.id === "weekly-fashion-report")).toMatchObject(
+      {
+        title: "패션 체크",
+        category: "weekly",
+        resetType: "weekly",
+        characterScoped: true,
+        group: "lifestyle",
+      },
+    );
+  });
 });

@@ -6,6 +6,7 @@ import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useTaskStore } from "../../stores/useTaskStore";
 import type { ResetType, TaskCategory, TaskGroup, TaskTemplate } from "../../types";
+import { useConfirmDialog } from "../common/ConfirmDialog";
 import { TaskItem } from "../tasks/TaskItem";
 
 type Draft = {
@@ -54,6 +55,7 @@ export const CustomTaskList = () => {
   const toggleCustomTaskEnabled = useTaskStore((state) => state.toggleCustomTaskEnabled);
   const toggleTask = useTaskStore((state) => state.toggleTask);
   const setTaskCount = useTaskStore((state) => state.setTaskCount);
+  const confirm = useConfirmDialog();
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -105,6 +107,21 @@ export const CustomTaskList = () => {
     setIsFormOpen(true);
   };
 
+  const handleRemoveCustomTask = async (task: TaskTemplate) => {
+    const confirmed = await confirm({
+      title: `${task.title} 숙제를 삭제할까요?`,
+      description: "직접 만든 숙제와 관련 체크 기록이 함께 삭제됩니다.",
+      confirmLabel: "삭제",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    removeCustomTask(task.id);
+  };
+
   return (
     <section className="card">
       <div className="mb-3 flex items-center justify-between">
@@ -132,12 +149,18 @@ export const CustomTaskList = () => {
         <form className="mb-4 grid gap-2" onSubmit={handleSubmit}>
           <input
             className="field"
+            name="custom-task-title"
+            aria-label="숙제 이름"
+            autoComplete="off"
             value={draft.title}
             onChange={(event) => setDraft((value) => ({ ...value, title: event.target.value }))}
             placeholder="새 커스텀 숙제"
           />
           <input
             className="field"
+            name="custom-task-description"
+            aria-label="숙제 설명"
+            autoComplete="off"
             value={draft.description}
             onChange={(event) =>
               setDraft((value) => ({ ...value, description: event.target.value }))
@@ -147,6 +170,8 @@ export const CustomTaskList = () => {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <select
               className="field"
+              name="custom-task-category"
+              aria-label="숙제 분류"
               value={draft.category}
               onChange={(event) =>
                 setDraft((value) => ({ ...value, category: event.target.value as TaskCategory }))
@@ -158,6 +183,8 @@ export const CustomTaskList = () => {
             </select>
             <select
               className="field"
+              name="custom-task-reset"
+              aria-label="초기화 주기"
               value={draft.resetType}
               onChange={(event) =>
                 setDraft((value) => ({ ...value, resetType: event.target.value as ResetType }))
@@ -170,6 +197,8 @@ export const CustomTaskList = () => {
             </select>
             <select
               className="field"
+              name="custom-task-group"
+              aria-label="숙제 그룹"
               value={draft.group}
               onChange={(event) =>
                 setDraft((value) => ({ ...value, group: event.target.value as TaskGroup }))
@@ -184,6 +213,8 @@ export const CustomTaskList = () => {
             <input
               className="field"
               type="number"
+              name="custom-task-max-count"
+              inputMode="numeric"
               min={1}
               max={99}
               value={draft.maxCount}
@@ -195,6 +226,9 @@ export const CustomTaskList = () => {
           </div>
           <input
             className="field"
+            name="custom-task-note"
+            aria-label="숙제 메모"
+            autoComplete="off"
             value={draft.note}
             onChange={(event) => setDraft((value) => ({ ...value, note: event.target.value }))}
             placeholder="메모"
@@ -250,7 +284,7 @@ export const CustomTaskList = () => {
                   onSetCount={(nextCount) =>
                     setTaskCount(scopeId, task.id, nextCount, task.maxCount, task.resetType)
                   }
-                  onRemove={() => removeCustomTask(task.id)}
+                  onRemove={() => handleRemoveCustomTask(task)}
                   showMeta
                 />
                 <div className="mt-1 flex justify-end gap-2">

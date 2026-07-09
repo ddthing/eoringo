@@ -7,15 +7,21 @@ describe("validateBackupPayload", () => {
     expect(
       validateBackupPayload({
         app: "에오링고",
-        version: 2,
+        version: 3,
         exportedAt: "2026-07-08T00:00:00.000Z",
         data: {
           [storageKeys.weeklyMemo]: { state: { memo: "이번 주 메모" }, version: 1 },
         },
+        images: {
+          "character-image-test": {
+            type: "image/webp",
+            dataUrl: "data:image/webp;base64,test",
+          },
+        },
       }),
     ).toMatchObject({
       app: "에오링고",
-      version: 2,
+      version: 3,
     });
   });
 

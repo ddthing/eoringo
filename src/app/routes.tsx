@@ -11,6 +11,7 @@ import { UpcomingAnniversaryWidget } from "../components/dashboard/UpcomingAnniv
 import { WeeklyMemoWidget } from "../components/dashboard/WeeklyMemoWidget";
 import { WeeklyTaskList } from "../components/dashboard/WeeklyTaskList";
 import { BackupRestorePanel } from "../components/settings/BackupRestorePanel";
+import { ThemeSettingsPanel } from "../components/settings/ThemeSettingsPanel";
 import { DefaultTaskManager } from "../components/tasks/DefaultTaskManager";
 import { TaskOverview } from "../components/tasks/TaskOverview";
 import { App } from "./App";
@@ -57,6 +58,7 @@ const CharactersPage = () => (
 const SettingsPage = () => (
   <div className="space-y-3">
     <PageTitle eyebrow="설정" title="백업과 데이터" />
+    <ThemeSettingsPanel />
     <BackupRestorePanel />
   </div>
 );
