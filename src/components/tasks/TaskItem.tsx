@@ -14,6 +14,7 @@ type TaskItemProps = {
 const resetLabels: Record<TaskTemplate["resetType"], string> = {
   daily: "일일",
   weekly: "주간",
+  eighteenHours: "18시간",
   manual: "수동",
 };
 

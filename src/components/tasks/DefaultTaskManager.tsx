@@ -7,6 +7,7 @@ import type { TaskGroup } from "../../types";
 const resetLabels = {
   daily: "일일",
   weekly: "주간",
+  eighteenHours: "18시간",
   manual: "수동",
 };
 

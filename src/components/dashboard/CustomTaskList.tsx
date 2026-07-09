@@ -166,6 +166,7 @@ export const CustomTaskList = () => {
               <option value="manual">수동</option>
               <option value="daily">일일</option>
               <option value="weekly">주간</option>
+              <option value="eighteenHours">18시간</option>
             </select>
             <select
               className="field"
@@ -245,8 +246,10 @@ export const CustomTaskList = () => {
                 <TaskItem
                   task={task}
                   count={count}
-                  onToggle={() => toggleTask(scopeId, task.id, task.maxCount)}
-                  onSetCount={(nextCount) => setTaskCount(scopeId, task.id, nextCount, task.maxCount)}
+                  onToggle={() => toggleTask(scopeId, task.id, task.maxCount, task.resetType)}
+                  onSetCount={(nextCount) =>
+                    setTaskCount(scopeId, task.id, nextCount, task.maxCount, task.resetType)
+                  }
                   onRemove={() => removeCustomTask(task.id)}
                   showMeta
                 />

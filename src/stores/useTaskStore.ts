@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { defaultTaskTemplates } from "../data/tasks";
-import { getResetKeys } from "../domain/tasks/resetRules";
+import { getResetKeys, isEighteenHourResetExpired } from "../domain/tasks/resetRules";
 import { createId, storageKeys } from "../lib/storage";
 import type { ResetType, TaskCategory, TaskGroup, TaskTemplate } from "../types";
 
 type TaskCountValue = number | boolean;
 type CompletedByScope = Record<string, Record<string, TaskCountValue>>;
+type CompletedAtByScope = Record<string, Record<string, string>>;
 
 export type CustomTaskInput = {
   title: string;
@@ -22,6 +23,7 @@ export type CustomTaskInput = {
 
 type PersistedTaskState = Partial<{
   completedByCharacter: CompletedByScope;
+  completedAtByCharacter: CompletedAtByScope;
   customTaskTemplates: Partial<TaskTemplate>[];
   disabledDefaultTaskIds: string[];
   dailyResetKey: string;
@@ -30,14 +32,26 @@ type PersistedTaskState = Partial<{
 
 type TaskState = {
   completedByCharacter: CompletedByScope;
+  completedAtByCharacter: CompletedAtByScope;
   customTaskTemplates: TaskTemplate[];
   disabledDefaultTaskIds: string[];
   dailyResetKey: string;
   weeklyResetKey: string;
   ensureCurrentResets: (date?: Date) => void;
-  toggleTask: (scopeId: string, taskId: string, maxCount?: number) => void;
-  setTaskCount: (scopeId: string, taskId: string, count: number, maxCount?: number) => void;
-  setTaskCompleted: (scopeId: string, taskId: string, completed: boolean) => void;
+  toggleTask: (scopeId: string, taskId: string, maxCount?: number, resetType?: ResetType) => void;
+  setTaskCount: (
+    scopeId: string,
+    taskId: string,
+    count: number,
+    maxCount?: number,
+    resetType?: ResetType,
+  ) => void;
+  setTaskCompleted: (
+    scopeId: string,
+    taskId: string,
+    completed: boolean,
+    resetType?: ResetType,
+  ) => void;
   addCustomTask: (task: CustomTaskInput) => void;
   updateCustomTask: (taskId: string, patch: Partial<CustomTaskInput>) => void;
   removeCustomTask: (taskId: string) => void;
@@ -59,6 +73,10 @@ const getTaskCount = (value: TaskCountValue | undefined) => {
 };
 
 const getSafeMaxCount = (maxCount = 1) => Math.max(1, Math.floor(Number(maxCount) || 1));
+const resetTypes: ResetType[] = ["daily", "weekly", "eighteenHours", "manual"];
+
+const normalizeResetType = (resetType: unknown): ResetType =>
+  resetTypes.includes(resetType as ResetType) ? (resetType as ResetType) : "manual";
 
 const getResettableTasks = (customTaskTemplates: TaskTemplate[]) => [
   ...defaultTaskTemplates,
@@ -70,7 +88,7 @@ const normalizeCustomTask = (task: Partial<TaskTemplate>, index = 0): TaskTempla
   title: task.title?.trim() || "이름 없는 숙제",
   description: task.description,
   category: task.category ?? "custom",
-  resetType: task.resetType ?? "manual",
+  resetType: normalizeResetType(task.resetType),
   maxCount: getSafeMaxCount(task.maxCount),
   enabledByDefault: task.enabledByDefault ?? true,
   characterScoped: task.characterScoped ?? true,
@@ -92,7 +110,7 @@ const createCustomTask = (task: CustomTaskInput, priority: number): TaskTemplate
 const clearTasksByResetType = (
   completedByCharacter: CompletedByScope,
   templates: TaskTemplate[],
-  resetType: Exclude<ResetType, "manual">,
+  resetType: Exclude<ResetType, "manual" | "eighteenHours">,
 ) => {
   const taskIdSet = new Set(
     templates.filter((task) => task.resetType === resetType).map((task) => task.id),
@@ -116,6 +134,72 @@ const removeCompletedTask = (completedByCharacter: CompletedByScope, taskId: str
     }),
   );
 
+const removeCompletedAtTask = (completedAtByCharacter: CompletedAtByScope, taskId: string) =>
+  Object.fromEntries(
+    Object.entries(completedAtByCharacter).map(([scopeId, taskState]) => {
+      const nextTaskState = { ...taskState };
+      delete nextTaskState[taskId];
+
+      return [scopeId, nextTaskState];
+    }),
+  );
+
+const updateCompletedAt = (
+  completedAtByCharacter: CompletedAtByScope,
+  scopeId: string,
+  taskId: string,
+  count: number,
+  resetType = "manual" as ResetType,
+) => {
+  if (resetType !== "eighteenHours") {
+    return completedAtByCharacter;
+  }
+
+  const currentScopeState = completedAtByCharacter[scopeId] ?? {};
+  const nextScopeState = { ...currentScopeState };
+
+  if (count <= 0) {
+    delete nextScopeState[taskId];
+  } else if (!nextScopeState[taskId]) {
+    nextScopeState[taskId] = new Date().toISOString();
+  }
+
+  return {
+    ...completedAtByCharacter,
+    [scopeId]: nextScopeState,
+  };
+};
+
+const clearExpiredEighteenHourTasks = (
+  completedByCharacter: CompletedByScope,
+  completedAtByCharacter: CompletedAtByScope,
+  templates: TaskTemplate[],
+  date: Date,
+) => {
+  const taskIdSet = new Set(
+    templates.filter((task) => task.resetType === "eighteenHours").map((task) => task.id),
+  );
+  let nextCompletedByCharacter = completedByCharacter;
+  let nextCompletedAtByCharacter = completedAtByCharacter;
+
+  Object.entries(completedByCharacter).forEach(([scopeId, taskState]) => {
+    Object.keys(taskState).forEach((taskId) => {
+      if (
+        taskIdSet.has(taskId) &&
+        isEighteenHourResetExpired(completedAtByCharacter[scopeId]?.[taskId], date)
+      ) {
+        nextCompletedByCharacter = removeCompletedTask(nextCompletedByCharacter, taskId);
+        nextCompletedAtByCharacter = removeCompletedAtTask(nextCompletedAtByCharacter, taskId);
+      }
+    });
+  });
+
+  return {
+    completedByCharacter: nextCompletedByCharacter,
+    completedAtByCharacter: nextCompletedAtByCharacter,
+  };
+};
+
 const normalizeCompletedByCharacter = (completedByCharacter: unknown): CompletedByScope => {
   if (!isRecord(completedByCharacter)) {
     return {};
@@ -138,6 +222,27 @@ const normalizeCompletedByCharacter = (completedByCharacter: unknown): Completed
   );
 };
 
+const normalizeCompletedAtByCharacter = (
+  completedAtByCharacter: unknown,
+): CompletedAtByScope => {
+  if (!isRecord(completedAtByCharacter)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(completedAtByCharacter)
+      .filter(([, taskState]) => isRecord(taskState))
+      .map(([scopeId, taskState]) => [
+        scopeId,
+        Object.fromEntries(
+          Object.entries(taskState as Record<string, unknown>).filter(
+            (entry): entry is [string, string] => typeof entry[1] === "string",
+          ),
+        ),
+      ]),
+  );
+};
+
 const normalizePersistedTaskState = (persistedState: unknown): PersistedTaskState => {
   const state = isRecord(persistedState) ? persistedState : {};
   const customTaskTemplates = Array.isArray(state.customTaskTemplates)
@@ -149,6 +254,7 @@ const normalizePersistedTaskState = (persistedState: unknown): PersistedTaskStat
 
   return {
     completedByCharacter: normalizeCompletedByCharacter(state.completedByCharacter),
+    completedAtByCharacter: normalizeCompletedAtByCharacter(state.completedAtByCharacter),
     customTaskTemplates,
     disabledDefaultTaskIds,
     dailyResetKey:
@@ -162,6 +268,7 @@ export const useTaskStore = create<TaskState>()(
   persist(
     (set) => ({
       completedByCharacter: {},
+      completedAtByCharacter: {},
       customTaskTemplates: [],
       disabledDefaultTaskIds: [],
       dailyResetKey: resetKeys.dailyResetKey,
@@ -171,6 +278,7 @@ export const useTaskStore = create<TaskState>()(
           const nextKeys = getResetKeys(date);
           const templates = getResettableTasks(state.customTaskTemplates);
           let completedByCharacter = state.completedByCharacter;
+          let completedAtByCharacter = state.completedAtByCharacter;
 
           if (state.dailyResetKey !== nextKeys.dailyResetKey) {
             completedByCharacter = clearTasksByResetType(completedByCharacter, templates, "daily");
@@ -180,13 +288,23 @@ export const useTaskStore = create<TaskState>()(
             completedByCharacter = clearTasksByResetType(completedByCharacter, templates, "weekly");
           }
 
+          const clearedIntervalTasks = clearExpiredEighteenHourTasks(
+            completedByCharacter,
+            completedAtByCharacter,
+            templates,
+            date,
+          );
+          completedByCharacter = clearedIntervalTasks.completedByCharacter;
+          completedAtByCharacter = clearedIntervalTasks.completedAtByCharacter;
+
           return {
             completedByCharacter,
+            completedAtByCharacter,
             dailyResetKey: nextKeys.dailyResetKey,
             weeklyResetKey: nextKeys.weeklyResetKey,
           };
         }),
-      toggleTask: (scopeId, taskId, maxCount = 1) =>
+      toggleTask: (scopeId, taskId, maxCount = 1, resetType = "manual") =>
         set((state) => {
           const safeMaxCount = getSafeMaxCount(maxCount);
           const currentScopeState = state.completedByCharacter[scopeId] ?? {};
@@ -205,9 +323,22 @@ export const useTaskStore = create<TaskState>()(
               ...state.completedByCharacter,
               [scopeId]: nextScopeState,
             },
+            completedAtByCharacter: updateCompletedAt(
+              state.completedAtByCharacter,
+              scopeId,
+              taskId,
+              nextCount,
+              resetType,
+            ),
           };
         }),
-      setTaskCount: (scopeId, taskId, count, maxCount = Number.MAX_SAFE_INTEGER) =>
+      setTaskCount: (
+        scopeId,
+        taskId,
+        count,
+        maxCount = Number.MAX_SAFE_INTEGER,
+        resetType = "manual",
+      ) =>
         set((state) => {
           const currentScopeState = state.completedByCharacter[scopeId] ?? {};
           const nextScopeState = { ...currentScopeState };
@@ -224,9 +355,16 @@ export const useTaskStore = create<TaskState>()(
               ...state.completedByCharacter,
               [scopeId]: nextScopeState,
             },
+            completedAtByCharacter: updateCompletedAt(
+              state.completedAtByCharacter,
+              scopeId,
+              taskId,
+              nextCount,
+              resetType,
+            ),
           };
         }),
-      setTaskCompleted: (scopeId, taskId, completed) =>
+      setTaskCompleted: (scopeId, taskId, completed, resetType = "manual") =>
         set((state) => {
           const currentScopeState = state.completedByCharacter[scopeId] ?? {};
           const nextScopeState = { ...currentScopeState };
@@ -242,6 +380,13 @@ export const useTaskStore = create<TaskState>()(
               ...state.completedByCharacter,
               [scopeId]: nextScopeState,
             },
+            completedAtByCharacter: updateCompletedAt(
+              state.completedAtByCharacter,
+              scopeId,
+              taskId,
+              completed ? 1 : 0,
+              resetType,
+            ),
           };
         }),
       addCustomTask: (task) =>
@@ -269,6 +414,7 @@ export const useTaskStore = create<TaskState>()(
         set((state) => ({
           customTaskTemplates: state.customTaskTemplates.filter((task) => task.id !== taskId),
           completedByCharacter: removeCompletedTask(state.completedByCharacter, taskId),
+          completedAtByCharacter: removeCompletedAtTask(state.completedAtByCharacter, taskId),
         })),
       toggleCustomTaskEnabled: (taskId) =>
         set((state) => ({
@@ -291,16 +437,20 @@ export const useTaskStore = create<TaskState>()(
             completedByCharacter: disabledSet.has(taskId)
               ? removeCompletedTask(state.completedByCharacter, taskId)
               : state.completedByCharacter,
+            completedAtByCharacter: disabledSet.has(taskId)
+              ? removeCompletedAtTask(state.completedAtByCharacter, taskId)
+              : state.completedAtByCharacter,
           };
         }),
     }),
     {
       name: storageKeys.tasks,
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
       migrate: normalizePersistedTaskState,
       partialize: (state) => ({
         completedByCharacter: state.completedByCharacter,
+        completedAtByCharacter: state.completedAtByCharacter,
         customTaskTemplates: state.customTaskTemplates,
         disabledDefaultTaskIds: state.disabledDefaultTaskIds,
         dailyResetKey: state.dailyResetKey,

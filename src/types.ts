@@ -32,7 +32,7 @@ export type HousingPhaseResult = {
 
 export type TaskCategory = "daily" | "weekly" | "custom";
 
-export type ResetType = "daily" | "weekly" | "manual";
+export type ResetType = "daily" | "weekly" | "eighteenHours" | "manual";
 
 export type TaskGroup =
   | "roulette"

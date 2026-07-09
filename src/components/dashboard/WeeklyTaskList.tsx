@@ -56,8 +56,10 @@ export const WeeklyTaskList = () => {
               key={task.id}
               task={task}
               count={getTaskCount(completed[task.id])}
-              onToggle={() => toggleTask(scopeId, task.id, task.maxCount)}
-              onSetCount={(count) => setTaskCount(scopeId, task.id, count, task.maxCount)}
+              onToggle={() => toggleTask(scopeId, task.id, task.maxCount, task.resetType)}
+              onSetCount={(count) =>
+                setTaskCount(scopeId, task.id, count, task.maxCount, task.resetType)
+              }
             />
           );
         })}
