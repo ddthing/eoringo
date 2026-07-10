@@ -3,6 +3,9 @@ import { Edit3, Star, Trash2, X } from "lucide-react";
 import { DEFAULT_KOREAN_SERVER, KOREAN_FF14_SERVERS } from "../../data/servers";
 import { deleteCharacterImage } from "../../lib/imageStorage";
 import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useTaskStore } from "../../stores/useTaskStore";
+import { useWeeklyMemoStore } from "../../stores/useWeeklyMemoStore";
+import { useDdayStore } from "../../stores/useDdayStore";
 import type { Character } from "../../types";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 import { CharacterAvatar } from "./CharacterAvatar";
@@ -36,6 +39,10 @@ export const CharacterSwitcher = ({
   const removeCharacter = useCharacterStore((state) => state.removeCharacter);
   const setActiveCharacter = useCharacterStore((state) => state.setActiveCharacter);
   const updateCharacter = useCharacterStore((state) => state.updateCharacter);
+  const setMainCharacter = useCharacterStore((state) => state.setMainCharacter);
+  const removeTaskData = useTaskStore((state) => state.removeCharacterData);
+  const removeMemoData = useWeeklyMemoStore((state) => state.removeCharacterData);
+  const removeDdayData = useDdayStore((state) => state.removeCharacterData);
   const confirm = useConfirmDialog();
   const [draft, setDraft] = useState<CharacterDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -102,6 +109,9 @@ export const CharacterSwitcher = ({
       await deleteCharacterImage(character.profileImageId);
     }
 
+    removeTaskData(character.id);
+    removeMemoData(character.id);
+    removeDdayData(character.id);
     removeCharacter(character.id);
   };
 
@@ -241,7 +251,7 @@ export const CharacterSwitcher = ({
                   <button
                     type="button"
                     className="secondary-button px-2 text-primary"
-                    onClick={() => updateCharacter(character.id, { isMain: true })}
+                    onClick={() => setMainCharacter(character.id)}
                     aria-label={`${character.name} 대표 설정`}
                   >
                     <Star aria-hidden size={13} />

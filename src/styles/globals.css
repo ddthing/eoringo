@@ -2,13 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes task-check-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-18deg); }
+  70% { transform: scale(1.18) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes task-row-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes calendar-cell-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes calendar-accordion-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 :root {
   color-scheme: light;
-  --color-bg: 242 242 240;
-  --color-card: 255 255 253;
-  --color-card-soft: 246 246 243;
-  --color-accent: 141 138 148;
-  --color-accent-soft: 236 234 240;
+  --app-header-height: 41px;
+  --color-bg: 244 246 248;
+  --color-card: 255 255 255;
+  --color-card-soft: 247 248 250;
+  --color-accent: 126 135 147;
+  --color-accent-soft: 234 237 241;
   --color-primary: var(--color-accent);
   --color-primary-soft: var(--color-accent-soft);
   --color-mint: 232 244 225;
@@ -16,10 +38,10 @@
   --color-peach: 249 246 238;
   --color-lavender: 244 243 248;
   --color-text: 31 39 48;
-  --color-muted: 112 119 126;
-  --color-faint: 164 168 170;
-  --color-line-soft: 213 214 211;
-  --color-line-muted: 226 226 222;
+  --color-muted: 104 113 124;
+  --color-faint: 159 166 174;
+  --color-line-soft: 210 215 222;
+  --color-line-muted: 226 230 235;
   --color-danger: 220 92 105;
   --color-surface: var(--color-card);
   --color-surface-muted: var(--color-bg);
@@ -45,8 +67,8 @@ html[data-theme-color="cream"] {
 }
 
 html[data-theme-color="gray"] {
-  --color-accent: 141 138 148;
-  --color-accent-soft: 236 234 240;
+  --color-accent: 126 135 147;
+  --color-accent-soft: 234 237 241;
 }
 
 html[data-theme-color="sky"] {
@@ -113,7 +135,7 @@ body {
   -webkit-font-smoothing: antialiased;
   color: rgb(var(--color-text));
   background:
-    linear-gradient(180deg, rgb(242 242 240 / 0.78), rgb(232 232 230)),
+    linear-gradient(180deg, rgb(248 249 251 / 0.82), rgb(237 240 244)),
     radial-gradient(circle at 20% 0%, rgb(255 255 255 / 0.72), transparent 18rem),
     rgb(var(--color-bg));
 }
@@ -123,6 +145,34 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+.task-check-icon {
+  animation: task-check-pop 180ms ease-out;
+}
+
+.task-row-enter {
+  animation: task-row-enter 180ms ease-out both;
+}
+
+.calendar-cell {
+  animation: calendar-cell-enter 220ms ease-out both;
+}
+
+.calendar-accordion {
+  animation: calendar-accordion-enter 160ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-check-icon,
+  .task-row-enter {
+    animation: none;
+  }
+
+  .calendar-cell,
+  .calendar-accordion {
+    animation: none;
+  }
 }
 
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
@@ -137,6 +187,14 @@ textarea {
 
   .memo-card {
     @apply rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 shadow-soft;
+  }
+
+  .home-panel {
+    @apply rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card shadow-soft transition duration-200 hover:border-primary/35 hover:shadow-[0_12px_30px_rgb(30_35_40/0.09)];
+  }
+
+  .calendar-panel {
+    @apply rounded-[14px] border border-[rgb(var(--color-line-soft))] bg-card shadow-[0_5px_18px_rgb(30_35_40/0.05)];
   }
 
   .muted-label {

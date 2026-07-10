@@ -4,7 +4,7 @@ const housingListingsSheetUrl =
   "https://docs.google.com/spreadsheets/d/1Y0UiNqNyBfmLLjpQNLv2KOkQYnFXP8iipDJmODzyozg/edit";
 
 export const HousingListingsMemo = () => (
-  <section className="memo-card bg-card/95 p-3">
+  <section className="calendar-panel p-4">
     <div className="flex items-start justify-between gap-3 max-[430px]:flex-col">
       <div>
         <span className="muted-label block">하우징</span>

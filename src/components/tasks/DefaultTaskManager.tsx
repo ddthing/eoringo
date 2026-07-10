@@ -101,7 +101,7 @@ export const DefaultTaskManager = () => {
                         <button
                           type="button"
                           className={[
-                            "shrink-0 rounded-full px-3 py-1 text-xs font-bold",
+                            "min-h-10 shrink-0 rounded-full px-3 py-1 text-xs font-bold transition active:scale-[0.98]",
                             enabled
                               ? "bg-brand-soft text-brand"
                               : "bg-surface-muted text-ink-muted",

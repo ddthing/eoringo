@@ -27,8 +27,8 @@ describe("theme colors", () => {
 
   it("defines gray theme tokens", () => {
     expect(grayThemeTokens).toMatchObject({
-      accent: "#8d8a94",
-      accentSoft: "#eceaf0",
+      accent: "#7e8793",
+      accentSoft: "#eaedf1",
     });
   });
 });

@@ -4,6 +4,7 @@ import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
+import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useTaskStore } from "../../stores/useTaskStore";
 
 export const TaskOverview = () => {
@@ -13,7 +14,7 @@ export const TaskOverview = () => {
   );
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
   const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
-  const customTaskTemplates = useTaskStore((state) => state.customTaskTemplates);
+  const customTaskTemplates = useCurrentCustomTaskTemplates();
   const dailyTasks = useMemo(
     () =>
       getVisibleTaskTemplatesByCategory(

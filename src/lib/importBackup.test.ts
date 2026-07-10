@@ -7,7 +7,7 @@ describe("validateBackupPayload", () => {
     expect(
       validateBackupPayload({
         app: "에오링고",
-        version: 3,
+        version: 4,
         exportedAt: "2026-07-08T00:00:00.000Z",
         data: {
           [storageKeys.weeklyMemo]: { state: { memo: "이번 주 메모" }, version: 1 },
@@ -21,7 +21,7 @@ describe("validateBackupPayload", () => {
       }),
     ).toMatchObject({
       app: "에오링고",
-      version: 3,
+      version: 4,
     });
   });
 

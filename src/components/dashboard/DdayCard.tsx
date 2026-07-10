@@ -5,13 +5,15 @@ import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 
+const emptyEvents = [] as const;
+
 export const DdayCard = () => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const characters = useCharacterStore((state) => state.characters);
-  const events = useDdayStore((state) => state.events);
+  const events = useDdayStore((state) => state.eventsByCharacter[activeCharacterId] ?? emptyEvents);
   const addEvent = useDdayStore((state) => state.addEvent);
   const removeEvent = useDdayStore((state) => state.removeEvent);
   const confirm = useConfirmDialog();
@@ -27,7 +29,7 @@ export const DdayCard = () => {
       return;
     }
 
-    addEvent({ title: title.trim(), date, characterId: activeCharacterId });
+    addEvent(activeCharacterId, { title: title.trim(), date });
     setTitle("");
     setDate("");
     setIsFormOpen(false);
@@ -45,7 +47,7 @@ export const DdayCard = () => {
       return;
     }
 
-    removeEvent(eventId);
+    removeEvent(activeCharacterId, eventId);
   };
 
   return (

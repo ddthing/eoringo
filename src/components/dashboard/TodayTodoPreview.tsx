@@ -6,6 +6,7 @@ import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
+import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useTaskStore } from "../../stores/useTaskStore";
 import { TaskCheckControl } from "../tasks/TaskCheckControl";
 
@@ -15,7 +16,7 @@ export const TodayTodoPreview = () => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
   const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
-  const customTaskTemplates = useTaskStore((state) => state.customTaskTemplates);
+  const customTaskTemplates = useCurrentCustomTaskTemplates();
   const toggleTask = useTaskStore((state) => state.toggleTask);
   const setTaskCount = useTaskStore((state) => state.setTaskCount);
   const tasks = useMemo(

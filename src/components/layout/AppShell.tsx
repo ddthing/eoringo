@@ -15,8 +15,8 @@ export const AppShell = ({ children }: PropsWithChildren) => {
   return (
     <div className="min-h-screen bg-bg">
       <div className="mx-auto min-h-screen max-w-3xl border-x border-[rgb(var(--color-line-soft))] bg-bg/58">
-        <header className="sticky top-0 z-20 border-b border-[rgb(var(--color-line-soft))] bg-bg/86 backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <header className="sticky top-0 z-20 h-[var(--app-header-height)] border-b border-[rgb(var(--color-line-soft))] bg-bg/86 backdrop-blur-xl">
+          <div className="flex h-full items-center justify-between gap-3 px-4">
             <p className="shrink-0 text-sm font-black tracking-tight text-ink">에오링고</p>
             <p className="truncate text-right text-xs font-bold text-ink-muted">
               {formatKoreanDate(now)}

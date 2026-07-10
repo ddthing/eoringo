@@ -1,6 +1,7 @@
 import { Minus, Plus } from "lucide-react";
 import { taskGroupLabels } from "../../data/tasks";
 import type { TaskTemplate } from "../../types";
+import type { ReactNode } from "react";
 import { TaskCheckControl } from "./TaskCheckControl";
 
 type TaskItemProps = {
@@ -10,6 +11,8 @@ type TaskItemProps = {
   onSetCount: (count: number) => void;
   onRemove?: () => void;
   showMeta?: boolean;
+  showGroup?: boolean;
+  dragHandle?: ReactNode;
 };
 
 const resetLabels: Record<TaskTemplate["resetType"], string> = {
@@ -26,6 +29,8 @@ export const TaskItem = ({
   onSetCount,
   onRemove,
   showMeta = false,
+  showGroup = true,
+  dragHandle,
 }: TaskItemProps) => {
   const cappedCount = Math.min(count, task.maxCount);
   const checked = cappedCount >= task.maxCount;
@@ -33,10 +38,11 @@ export const TaskItem = ({
   return (
     <div
       className={[
-        "flex min-h-12 items-center gap-2.5 border-b border-[rgb(var(--color-line-muted))] px-3 py-2 last:border-b-0",
-        checked ? "opacity-70" : "",
+        "task-row-enter flex min-h-12 items-center gap-2 border-b border-[rgb(var(--color-line-muted))] px-2.5 py-2 transition duration-200 last:border-b-0 hover:bg-card-soft/70",
+        checked ? "bg-card-soft/35 opacity-65" : "",
       ].join(" ")}
     >
+      {dragHandle}
       <button
         type="button"
         onClick={onToggle}
@@ -51,9 +57,11 @@ export const TaskItem = ({
               checked ? "line-through" : "",
             ].join(" ")}
           >
-            <span className="mr-1.5 rounded-full bg-card-soft px-1.5 py-0.5 text-[10px] font-bold text-primary">
-              {taskGroupLabels[task.group]}
-            </span>
+            {showGroup ? (
+              <span className="mr-1.5 rounded-full bg-card-soft px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                {taskGroupLabels[task.group]}
+              </span>
+            ) : null}
             {task.title}
           </span>
           {showMeta || task.description || task.note ? (

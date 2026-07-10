@@ -7,6 +7,7 @@ import {
   startOfMonth,
 } from "date-fns";
 import { useMemo, useState } from "react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { frontlineMaps } from "../../data/frontline";
 import { getFrontlineByDateKey } from "../../domain/frontline/getTodayFrontline";
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
@@ -69,17 +70,25 @@ export const CalendarPage = () => {
   }, [todayKey]);
 
   const monthLabel = format(parseISO(todayKey), "M월");
+  const nextSevenDays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => addDaysToDateKey(todayKey, index)),
+    [todayKey],
+  );
 
   return (
-    <div className="space-y-3">
-      <div className="px-1">
-        <h1 className="text-lg font-bold text-ink">전장 / 하우징 달력</h1>
+    <div className="space-y-5">
+      <div className="px-1 pt-1">
+        <p className="muted-label">일정</p>
+        <h1 className="mt-1 text-xl font-black text-ink">전장 / 하우징 달력</h1>
       </div>
 
-      <section className="space-y-2">
-        <p className="px-1 text-xs font-bold text-ink-muted">오늘 요약</p>
+      <section className="space-y-2.5">
+        <div className="flex items-center gap-2 px-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <h2 className="text-sm font-black text-ink">오늘 요약</h2>
+        </div>
         <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
-          <article className="memo-card bg-sky/70 p-3">
+          <article className="calendar-panel p-4 transition duration-200 hover:border-primary/30">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="muted-label">전장</p>
               <span className="sticker bg-card/80">{todayFrontline.shortName}</span>
@@ -93,7 +102,7 @@ export const CalendarPage = () => {
             </p>
           </article>
 
-          <article className="memo-card bg-card/86 p-3">
+          <article className="calendar-panel p-4 transition duration-200 hover:border-primary/30">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="muted-label">하우징</p>
               <span
@@ -126,10 +135,50 @@ export const CalendarPage = () => {
         </div>
       </section>
 
-      <section className="memo-card bg-card/86 p-3">
-        <div>
-          <span className="muted-label block">월간 달력</span>
-          <span className="text-sm font-bold">{monthLabel} 달력</span>
+      <section className="space-y-2.5">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <div className="flex items-center gap-2">
+            <CalendarDays aria-hidden size={15} className="text-primary" />
+            <h2 className="text-sm font-black text-ink">7일 일정</h2>
+          </div>
+          <span className="text-[11px] font-bold text-ink-muted">오늘부터 7일</span>
+        </div>
+        <div className="grid snap-x grid-cols-7 gap-1.5 overflow-x-auto pb-1 max-[560px]:grid-cols-[repeat(7,minmax(76px,1fr))]">
+          {nextSevenDays.map((dateKey, index) => {
+            const frontline = getFrontlineByDateKey(dateKey);
+            const housing = getHousingPhase(toKstDate(dateKey));
+            const isToday = index === 0;
+
+            return (
+              <article
+                key={dateKey}
+                className={[
+                  "calendar-cell min-h-[112px] snap-start rounded-[12px] border p-2 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
+                  isToday
+                    ? "border-primary bg-card ring-2 ring-primary/20"
+                    : "border-[rgb(var(--color-line-muted))] bg-card",
+                ].join(" ")}
+                style={{ animationDelay: `${index * 24}ms` }}
+              >
+                <p className="text-[10px] font-black text-primary">
+                  {isToday ? "오늘" : weekdays[getDay(parseISO(dateKey))]}
+                </p>
+                <p className="mt-0.5 text-sm font-black text-ink">{format(parseISO(dateKey), "M.d")}</p>
+                <p className="mt-3 truncate text-[11px] font-bold text-ink">{frontline.shortName}</p>
+                <p className="mt-1 truncate text-[10px] font-bold text-ink-muted">하우징 {phaseLabel[housing.phase]}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="calendar-panel p-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <span className="muted-label block">월간 달력</span>
+            <h2 className="mt-1 text-base font-black text-ink">{monthLabel} 달력</h2>
+          </div>
+          <span className="text-[11px] font-bold text-ink-muted">KST 기준</span>
         </div>
 
         <div className="mt-3 space-y-3">
@@ -156,15 +205,15 @@ export const CalendarPage = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-ink-muted">
-            {weekdays.map((weekday) => (
-              <span key={weekday}>{weekday}</span>
+          <div className="grid grid-cols-7 gap-1 rounded-[10px] bg-card-soft/80 px-1 py-2 text-center text-[10px] font-black text-ink-muted">
+            {weekdays.map((weekday, index) => (
+              <span key={weekday} className={index === 0 ? "text-[rgb(var(--color-danger))]" : index === 6 ? "text-primary" : ""}>{weekday}</span>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {monthCells.map((dateKey, index) => {
               if (!dateKey) {
-                return <div key={`blank-${index}`} className="min-h-12" />;
+                return <div key={`blank-${index}`} className="min-h-14" />;
               }
 
               const isToday = dateKey === todayKey;
@@ -182,7 +231,7 @@ export const CalendarPage = () => {
                 <div
                   key={dateKey}
                   className={[
-                    "min-h-14 rounded-[14px] border px-1.5 py-1.5 text-center transition",
+                    "calendar-cell min-h-14 rounded-[11px] border px-1 py-1.5 text-center transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
                     toneClassName,
                   ].join(" ")}
                 >
@@ -199,7 +248,7 @@ export const CalendarPage = () => {
 
       <HousingListingsMemo />
 
-      <section className="memo-card bg-card/80 p-3">
+      <section className="calendar-panel overflow-hidden px-4 py-2">
         <button
           type="button"
           className="flex min-h-10 w-full items-center justify-between gap-3 text-left text-sm font-bold text-ink"
@@ -207,18 +256,10 @@ export const CalendarPage = () => {
           aria-expanded={legendOpen}
         >
           <span>범례</span>
-          <span
-            aria-hidden
-            className={[
-              "text-base leading-none text-primary transition-transform",
-              legendOpen ? "rotate-180" : "",
-            ].join(" ")}
-          >
-            ˅
-          </span>
+          <ChevronDown aria-hidden size={17} className={`text-primary transition-transform duration-200 ${legendOpen ? "rotate-180" : ""}`} />
         </button>
         {legendOpen ? (
-          <div className="mt-2 grid gap-1.5 text-xs">
+          <div className="calendar-accordion mt-1 grid gap-2 border-t border-[rgb(var(--color-line-muted))] py-3 text-xs">
             {frontlineMaps.map((map) => (
               <div key={map.id} className="grid grid-cols-[2.4rem_1fr] gap-2">
                 <span

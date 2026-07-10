@@ -136,14 +136,14 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
       {request ? (
         <div
           ref={dialogRef}
-          className="fixed inset-0 z-[70] grid place-items-end overflow-y-auto overscroll-contain bg-ink/20 p-3 backdrop-blur-[2px] sm:place-items-center"
+          className="fixed inset-0 z-[70] grid place-items-end overflow-y-auto overscroll-contain bg-ink/35 p-3 backdrop-blur-[3px] sm:place-items-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
           aria-describedby={request.description ? "confirm-dialog-description" : undefined}
           onKeyDown={handleKeyDown}
         >
-          <div className="w-full max-w-[360px] rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card/96 p-3 shadow-soft">
+          <div className="w-full max-w-[360px] rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card p-3 shadow-[0_18px_46px_rgb(30_35_40/0.18),0_2px_8px_rgb(30_35_40/0.08)]">
             <div className="flex items-start gap-3">
               <div
                 className={[
@@ -173,7 +173,7 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
               </div>
               <button
                 type="button"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted transition active:scale-95"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted shadow-[0_1px_3px_rgb(30_35_40/0.08)] transition hover:text-ink active:scale-95"
                 onClick={() => closeDialog(false)}
                 aria-label="닫기"
               >

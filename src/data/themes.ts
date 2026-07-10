@@ -47,7 +47,7 @@ export const themeColors: ThemeColor[] = [
   {
     id: "gray",
     label: "Gray",
-    swatchClassName: "bg-[rgb(141_138_148)]",
+    swatchClassName: "bg-[rgb(126_135_147)]",
   },
   {
     id: "custom",
@@ -58,8 +58,8 @@ export const themeColors: ThemeColor[] = [
 ];
 
 export const grayThemeTokens = {
-  accent: "#8d8a94",
-  accentSoft: "#eceaf0",
+  accent: "#7e8793",
+  accentSoft: "#eaedf1",
 } as const;
 
 const legacyThemeColorIds: ThemeColorId[] = ["sky", "peach"];

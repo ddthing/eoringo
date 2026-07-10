@@ -1,9 +1,11 @@
 import { FormEvent, useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import { useWeeklyMemoStore } from "../../stores/useWeeklyMemoStore";
+import { useCharacterStore } from "../../stores/useCharacterStore";
 
 export const WeeklyMemoWidget = () => {
-  const memo = useWeeklyMemoStore((state) => state.memo);
+  const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
+  const memo = useWeeklyMemoStore((state) => state.memosByCharacter[activeCharacterId] ?? "");
   const setMemo = useWeeklyMemoStore((state) => state.setMemo);
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(memo);
@@ -15,7 +17,7 @@ export const WeeklyMemoWidget = () => {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setMemo(draft.trim());
+    setMemo(activeCharacterId, draft.trim());
     setIsEditing(false);
   };
 
@@ -25,7 +27,7 @@ export const WeeklyMemoWidget = () => {
   };
 
   return (
-    <section className="rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
+    <section className="home-panel p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <p className="muted-label">이번 주</p>

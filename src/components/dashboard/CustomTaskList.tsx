@@ -4,6 +4,7 @@ import { taskGroupLabels } from "../../data/tasks";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
 import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useTaskStore } from "../../stores/useTaskStore";
 import type { ResetType, TaskCategory, TaskGroup, TaskTemplate } from "../../types";
 import { useConfirmDialog } from "../common/ConfirmDialog";
@@ -47,7 +48,7 @@ const createDraftFromTask = (task: TaskTemplate): Draft => ({
 
 export const CustomTaskList = () => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
-  const customTasks = useTaskStore((state) => state.customTaskTemplates);
+  const customTasks = useCurrentCustomTaskTemplates();
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
   const addCustomTask = useTaskStore((state) => state.addCustomTask);
   const updateCustomTask = useTaskStore((state) => state.updateCustomTask);
@@ -85,6 +86,7 @@ export const CustomTaskList = () => {
 
     const payload = {
       ...draft,
+      characterScoped: true,
       title: draft.title.trim(),
       description: draft.description.trim() || undefined,
       note: draft.note.trim() || undefined,
@@ -92,9 +94,9 @@ export const CustomTaskList = () => {
     };
 
     if (editingTaskId) {
-      updateCustomTask(editingTaskId, payload);
+      updateCustomTask(activeCharacterId, editingTaskId, payload);
     } else {
-      addCustomTask(payload);
+      addCustomTask(activeCharacterId, payload);
     }
 
     resetForm();
@@ -119,7 +121,7 @@ export const CustomTaskList = () => {
       return;
     }
 
-    removeCustomTask(task.id);
+    removeCustomTask(activeCharacterId, task.id);
   };
 
   return (
@@ -237,16 +239,6 @@ export const CustomTaskList = () => {
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={draft.characterScoped}
-                onChange={(event) =>
-                  setDraft((value) => ({ ...value, characterScoped: event.target.checked }))
-                }
-              />
-              캐릭터별 체크
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
                 checked={draft.enabledByDefault}
                 onChange={(event) =>
                   setDraft((value) => ({ ...value, enabledByDefault: event.target.checked }))
@@ -291,7 +283,7 @@ export const CustomTaskList = () => {
                   <button
                     type="button"
                     className="rounded-lg px-3 py-1 text-xs font-semibold text-ink-muted"
-                    onClick={() => toggleCustomTaskEnabled(task.id)}
+                    onClick={() => toggleCustomTaskEnabled(activeCharacterId, task.id)}
                   >
                     {task.enabledByDefault ? "비활성화" : "활성화"}
                   </button>

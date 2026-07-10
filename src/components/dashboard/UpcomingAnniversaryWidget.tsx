@@ -1,11 +1,14 @@
 import { getDaysFromTodayKst } from "../../lib/date";
 import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import { useDdayStore } from "../../stores/useDdayStore";
+import { useCharacterStore } from "../../stores/useCharacterStore";
 
 const formatDisplayDate = (dateKey: string) => dateKey.split("-").join(".");
+const emptyEvents = [] as const;
 
 export const UpcomingAnniversaryWidget = () => {
-  const events = useDdayStore((state) => state.events);
+  const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
+  const events = useDdayStore((state) => state.eventsByCharacter[activeCharacterId] ?? emptyEvents);
   const upcomingEvents = [...events]
     .sort((a, b) => {
       const daysA = Math.abs(getDaysFromTodayKst(a.date));
@@ -20,7 +23,7 @@ export const UpcomingAnniversaryWidget = () => {
   }
 
   return (
-    <section className="rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
+    <section className="home-panel p-4 sm:p-5">
       <div className="mb-3">
         <p className="muted-label">기념일</p>
         <h2 className="text-base font-black text-ink">기념일</h2>
