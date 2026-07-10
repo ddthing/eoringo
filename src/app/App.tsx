@@ -25,13 +25,13 @@ export const App = () => {
 
     if (themeColorId === "custom") {
       const accentColor = normalizeHexColor(customAccentColor);
-      root.style.setProperty("--color-primary", hexToRgbString(accentColor));
-      root.style.setProperty("--color-primary-soft", getSoftAccentColor(accentColor));
+      root.style.setProperty("--color-accent", hexToRgbString(accentColor));
+      root.style.setProperty("--color-accent-soft", getSoftAccentColor(accentColor));
       return;
     }
 
-    root.style.removeProperty("--color-primary");
-    root.style.removeProperty("--color-primary-soft");
+    root.style.removeProperty("--color-accent");
+    root.style.removeProperty("--color-accent-soft");
   }, [customAccentColor, themeColorId]);
 
   return (

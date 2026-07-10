@@ -4,11 +4,13 @@
 
 :root {
   color-scheme: light;
-  --color-bg: 232 232 230;
+  --color-bg: 242 242 240;
   --color-card: 255 255 253;
-  --color-card-soft: 246 248 244;
-  --color-primary: 142 191 130;
-  --color-primary-soft: 220 238 213;
+  --color-card-soft: 246 246 243;
+  --color-accent: 141 138 148;
+  --color-accent-soft: 236 234 240;
+  --color-primary: var(--color-accent);
+  --color-primary-soft: var(--color-accent-soft);
   --color-mint: 232 244 225;
   --color-sky: 240 246 248;
   --color-peach: 249 246 238;
@@ -23,107 +25,43 @@
   --color-surface-muted: var(--color-bg);
   --color-ink: var(--color-text);
   --color-ink-muted: var(--color-muted);
-  --color-brand: var(--color-primary);
-  --color-brand-soft: var(--color-primary-soft);
+  --color-brand: var(--color-accent);
+  --color-brand-soft: var(--color-accent-soft);
 }
 
 html[data-theme-color="pink"] {
-  --color-primary: 238 154 181;
-  --color-primary-soft: 252 226 234;
-  --color-mint: 248 238 242;
-  --color-sky: 246 241 246;
-  --color-peach: 252 239 234;
-  --color-lavender: 247 241 250;
+  --color-accent: 238 154 181;
+  --color-accent-soft: 252 226 234;
 }
 
 html[data-theme-color="lavender"] {
-  --color-primary: 176 154 219;
-  --color-primary-soft: 235 229 249;
-  --color-mint: 239 242 248;
-  --color-sky: 238 243 249;
-  --color-peach: 247 239 245;
-  --color-lavender: 240 235 250;
+  --color-accent: 176 154 219;
+  --color-accent-soft: 235 229 249;
 }
 
 html[data-theme-color="cream"] {
-  --color-bg: 255 248 239;
-  --color-card: 255 253 248;
-  --color-card-soft: 255 241 220;
-  --color-primary: 217 168 108;
-  --color-primary-soft: 255 240 213;
-  --color-mint: 247 244 234;
-  --color-sky: 249 245 239;
-  --color-peach: 255 238 218;
-  --color-lavender: 248 243 246;
-  --color-line-soft: 236 216 191;
-  --color-line-muted: 244 229 210;
+  --color-accent: 217 168 108;
+  --color-accent-soft: 255 240 213;
 }
 
 html[data-theme-color="gray"] {
-  --color-bg: 247 247 248;
-  --color-card: 255 255 255;
-  --color-card-soft: 241 241 243;
-  --color-primary: 141 138 148;
-  --color-primary-soft: 236 234 240;
-  --color-mint: 242 242 243;
-  --color-sky: 240 241 244;
-  --color-peach: 246 244 242;
-  --color-lavender: 242 241 245;
-  --color-text: 71 67 75;
-  --color-muted: 129 123 134;
-  --color-faint: 168 164 172;
-  --color-line-soft: 221 221 223;
-  --color-line-muted: 234 234 236;
+  --color-accent: 141 138 148;
+  --color-accent-soft: 236 234 240;
 }
 
 html[data-theme-color="sky"] {
-  --color-primary: 119 166 213;
-  --color-primary-soft: 222 237 249;
-  --color-mint: 235 244 242;
-  --color-sky: 229 240 250;
-  --color-peach: 245 241 236;
-  --color-lavender: 241 241 248;
+  --color-accent: 119 166 213;
+  --color-accent-soft: 222 237 249;
 }
 
 html[data-theme-color="lemon"] {
-  --color-bg: 255 253 236;
-  --color-card: 255 255 249;
-  --color-card-soft: 255 248 199;
-  --color-primary: 229 205 87;
-  --color-primary-soft: 255 247 184;
-  --color-mint: 245 248 226;
-  --color-sky: 246 248 239;
-  --color-peach: 255 246 216;
-  --color-lavender: 248 245 242;
-  --color-line-soft: 232 221 159;
-  --color-line-muted: 246 238 191;
+  --color-accent: 229 205 87;
+  --color-accent-soft: 255 247 184;
 }
 
 html[data-theme-color="peach"] {
-  --color-primary: 226 151 119;
-  --color-primary-soft: 251 229 219;
-  --color-mint: 244 241 232;
-  --color-sky: 244 242 240;
-  --color-peach: 251 235 226;
-  --color-lavender: 247 241 247;
-}
-
-.dark {
-  color-scheme: dark;
-  --color-bg: 31 25 32;
-  --color-card: 43 35 44;
-  --color-card-soft: 54 43 55;
-  --color-primary: 241 172 205;
-  --color-primary-soft: 74 52 66;
-  --color-mint: 35 61 50;
-  --color-sky: 37 55 67;
-  --color-peach: 67 53 42;
-  --color-lavender: 52 43 66;
-  --color-text: 246 238 243;
-  --color-muted: 197 181 191;
-  --color-faint: 151 135 145;
-  --color-line-soft: 82 64 76;
-  --color-line-muted: 72 60 70;
+  --color-accent: 226 151 119;
+  --color-accent-soft: 251 229 219;
 }
 
 html {

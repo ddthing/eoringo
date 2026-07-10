@@ -3,7 +3,7 @@ import { defaultThemeColorId, grayThemeTokens, isThemeColorId, themeColors } fro
 
 describe("theme colors", () => {
   it("keeps the default theme stable", () => {
-    expect(defaultThemeColorId).toBe("mint");
+    expect(defaultThemeColorId).toBe("gray");
     expect(isThemeColorId(defaultThemeColorId)).toBe(true);
   });
 
@@ -27,14 +27,8 @@ describe("theme colors", () => {
 
   it("defines gray theme tokens", () => {
     expect(grayThemeTokens).toMatchObject({
-      page: "#f7f7f8",
-      panel: "#ffffff",
-      note: "#f1f1f3",
-      line: "#dddddf",
-      primary: "#8d8a94",
-      primarySoft: "#eceaf0",
-      text: "#47434b",
-      muted: "#817b86",
+      accent: "#8d8a94",
+      accentSoft: "#eceaf0",
     });
   });
 });

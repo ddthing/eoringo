@@ -26,6 +26,10 @@ export default {
           DEFAULT: "rgb(var(--color-primary) / <alpha-value>)",
           soft: "rgb(var(--color-primary-soft) / <alpha-value>)",
         },
+        accent: {
+          DEFAULT: "rgb(var(--color-accent) / <alpha-value>)",
+          soft: "rgb(var(--color-accent-soft) / <alpha-value>)",
+        },
         mint: "rgb(var(--color-mint) / <alpha-value>)",
         sky: "rgb(var(--color-sky) / <alpha-value>)",
         peach: "rgb(var(--color-peach) / <alpha-value>)",

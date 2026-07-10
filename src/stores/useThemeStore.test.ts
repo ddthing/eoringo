@@ -22,7 +22,7 @@ describe("theme store normalization", () => {
         customAccentColor: "bad",
       }),
     ).toMatchObject({
-      themeColorId: "mint",
+      themeColorId: "gray",
       customAccentColor: defaultCustomAccentColor,
     });
   });

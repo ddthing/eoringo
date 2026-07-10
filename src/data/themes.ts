@@ -16,7 +16,7 @@ export type ThemeColor = {
   description?: string;
 };
 
-export const defaultThemeColorId: ThemeColorId = "mint";
+export const defaultThemeColorId: ThemeColorId = "gray";
 
 export const themeColors: ThemeColor[] = [
   {
@@ -58,14 +58,8 @@ export const themeColors: ThemeColor[] = [
 ];
 
 export const grayThemeTokens = {
-  page: "#f7f7f8",
-  panel: "#ffffff",
-  note: "#f1f1f3",
-  line: "#dddddf",
-  primary: "#8d8a94",
-  primarySoft: "#eceaf0",
-  text: "#47434b",
-  muted: "#817b86",
+  accent: "#8d8a94",
+  accentSoft: "#eceaf0",
 } as const;
 
 const legacyThemeColorIds: ThemeColorId[] = ["sky", "peach"];

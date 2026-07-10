@@ -16,12 +16,12 @@ import { HousingListingsMemo } from "./HousingListingsMemo";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
-const phaseLabel = {
+const phaseLabel: Record<HousingPhaseResult["phase"], string> = {
   entry: "신청",
   result: "발표",
 };
 
-const phasePillClassName = {
+const phasePillClassName: Record<HousingPhaseResult["phase"], string> = {
   entry: "border-[rgb(199_217_196)] bg-[rgb(235_243_231)] text-[rgb(88_124_82)]",
   result: "border-[rgb(225_205_174)] bg-[rgb(249_240_226)] text-[rgb(139_109_64)]",
 };
@@ -44,13 +44,14 @@ const toKstDate = (dateKey: string) => new Date(`${dateKey}T00:00:00+09:00`);
 const formatMonthDay = (dateKey: string) => format(parseISO(dateKey), "MM.dd");
 
 const getNextPhaseCopy = (phase: HousingPhaseResult) => {
-  const nextLabel = phase.nextPhaseLabel === "신청 기간" ? "신청" : "발표";
+  const nextLabel = phase.phase === "entry" ? "발표" : "신청";
 
   return `다음 ${nextLabel} ${formatMonthDay(phase.nextPhaseDate)}`;
 };
 
 export const CalendarPage = () => {
   const [monthlyMode, setMonthlyMode] = useState<"frontline" | "housing">("frontline");
+  const [legendOpen, setLegendOpen] = useState(false);
   const todayKey = getKstDateKey();
   const todayHousing = getHousingPhase();
   const todayFrontline = getFrontlineByDateKey(todayKey);
@@ -87,7 +88,7 @@ export const CalendarPage = () => {
               {todayFrontline.displayName}
             </h2>
             <p className="mt-3 grid gap-1 rounded-[14px] bg-card/70 px-2.5 py-2 text-xs font-bold text-ink">
-              <span className="text-ink-muted">내일 전장은?</span>
+              <span className="text-ink-muted">내일 전장은</span>
               <span className="break-keep text-ink">{tomorrowFrontline.displayName}</span>
             </p>
           </article>
@@ -171,8 +172,9 @@ export const CalendarPage = () => {
               const housing = getHousingPhase(toKstDate(dateKey));
               const label =
                 monthlyMode === "frontline" ? frontline.shortName : phaseLabel[housing.phase];
-              const toneClassName =
-                monthlyMode === "frontline"
+              const toneClassName = isToday
+                ? "border-primary bg-card text-ink ring-2 ring-primary/35"
+                : monthlyMode === "frontline"
                   ? frontlineCellClassName[frontline.id]
                   : housingCellClassName[housing.phase];
 
@@ -182,7 +184,6 @@ export const CalendarPage = () => {
                   className={[
                     "min-h-14 rounded-[14px] border px-1.5 py-1.5 text-center transition",
                     toneClassName,
-                    isToday ? "ring-2 ring-primary/40" : "",
                   ].join(" ")}
                 >
                   <p className="text-[11px] font-bold text-ink">
@@ -199,22 +200,40 @@ export const CalendarPage = () => {
       <HousingListingsMemo />
 
       <section className="memo-card bg-card/80 p-3">
-        <h2 className="text-sm font-bold">범례</h2>
-        <div className="mt-2 grid gap-1.5 text-xs">
-          {frontlineMaps.map((map) => (
-            <div key={map.id} className="grid grid-cols-[2.4rem_1fr] gap-2">
-              <span
-                className={[
-                  "w-fit rounded-full border px-2 py-0.5 text-[11px] font-bold",
-                  frontlineCellClassName[map.id],
-                ].join(" ")}
-              >
-                {map.shortName}
-              </span>
-              <span className="text-ink-muted">{map.displayName}</span>
-            </div>
-          ))}
-        </div>
+        <button
+          type="button"
+          className="flex min-h-10 w-full items-center justify-between gap-3 text-left text-sm font-bold text-ink"
+          onClick={() => setLegendOpen((current) => !current)}
+          aria-expanded={legendOpen}
+        >
+          <span>범례</span>
+          <span
+            aria-hidden
+            className={[
+              "text-base leading-none text-primary transition-transform",
+              legendOpen ? "rotate-180" : "",
+            ].join(" ")}
+          >
+            ˅
+          </span>
+        </button>
+        {legendOpen ? (
+          <div className="mt-2 grid gap-1.5 text-xs">
+            {frontlineMaps.map((map) => (
+              <div key={map.id} className="grid grid-cols-[2.4rem_1fr] gap-2">
+                <span
+                  className={[
+                    "w-fit rounded-full border px-2 py-0.5 text-[11px] font-bold",
+                    frontlineCellClassName[map.id],
+                  ].join(" ")}
+                >
+                  {map.shortName}
+                </span>
+                <span className="text-ink-muted">{map.displayName}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );
