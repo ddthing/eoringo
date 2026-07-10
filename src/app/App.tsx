@@ -3,12 +3,14 @@ import { Outlet } from "react-router-dom";
 import { ConfirmDialogProvider } from "../components/common/ConfirmDialog";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { AppShell } from "../components/layout/AppShell";
+import { getSoftAccentColor, hexToRgbString, normalizeHexColor } from "../lib/color";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useTaskStore } from "../stores/useTaskStore";
 
 export const App = () => {
   const ensureCurrentResets = useTaskStore((state) => state.ensureCurrentResets);
   const themeColorId = useThemeStore((state) => state.themeColorId);
+  const customAccentColor = useThemeStore((state) => state.customAccentColor);
 
   useEffect(() => {
     ensureCurrentResets();
@@ -18,8 +20,19 @@ export const App = () => {
   }, [ensureCurrentResets]);
 
   useEffect(() => {
-    document.documentElement.dataset.themeColor = themeColorId;
-  }, [themeColorId]);
+    const root = document.documentElement;
+    root.dataset.themeColor = themeColorId;
+
+    if (themeColorId === "custom") {
+      const accentColor = normalizeHexColor(customAccentColor);
+      root.style.setProperty("--color-primary", hexToRgbString(accentColor));
+      root.style.setProperty("--color-primary-soft", getSoftAccentColor(accentColor));
+      return;
+    }
+
+    root.style.removeProperty("--color-primary");
+    root.style.removeProperty("--color-primary-soft");
+  }, [customAccentColor, themeColorId]);
 
   return (
     <ConfirmDialogProvider>

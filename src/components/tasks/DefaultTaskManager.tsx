@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { defaultTaskTemplates, taskGroupLabels } from "../../data/tasks";
+import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useTaskStore } from "../../stores/useTaskStore";
 import type { TaskGroup } from "../../types";
 
@@ -23,7 +25,11 @@ const groupOrder: TaskGroup[] = [
 ];
 
 export const DefaultTaskManager = () => {
-  const disabledDefaultTaskIds = useTaskStore((state) => state.disabledDefaultTaskIds);
+  const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
+  const activeCharacter = useCharacterStore((state) =>
+    state.characters.find((character) => character.id === state.activeCharacterId),
+  );
+  const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
   const toggleDefaultTaskEnabled = useTaskStore((state) => state.toggleDefaultTaskEnabled);
   const [openGroups, setOpenGroups] = useState<TaskGroup[]>(["roulette", "delivery", "combat"]);
   const disabledSet = new Set(disabledDefaultTaskIds);
@@ -34,6 +40,10 @@ export const DefaultTaskManager = () => {
         <p className="muted-label">기본 숙제 관리</p>
         <h2 className="text-lg font-bold">표시할 기본 숙제</h2>
       </div>
+      <p className="mb-3 text-xs font-medium text-ink-muted">
+        캐릭터별 숙제 표시 설정은 현재 캐릭터
+        {activeCharacter ? ` (${activeCharacter.name})` : ""}에만 적용됩니다.
+      </p>
       <div className="space-y-2">
         {groupOrder.map((group) => {
           const tasks = defaultTaskTemplates.filter((task) => task.group === group);
@@ -96,7 +106,7 @@ export const DefaultTaskManager = () => {
                               ? "bg-brand-soft text-brand"
                               : "bg-surface-muted text-ink-muted",
                           ].join(" ")}
-                          onClick={() => toggleDefaultTaskEnabled(task.id)}
+                          onClick={() => toggleDefaultTaskEnabled(task.id, activeCharacterId)}
                         >
                           {enabled ? "켜짐" : "꺼짐"}
                         </button>

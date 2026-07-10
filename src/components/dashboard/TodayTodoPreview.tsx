@@ -1,19 +1,23 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
 import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
 import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useTaskStore } from "../../stores/useTaskStore";
+import { TaskCheckControl } from "../tasks/TaskCheckControl";
 
 const PREVIEW_LIMIT = 5;
 
 export const TodayTodoPreview = () => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
-  const disabledDefaultTaskIds = useTaskStore((state) => state.disabledDefaultTaskIds);
+  const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
   const customTaskTemplates = useTaskStore((state) => state.customTaskTemplates);
+  const toggleTask = useTaskStore((state) => state.toggleTask);
+  const setTaskCount = useTaskStore((state) => state.setTaskCount);
   const tasks = useMemo(
     () =>
       getVisibleTaskTemplatesByCategory(
@@ -62,20 +66,53 @@ export const TodayTodoPreview = () => {
 
       <div className="mt-3 space-y-1.5">
         {remainingTasks.length > 0 ? (
-          remainingTasks.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center gap-2 rounded-[10px] border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5"
-            >
-              <span className="h-1 w-1 shrink-0 rounded-full bg-primary" />
-              <p className="min-w-0 truncate text-sm font-bold text-ink">{task.title}</p>
-              {task.maxCount > 1 ? (
-                <span className="ml-auto shrink-0 text-[11px] font-bold text-ink-muted">
-                  {getTaskCount(completed[task.id])}/{task.maxCount}
+          remainingTasks.map((task) => {
+            const scopeId = getTaskScopeId(task, activeCharacterId);
+            const currentCount = getTaskCount(completed[task.id]);
+
+            return task.maxCount === 1 ? (
+              <button
+                key={task.id}
+                type="button"
+                className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[10px] border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5 text-left transition hover:border-primary/45 active:scale-[0.99]"
+                onClick={() => toggleTask(scopeId, task.id, task.maxCount, task.resetType)}
+                aria-label={`${task.title} 완료 전환`}
+              >
+                <TaskCheckControl checked={false} />
+                <span className="min-w-0 flex-1 truncate text-sm font-bold text-ink">
+                  {task.title}
                 </span>
-              ) : null}
-            </div>
-          ))
+              </button>
+            ) : (
+              <div
+                key={task.id}
+                className="flex min-h-10 items-center gap-2 rounded-[10px] border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5"
+              >
+                <span className="h-1 w-1 shrink-0 rounded-full bg-primary" />
+                <p className="min-w-0 flex-1 truncate text-sm font-bold text-ink">{task.title}</p>
+                <span className="shrink-0 text-[11px] font-bold text-ink-muted">
+                  {currentCount}/{task.maxCount}
+                </span>
+                <button
+                  type="button"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-primary transition active:scale-95 disabled:opacity-35"
+                  onClick={() =>
+                    setTaskCount(
+                      scopeId,
+                      task.id,
+                      currentCount + 1,
+                      task.maxCount,
+                      task.resetType,
+                    )
+                  }
+                  disabled={currentCount >= task.maxCount}
+                  aria-label={`${task.title} 1회 추가`}
+                >
+                  <Plus aria-hidden size={16} strokeWidth={3} />
+                </button>
+              </div>
+            );
+          })
         ) : (
           <p className="rounded-[12px] bg-mint/70 px-3 py-3 text-sm font-bold text-ink">
             오늘 체크는 모두 끝났어요.

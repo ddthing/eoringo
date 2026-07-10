@@ -35,4 +35,15 @@ describe("default task templates", () => {
       },
     );
   });
+
+  it("includes grand company squadron weekly task", () => {
+    expect(defaultTaskTemplates.find((task) => task.id === "grand-company-squadron-weekly"))
+      .toMatchObject({
+        title: "총사령부 소대 임무 확인",
+        category: "weekly",
+        resetType: "weekly",
+        characterScoped: true,
+        group: "lifestyle",
+      });
+  });
 });

@@ -3,6 +3,7 @@ import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgres
 import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
 import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useTaskStore } from "../../stores/useTaskStore";
 import { TaskItem } from "../tasks/TaskItem";
 
@@ -13,7 +14,7 @@ type DailyTaskListProps = {
 export const DailyTaskList = ({ limit }: DailyTaskListProps) => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
-  const disabledDefaultTaskIds = useTaskStore((state) => state.disabledDefaultTaskIds);
+  const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
   const customTaskTemplates = useTaskStore((state) => state.customTaskTemplates);
   const toggleTask = useTaskStore((state) => state.toggleTask);
   const setTaskCount = useTaskStore((state) => state.setTaskCount);

@@ -1,6 +1,20 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { defaultTaskTemplates } from "../data/tasks";
+import {
+  fallbackMigrationCharacterId,
+  getDefaultTaskDisabledScope,
+  migrateLegacyDisabledDefaultTaskIds,
+  normalizeDisabledDefaultTaskIdsByCharacter,
+  type DisabledDefaultTaskIdsByCharacter,
+} from "../domain/tasks/disabledDefaultTasks";
+import {
+  getClampedTaskCount,
+  getNextTaskCount,
+  getSafeTaskMaxCount,
+  getTaskCount,
+} from "../domain/tasks/getTaskProgress";
+import { globalTaskScopeId } from "../domain/tasks/getTaskScopeId";
 import { getResetKeys, isEighteenHourResetExpired } from "../domain/tasks/resetRules";
 import { createId, storageKeys } from "../lib/storage";
 import type { ResetType, TaskCategory, TaskGroup, TaskTemplate } from "../types";
@@ -26,6 +40,8 @@ type PersistedTaskState = Partial<{
   completedAtByCharacter: CompletedAtByScope;
   customTaskTemplates: Partial<TaskTemplate>[];
   disabledDefaultTaskIds: string[];
+  disabledDefaultTaskIdsByCharacter: DisabledDefaultTaskIdsByCharacter;
+  disabledGlobalDefaultTaskIds: string[];
   dailyResetKey: string;
   weeklyResetKey: string;
 }>;
@@ -34,7 +50,8 @@ type TaskState = {
   completedByCharacter: CompletedByScope;
   completedAtByCharacter: CompletedAtByScope;
   customTaskTemplates: TaskTemplate[];
-  disabledDefaultTaskIds: string[];
+  disabledDefaultTaskIdsByCharacter: DisabledDefaultTaskIdsByCharacter;
+  disabledGlobalDefaultTaskIds: string[];
   dailyResetKey: string;
   weeklyResetKey: string;
   ensureCurrentResets: (date?: Date) => void;
@@ -56,7 +73,7 @@ type TaskState = {
   updateCustomTask: (taskId: string, patch: Partial<CustomTaskInput>) => void;
   removeCustomTask: (taskId: string) => void;
   toggleCustomTaskEnabled: (taskId: string) => void;
-  toggleDefaultTaskEnabled: (taskId: string) => void;
+  toggleDefaultTaskEnabled: (taskId: string, characterId: string) => void;
 };
 
 const resetKeys = getResetKeys();
@@ -64,15 +81,6 @@ const resetKeys = getResetKeys();
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const getTaskCount = (value: TaskCountValue | undefined) => {
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
-  }
-
-  return value === true ? 1 : 0;
-};
-
-const getSafeMaxCount = (maxCount = 1) => Math.max(1, Math.floor(Number(maxCount) || 1));
 const resetTypes: ResetType[] = ["daily", "weekly", "eighteenHours", "manual"];
 
 const normalizeResetType = (resetType: unknown): ResetType =>
@@ -89,7 +97,7 @@ const normalizeCustomTask = (task: Partial<TaskTemplate>, index = 0): TaskTempla
   description: task.description,
   category: task.category ?? "custom",
   resetType: normalizeResetType(task.resetType),
-  maxCount: getSafeMaxCount(task.maxCount),
+  maxCount: getSafeTaskMaxCount(task.maxCount),
   enabledByDefault: task.enabledByDefault ?? true,
   characterScoped: task.characterScoped ?? true,
   group: task.group ?? "custom",
@@ -143,6 +151,34 @@ const removeCompletedAtTask = (completedAtByCharacter: CompletedAtByScope, taskI
       return [scopeId, nextTaskState];
     }),
   );
+
+const removeCompletedTaskFromScope = (
+  completedByCharacter: CompletedByScope,
+  scopeId: string,
+  taskId: string,
+) => {
+  const nextScopeState = { ...(completedByCharacter[scopeId] ?? {}) };
+  delete nextScopeState[taskId];
+
+  return {
+    ...completedByCharacter,
+    [scopeId]: nextScopeState,
+  };
+};
+
+const removeCompletedAtTaskFromScope = (
+  completedAtByCharacter: CompletedAtByScope,
+  scopeId: string,
+  taskId: string,
+) => {
+  const nextScopeState = { ...(completedAtByCharacter[scopeId] ?? {}) };
+  delete nextScopeState[taskId];
+
+  return {
+    ...completedAtByCharacter,
+    [scopeId]: nextScopeState,
+  };
+};
 
 const updateCompletedAt = (
   completedAtByCharacter: CompletedAtByScope,
@@ -243,20 +279,72 @@ const normalizeCompletedAtByCharacter = (
   );
 };
 
+const getMigrationCharacterId = () => {
+  if (typeof localStorage === "undefined") {
+    return fallbackMigrationCharacterId;
+  }
+
+  try {
+    const persistedCharacters = localStorage.getItem(storageKeys.characters);
+
+    if (!persistedCharacters) {
+      return fallbackMigrationCharacterId;
+    }
+
+    const parsed = JSON.parse(persistedCharacters) as unknown;
+    const state =
+      isRecord(parsed) && isRecord(parsed.state) ? parsed.state : isRecord(parsed) ? parsed : {};
+
+    return typeof state.activeCharacterId === "string"
+      ? state.activeCharacterId
+      : fallbackMigrationCharacterId;
+  } catch {
+    return fallbackMigrationCharacterId;
+  }
+};
+
+const mergeDisabledDefaultTaskIdsByCharacter = (
+  first: DisabledDefaultTaskIdsByCharacter,
+  second: DisabledDefaultTaskIdsByCharacter,
+) => {
+  const characterIds = new Set([...Object.keys(first), ...Object.keys(second)]);
+
+  return Object.fromEntries(
+    Array.from(characterIds).map((characterId) => [
+      characterId,
+      Array.from(new Set([...(first[characterId] ?? []), ...(second[characterId] ?? [])])),
+    ]),
+  );
+};
+
 const normalizePersistedTaskState = (persistedState: unknown): PersistedTaskState => {
   const state = isRecord(persistedState) ? persistedState : {};
   const customTaskTemplates = Array.isArray(state.customTaskTemplates)
     ? state.customTaskTemplates.filter(isRecord).map(normalizeCustomTask)
     : [];
-  const disabledDefaultTaskIds = Array.isArray(state.disabledDefaultTaskIds)
-    ? state.disabledDefaultTaskIds.filter((id): id is string => typeof id === "string")
-    : [];
+  const legacyDisabledDefaultTaskIds = migrateLegacyDisabledDefaultTaskIds(
+    state.disabledDefaultTaskIds,
+    getMigrationCharacterId(),
+  );
+  const disabledDefaultTaskIdsByCharacter = mergeDisabledDefaultTaskIdsByCharacter(
+    legacyDisabledDefaultTaskIds.disabledDefaultTaskIdsByCharacter,
+    normalizeDisabledDefaultTaskIdsByCharacter(state.disabledDefaultTaskIdsByCharacter),
+  );
+  const disabledGlobalDefaultTaskIds = Array.from(
+    new Set([
+      ...legacyDisabledDefaultTaskIds.disabledGlobalDefaultTaskIds,
+      ...(Array.isArray(state.disabledGlobalDefaultTaskIds)
+        ? state.disabledGlobalDefaultTaskIds.filter((id): id is string => typeof id === "string")
+        : []),
+    ]),
+  );
 
   return {
     completedByCharacter: normalizeCompletedByCharacter(state.completedByCharacter),
     completedAtByCharacter: normalizeCompletedAtByCharacter(state.completedAtByCharacter),
     customTaskTemplates,
-    disabledDefaultTaskIds,
+    disabledDefaultTaskIdsByCharacter,
+    disabledGlobalDefaultTaskIds,
     dailyResetKey:
       typeof state.dailyResetKey === "string" ? state.dailyResetKey : resetKeys.dailyResetKey,
     weeklyResetKey:
@@ -270,7 +358,8 @@ export const useTaskStore = create<TaskState>()(
       completedByCharacter: {},
       completedAtByCharacter: {},
       customTaskTemplates: [],
-      disabledDefaultTaskIds: [],
+      disabledDefaultTaskIdsByCharacter: {},
+      disabledGlobalDefaultTaskIds: [],
       dailyResetKey: resetKeys.dailyResetKey,
       weeklyResetKey: resetKeys.weeklyResetKey,
       ensureCurrentResets: (date = new Date()) =>
@@ -306,10 +395,8 @@ export const useTaskStore = create<TaskState>()(
         }),
       toggleTask: (scopeId, taskId, maxCount = 1, resetType = "manual") =>
         set((state) => {
-          const safeMaxCount = getSafeMaxCount(maxCount);
           const currentScopeState = state.completedByCharacter[scopeId] ?? {};
-          const currentCount = getTaskCount(currentScopeState[taskId]);
-          const nextCount = currentCount >= safeMaxCount ? 0 : currentCount + 1;
+          const nextCount = getNextTaskCount(currentScopeState[taskId], maxCount);
           const nextScopeState = { ...currentScopeState };
 
           if (nextCount <= 0) {
@@ -342,7 +429,7 @@ export const useTaskStore = create<TaskState>()(
         set((state) => {
           const currentScopeState = state.completedByCharacter[scopeId] ?? {};
           const nextScopeState = { ...currentScopeState };
-          const nextCount = Math.min(getTaskCount(count), getSafeMaxCount(maxCount));
+          const nextCount = getClampedTaskCount(count, maxCount);
 
           if (nextCount <= 0) {
             delete nextScopeState[taskId];
@@ -422,23 +509,46 @@ export const useTaskStore = create<TaskState>()(
             task.id === taskId ? { ...task, enabledByDefault: !task.enabledByDefault } : task,
           ),
         })),
-      toggleDefaultTaskEnabled: (taskId) =>
+      toggleDefaultTaskEnabled: (taskId, characterId) =>
         set((state) => {
-          const disabledSet = new Set(state.disabledDefaultTaskIds);
+          const disabledScope = getDefaultTaskDisabledScope(taskId);
+          const normalizedCharacterId = characterId || fallbackMigrationCharacterId;
+          const isGlobalScope = disabledScope === globalTaskScopeId;
+          const disabledGlobalSet = new Set(state.disabledGlobalDefaultTaskIds);
+          const disabledCharacterSet = new Set(
+            state.disabledDefaultTaskIdsByCharacter[normalizedCharacterId] ?? [],
+          );
+          const isDisabled = isGlobalScope
+            ? disabledGlobalSet.has(taskId)
+            : disabledCharacterSet.has(taskId) || disabledGlobalSet.has(taskId);
 
-          if (disabledSet.has(taskId)) {
-            disabledSet.delete(taskId);
+          if (isDisabled) {
+            disabledGlobalSet.delete(taskId);
+            disabledCharacterSet.delete(taskId);
+          } else if (isGlobalScope) {
+            disabledGlobalSet.add(taskId);
           } else {
-            disabledSet.add(taskId);
+            disabledCharacterSet.add(taskId);
           }
 
+          const nextDisabledDefaultTaskIdsByCharacter = {
+            ...state.disabledDefaultTaskIdsByCharacter,
+            [normalizedCharacterId]: Array.from(disabledCharacterSet),
+          };
+          const completedScopeId = isGlobalScope ? globalTaskScopeId : normalizedCharacterId;
+
           return {
-            disabledDefaultTaskIds: Array.from(disabledSet),
-            completedByCharacter: disabledSet.has(taskId)
-              ? removeCompletedTask(state.completedByCharacter, taskId)
+            disabledDefaultTaskIdsByCharacter: nextDisabledDefaultTaskIdsByCharacter,
+            disabledGlobalDefaultTaskIds: Array.from(disabledGlobalSet),
+            completedByCharacter: !isDisabled
+              ? removeCompletedTaskFromScope(state.completedByCharacter, completedScopeId, taskId)
               : state.completedByCharacter,
-            completedAtByCharacter: disabledSet.has(taskId)
-              ? removeCompletedAtTask(state.completedAtByCharacter, taskId)
+            completedAtByCharacter: !isDisabled
+              ? removeCompletedAtTaskFromScope(
+                  state.completedAtByCharacter,
+                  completedScopeId,
+                  taskId,
+                )
               : state.completedAtByCharacter,
           };
         }),
@@ -446,13 +556,14 @@ export const useTaskStore = create<TaskState>()(
     {
       name: storageKeys.tasks,
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      version: 4,
       migrate: normalizePersistedTaskState,
       partialize: (state) => ({
         completedByCharacter: state.completedByCharacter,
         completedAtByCharacter: state.completedAtByCharacter,
         customTaskTemplates: state.customTaskTemplates,
-        disabledDefaultTaskIds: state.disabledDefaultTaskIds,
+        disabledDefaultTaskIdsByCharacter: state.disabledDefaultTaskIdsByCharacter,
+        disabledGlobalDefaultTaskIds: state.disabledGlobalDefaultTaskIds,
         dailyResetKey: state.dailyResetKey,
         weeklyResetKey: state.weeklyResetKey,
       }),

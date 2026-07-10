@@ -1,19 +1,24 @@
-export type ThemeColorId = "mint" | "pink" | "lavender" | "sky" | "lemon" | "peach";
+export type ThemeColorId =
+  | "mint"
+  | "pink"
+  | "lavender"
+  | "cream"
+  | "gray"
+  | "custom"
+  | "sky"
+  | "lemon"
+  | "peach";
 
 export type ThemeColor = {
   id: ThemeColorId;
   label: string;
   swatchClassName: string;
+  description?: string;
 };
 
 export const defaultThemeColorId: ThemeColorId = "mint";
 
 export const themeColors: ThemeColor[] = [
-  {
-    id: "mint",
-    label: "Mint",
-    swatchClassName: "bg-[rgb(142_191_130)]",
-  },
   {
     id: "pink",
     label: "Pink",
@@ -25,21 +30,46 @@ export const themeColors: ThemeColor[] = [
     swatchClassName: "bg-[rgb(176_154_219)]",
   },
   {
-    id: "sky",
-    label: "Sky",
-    swatchClassName: "bg-[rgb(119_166_213)]",
+    id: "mint",
+    label: "Mint",
+    swatchClassName: "bg-[rgb(142_191_130)]",
+  },
+  {
+    id: "cream",
+    label: "Cream",
+    swatchClassName: "bg-[rgb(217_168_108)]",
   },
   {
     id: "lemon",
     label: "Lemon",
-    swatchClassName: "bg-[rgb(217_189_91)]",
+    swatchClassName: "bg-[rgb(229_205_87)]",
   },
   {
-    id: "peach",
-    label: "Peach",
-    swatchClassName: "bg-[rgb(226_151_119)]",
+    id: "gray",
+    label: "Gray",
+    swatchClassName: "bg-[rgb(141_138_148)]",
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    swatchClassName: "bg-primary",
+    description: "나만의 포인트 컬러",
   },
 ];
 
+export const grayThemeTokens = {
+  page: "#f7f7f8",
+  panel: "#ffffff",
+  note: "#f1f1f3",
+  line: "#dddddf",
+  primary: "#8d8a94",
+  primarySoft: "#eceaf0",
+  text: "#47434b",
+  muted: "#817b86",
+} as const;
+
+const legacyThemeColorIds: ThemeColorId[] = ["sky", "peach"];
+
 export const isThemeColorId = (value: unknown): value is ThemeColorId =>
-  themeColors.some((themeColor) => themeColor.id === value);
+  themeColors.some((themeColor) => themeColor.id === value) ||
+  legacyThemeColorIds.includes(value as ThemeColorId);

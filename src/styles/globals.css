@@ -45,6 +45,37 @@ html[data-theme-color="lavender"] {
   --color-lavender: 240 235 250;
 }
 
+html[data-theme-color="cream"] {
+  --color-bg: 255 248 239;
+  --color-card: 255 253 248;
+  --color-card-soft: 255 241 220;
+  --color-primary: 217 168 108;
+  --color-primary-soft: 255 240 213;
+  --color-mint: 247 244 234;
+  --color-sky: 249 245 239;
+  --color-peach: 255 238 218;
+  --color-lavender: 248 243 246;
+  --color-line-soft: 236 216 191;
+  --color-line-muted: 244 229 210;
+}
+
+html[data-theme-color="gray"] {
+  --color-bg: 247 247 248;
+  --color-card: 255 255 255;
+  --color-card-soft: 241 241 243;
+  --color-primary: 141 138 148;
+  --color-primary-soft: 236 234 240;
+  --color-mint: 242 242 243;
+  --color-sky: 240 241 244;
+  --color-peach: 246 244 242;
+  --color-lavender: 242 241 245;
+  --color-text: 71 67 75;
+  --color-muted: 129 123 134;
+  --color-faint: 168 164 172;
+  --color-line-soft: 221 221 223;
+  --color-line-muted: 234 234 236;
+}
+
 html[data-theme-color="sky"] {
   --color-primary: 119 166 213;
   --color-primary-soft: 222 237 249;
@@ -55,12 +86,17 @@ html[data-theme-color="sky"] {
 }
 
 html[data-theme-color="lemon"] {
-  --color-primary: 217 189 91;
-  --color-primary-soft: 250 241 206;
-  --color-mint: 242 244 231;
-  --color-sky: 243 245 240;
-  --color-peach: 250 242 226;
-  --color-lavender: 246 242 248;
+  --color-bg: 255 253 236;
+  --color-card: 255 255 249;
+  --color-card-soft: 255 248 199;
+  --color-primary: 229 205 87;
+  --color-primary-soft: 255 247 184;
+  --color-mint: 245 248 226;
+  --color-sky: 246 248 239;
+  --color-peach: 255 246 216;
+  --color-lavender: 248 245 242;
+  --color-line-soft: 232 221 159;
+  --color-line-muted: 246 238 191;
 }
 
 html[data-theme-color="peach"] {

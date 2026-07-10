@@ -10,6 +10,7 @@ import {
   getTimeUntil,
 } from "../../lib/date";
 import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useTaskStore } from "../../stores/useTaskStore";
 import { CharacterAvatar } from "../characters/CharacterAvatar";
 
@@ -18,7 +19,7 @@ export const TodayHeader = () => {
   const characters = useCharacterStore((state) => state.characters);
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
-  const disabledDefaultTaskIds = useTaskStore((state) => state.disabledDefaultTaskIds);
+  const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
   const customTaskTemplates = useTaskStore((state) => state.customTaskTemplates);
   const activeCharacter =
     characters.find((character) => character.id === activeCharacterId) ?? characters[0];

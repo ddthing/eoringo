@@ -8,6 +8,24 @@ export const getTaskCount = (value: boolean | number | undefined) => {
   return value === true ? 1 : 0;
 };
 
+export const getSafeTaskMaxCount = (maxCount = 1) =>
+  Math.max(1, Math.floor(Number(maxCount) || 1));
+
+export const getClampedTaskCount = (
+  value: boolean | number | undefined,
+  maxCount = Number.MAX_SAFE_INTEGER,
+) => Math.min(getTaskCount(value), getSafeTaskMaxCount(maxCount));
+
+export const getNextTaskCount = (
+  value: boolean | number | undefined,
+  maxCount = 1,
+) => {
+  const safeMaxCount = getSafeTaskMaxCount(maxCount);
+  const currentCount = getClampedTaskCount(value, safeMaxCount);
+
+  return currentCount >= safeMaxCount ? 0 : currentCount + 1;
+};
+
 export const getTaskProgress = (
   tasks: TaskTemplate[],
   completedByTaskId: Record<string, boolean | number> = {},

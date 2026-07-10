@@ -12,6 +12,7 @@ import { getFrontlineByDateKey } from "../../domain/frontline/getTodayFrontline"
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
 import { addDaysToDateKey, getKstDateKey } from "../../lib/date";
 import type { FrontlineMap, HousingPhaseResult } from "../../types";
+import { HousingListingsMemo } from "./HousingListingsMemo";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -195,6 +196,8 @@ export const CalendarPage = () => {
         </div>
       </section>
 
+      <HousingListingsMemo />
+
       <section className="memo-card bg-card/80 p-3">
         <h2 className="text-sm font-bold">범례</h2>
         <div className="mt-2 grid gap-1.5 text-xs">
@@ -212,20 +215,6 @@ export const CalendarPage = () => {
             </div>
           ))}
         </div>
-        <p className="mt-2 text-[11px] text-ink-muted">
-          점검이나 패치로 실제 일정이 달라질 수 있어요.
-        </p>
-        <p className="mt-1 text-[11px] text-ink-muted">
-          하우징 정보 제공:{" "}
-          <a
-            href="https://x.com/ff14gingerS"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-bold text-primary underline-offset-2 hover:underline"
-          >
-            @ff14gingerS
-          </a>
-        </p>
       </section>
     </div>
   );
