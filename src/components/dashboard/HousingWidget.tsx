@@ -11,11 +11,11 @@ export const HousingWidget = () => {
   const phase = getHousingPhase();
 
   return (
-    <section className="rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card p-3 shadow-soft transition duration-200 hover:border-primary/35 active:scale-[0.99]">
+    <section className="home-panel h-full p-3.5 min-[420px]:p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="muted-label">하우징</p>
-          <h2 className="mt-2 text-3xl font-black leading-none text-ink">
+          <h2 className="home-heading mt-2 text-[26px] font-black leading-none tracking-[-0.035em] text-ink min-[420px]:text-[28px]">
             {shortPhaseLabel[phase.phase]}
           </h2>
         </div>
@@ -23,8 +23,8 @@ export const HousingWidget = () => {
           {phase.day}/{phase.totalDays}
         </span>
       </div>
-      <p className="mt-2 truncate text-sm font-bold text-ink">{phase.label}</p>
-      <p className="mt-1 text-[11px] font-medium text-ink-muted">
+      <p className="mt-2.5 truncate text-[13px] font-bold leading-5 text-ink min-[420px]:text-sm">{phase.label}</p>
+      <p className="mt-0.5 text-[11px] font-medium leading-5 text-ink-muted tabular-nums">
         다음 {shortPhaseLabel[phase.phase === "entry" ? "result" : "entry"]}{" "}
         {formatShortDate(phase.nextPhaseDate)}
       </p>

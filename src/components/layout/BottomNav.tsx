@@ -1,20 +1,20 @@
-import { CalendarDays, CheckSquare, Home, Settings, UsersRound } from "lucide-react";
+import { CalendarDays, CheckSquare, Home, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { bottomNavItems } from "../../app/navigation";
 
-const navItems = [
-  { to: "/", label: "오늘", icon: Home },
-  { to: "/tasks", label: "숙제", icon: CheckSquare },
-  { to: "/calendar", label: "일정", icon: CalendarDays },
-  { to: "/characters", label: "캐릭터", icon: UsersRound },
-  { to: "/settings", label: "설정", icon: Settings },
-];
+const navIcons = {
+  "/": Home,
+  "/tasks": CheckSquare,
+  "/calendar": CalendarDays,
+  "/settings": Settings,
+} as const;
 
 export const BottomNav = () => (
   <nav className="fixed inset-x-0 bottom-0 z-30">
     <div className="mx-auto max-w-3xl px-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))]">
-      <div className="grid grid-cols-5 rounded-[18px] border border-[rgb(var(--color-line-soft))] bg-card/92 p-1.5 shadow-soft backdrop-blur-xl">
-        {navItems.map((item) => {
-          const Icon = item.icon;
+      <div className="grid grid-cols-4 rounded-[18px] border border-[rgb(var(--color-line-soft))] bg-card/92 p-1.5 shadow-soft backdrop-blur-xl">
+        {bottomNavItems.map((item) => {
+          const Icon = navIcons[item.to];
 
           return (
             <NavLink

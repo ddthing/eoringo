@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { defaultThemeColorId, grayThemeTokens, isThemeColorId, themeColors } from "./themes";
 
@@ -30,5 +31,22 @@ describe("theme colors", () => {
       accent: "#7e8793",
       accentSoft: "#eaedf1",
     });
+  });
+
+  it("defines Mint CSS tokens separately from Gray", () => {
+    const globalsCss = readFileSync(
+      new URL("../styles/globals.css", import.meta.url),
+      "utf8",
+    );
+    const mintBlock = globalsCss.match(
+      /html\[data-theme-color="mint"\]\s*\{([^}]+)\}/,
+    )?.[1];
+    const grayBlock = globalsCss.match(
+      /html\[data-theme-color="gray"\]\s*\{([^}]+)\}/,
+    )?.[1];
+
+    expect(mintBlock).toContain("--color-accent: 142 191 130");
+    expect(mintBlock).toContain("--color-accent-soft: 232 244 225");
+    expect(mintBlock).not.toBe(grayBlock);
   });
 });

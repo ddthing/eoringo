@@ -93,9 +93,13 @@ export const DefaultTaskManager = () => {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{task.title}</p>
                           <p className="truncate text-xs text-ink-muted">
-                            {resetLabels[task.resetType]} ·{" "}
-                            {task.characterScoped ? "캐릭터별" : "공통"}
-                            {task.note ? ` · ${task.note}` : ""}
+                            {[
+                              resetLabels[task.resetType],
+                              task.characterScoped ? undefined : "공통",
+                              task.note,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </p>
                         </div>
                         <button

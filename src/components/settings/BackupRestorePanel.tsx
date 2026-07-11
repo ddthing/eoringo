@@ -8,7 +8,6 @@ import { storageKeys } from "../../lib/storage";
 
 export const BackupRestorePanel = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const confirm = useConfirmDialog();
   const [message, setMessage] = useState("");
   const [isBusy, setIsBusy] = useState(false);
 
@@ -58,40 +57,16 @@ export const BackupRestorePanel = () => {
     }
   };
 
-  const handleReset = async () => {
-    const confirmed = await confirm({
-      title: "모든 로컬 데이터를 초기화할까요?",
-      description: "캐릭터, 체크리스트, D-day, 메모, 테마, 캐릭터 사진이 이 브라우저에서 삭제됩니다.",
-      confirmLabel: "초기화",
-      tone: "danger",
-    });
-
-    if (!confirmed) {
-      return;
-    }
-
-    setIsBusy(true);
-
-    try {
-      Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
-      await clearCharacterImages();
-      window.location.reload();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "초기화에 실패했습니다.");
-      setIsBusy(false);
-    }
-  };
-
   return (
     <section className="card space-y-4">
       <div>
         <p className="muted-label">local data</p>
-        <h2 className="text-lg font-bold">백업 / 복원 / 초기화</h2>
+        <h2 className="text-lg font-bold">백업 및 복원</h2>
         <p className="mt-1 text-sm text-ink-muted">
           브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
         </p>
       </div>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2">
         <button
           type="button"
           className="primary-button flex items-center justify-center gap-2"
@@ -110,15 +85,6 @@ export const BackupRestorePanel = () => {
           <Upload aria-hidden size={17} />
           복원
         </button>
-        <button
-          type="button"
-          className="secondary-button flex items-center justify-center gap-2 text-[rgb(var(--color-danger))]"
-          onClick={handleReset}
-          disabled={isBusy}
-        >
-          <RotateCcw aria-hidden size={17} />
-          초기화
-        </button>
       </div>
       <input
         ref={fileInputRef}
@@ -128,6 +94,63 @@ export const BackupRestorePanel = () => {
         onChange={handleImport}
         aria-label="백업 파일 선택"
       />
+      {message ? (
+        <p className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
+    </section>
+  );
+};
+
+export const DataManagementPanel = () => {
+  const confirm = useConfirmDialog();
+  const [message, setMessage] = useState("");
+  const [isBusy, setIsBusy] = useState(false);
+
+  const handleReset = async () => {
+    const confirmed = await confirm({
+      title: "모든 로컬 데이터를 초기화할까요?",
+      description: "캐릭터, 체크리스트, D-day, 메모, 테마, 캐릭터 사진이 이 브라우저에서 삭제됩니다.",
+      confirmLabel: "초기화",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsBusy(true);
+    setMessage("");
+
+    try {
+      Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
+      await clearCharacterImages();
+      window.location.reload();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "초기화에 실패했습니다.");
+      setIsBusy(false);
+    }
+  };
+
+  return (
+    <section className="card space-y-4">
+      <div>
+        <p className="muted-label">local data</p>
+        <h2 className="text-lg font-bold">데이터 관리</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          이 브라우저에 저장된 모든 앱 데이터를 삭제합니다. 먼저 백업을 권장합니다.
+        </p>
+      </div>
+      <button
+        type="button"
+        className="secondary-button flex w-full items-center justify-center gap-2 text-[rgb(var(--color-danger))] sm:w-auto"
+        onClick={handleReset}
+        disabled={isBusy}
+      >
+        <RotateCcw aria-hidden size={17} />
+        {isBusy ? "처리 중…" : "모든 데이터 초기화"}
+      </button>
       {message ? (
         <p className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted" aria-live="polite">
           {message}

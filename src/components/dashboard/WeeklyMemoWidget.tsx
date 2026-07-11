@@ -27,16 +27,16 @@ export const WeeklyMemoWidget = () => {
   };
 
   return (
-    <section className="home-panel p-4 sm:p-5">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <section className="home-panel p-4 min-[420px]:p-[18px] md:p-5">
+      <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
           <p className="muted-label">이번 주</p>
-          <h2 className="text-base font-black text-ink">이번 주 메모</h2>
+          <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">이번 주 메모</h2>
         </div>
         {isEditing ? (
           <button
             type="button"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card-soft/80 text-ink-muted"
+            className="home-icon-button text-ink-muted"
             onClick={() => setIsEditing(false)}
             aria-label="메모 편집 닫기"
             title="닫기"
@@ -46,7 +46,7 @@ export const WeeklyMemoWidget = () => {
         ) : (
           <button
             type="button"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card-soft/80 text-primary"
+            className="home-icon-button text-primary"
             onClick={openEditor}
             aria-label="메모 편집"
             title="편집"
@@ -60,17 +60,20 @@ export const WeeklyMemoWidget = () => {
         <form onSubmit={handleSubmit} className="space-y-2">
           <textarea
             className="field min-h-28 resize-none leading-relaxed"
+            name="weekly-memo"
+            aria-label="이번 주 메모"
+            autoComplete="off"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="이번 주 목표를 적어보세요."
+            placeholder="이번 주 목표를 적어보세요…"
           />
-          <button type="submit" className="primary-button gap-1.5">
+          <button type="submit" className="primary-button home-touch-target gap-1.5">
             <Check aria-hidden size={15} />
             저장
           </button>
         </form>
       ) : memoLines.length > 0 ? (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 rounded-[14px] bg-card-soft/45 px-3 py-2.5">
           {memoLines.map((line, index) => (
             <p key={`${line}-${index}`} className="text-sm font-bold leading-relaxed text-ink">
               - {line}
@@ -78,9 +81,10 @@ export const WeeklyMemoWidget = () => {
           ))}
         </div>
       ) : (
-        <p className="rounded-[12px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/56 p-3 text-sm font-bold text-ink-muted">
-          이번 주 목표를 적어보세요.
-        </p>
+        <div className="home-empty-state min-h-20">
+          <Pencil aria-hidden size={16} />
+          <p>이번 주 목표를 적어보세요.</p>
+        </div>
       )}
     </section>
   );

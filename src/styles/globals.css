@@ -23,6 +23,26 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes settings-anchor-highlight {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--color-primary) / 0); }
+  30% { box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.22); }
+}
+
+@keyframes avatar-skeleton-sweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(110%); }
+}
+
+@keyframes character-sheet-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes character-sheet-panel-enter {
+  from { transform: translateY(18px); }
+  to { transform: translateY(0); }
+}
+
 :root {
   color-scheme: light;
   --app-header-height: 41px;
@@ -71,6 +91,11 @@ html[data-theme-color="gray"] {
   --color-accent-soft: 234 237 241;
 }
 
+html[data-theme-color="mint"] {
+  --color-accent: 142 191 130;
+  --color-accent-soft: 232 244 225;
+}
+
 html[data-theme-color="sky"] {
   --color-accent: 119 166 213;
   --color-accent-soft: 222 237 249;
@@ -93,6 +118,12 @@ html {
   scrollbar-color: rgb(var(--color-line-soft)) transparent;
   scrollbar-width: thin;
   background: rgb(var(--color-bg));
+}
+
+html,
+body,
+#root {
+  overflow-x: clip;
 }
 
 * {
@@ -147,6 +178,12 @@ textarea {
   font: inherit;
 }
 
+button,
+a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgb(var(--color-primary) / 0.12);
+}
+
 .task-check-icon {
   animation: task-check-pop 180ms ease-out;
 }
@@ -163,6 +200,36 @@ textarea {
   animation: calendar-accordion-enter 160ms ease-out both;
 }
 
+.settings-anchor-highlight {
+  animation: settings-anchor-highlight 1.2s ease-out both;
+}
+
+.avatar-skeleton {
+  background: rgb(var(--color-card-soft));
+}
+
+.avatar-skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    100deg,
+    transparent 16%,
+    rgb(255 255 255 / 0.72) 46%,
+    transparent 76%
+  );
+  animation: avatar-skeleton-sweep 1.25s ease-in-out infinite;
+}
+
+.character-sheet-backdrop {
+  animation: character-sheet-backdrop-enter 180ms ease-out both;
+}
+
+.character-sheet-panel {
+  animation: character-sheet-panel-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .task-check-icon,
   .task-row-enter {
@@ -170,8 +237,16 @@ textarea {
   }
 
   .calendar-cell,
-  .calendar-accordion {
+  .calendar-accordion,
+  .settings-anchor-highlight,
+  .character-sheet-backdrop,
+  .character-sheet-panel {
     animation: none;
+  }
+
+  .avatar-skeleton::after {
+    animation: none;
+    opacity: 0.45;
   }
 }
 
@@ -190,7 +265,28 @@ textarea {
   }
 
   .home-panel {
-    @apply rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card shadow-soft transition duration-200 hover:border-primary/35 hover:shadow-[0_12px_30px_rgb(30_35_40/0.09)];
+    @apply rounded-[20px] border border-[rgb(var(--color-line-soft))] bg-card shadow-[0_8px_26px_rgb(30_35_40/0.065),0_1px_2px_rgb(30_35_40/0.045)];
+  }
+
+  .home-heading {
+    text-wrap: balance;
+  }
+
+  .home-touch-target {
+    @apply min-h-11;
+    min-height: 2.75rem !important;
+  }
+
+  .home-icon-button {
+    @apply grid h-11 w-11 shrink-0 touch-manipulation place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card-soft/75 transition-[background-color,border-color,color,transform] duration-150 hover:border-[rgb(var(--color-line-soft))] hover:bg-card active:scale-[0.96];
+  }
+
+  .home-empty-state {
+    @apply flex items-center justify-center gap-2 rounded-[14px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/50 px-3 py-3 text-center text-[13px] font-bold leading-5 text-ink-muted;
+  }
+
+  .home-identity-trigger {
+    @apply transition-[background-color,transform] duration-150 active:scale-[0.99];
   }
 
   .calendar-panel {
@@ -251,5 +347,11 @@ textarea {
 
   .sticker {
     @apply rounded-full border border-[rgb(var(--color-line-soft))] bg-primary-soft px-2 py-0.5 text-[11px] font-black text-primary;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-identity-trigger:hover {
+    background: rgb(var(--color-card-soft) / 0.72);
   }
 }

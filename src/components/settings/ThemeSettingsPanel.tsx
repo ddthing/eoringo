@@ -19,7 +19,7 @@ export const ThemeSettingsPanel = () => {
     <section className="card space-y-4">
       <div>
         <p className="muted-label">디자인</p>
-        <h2 className="text-lg font-bold">테마 컬러</h2>
+        <h2 className="text-lg font-bold">테마</h2>
         <p className="mt-1 text-sm text-ink-muted">
           대표 컬러 하나를 고르면 체크, 버튼, 스티커 색이 같은 계열로 정리됩니다.
         </p>
