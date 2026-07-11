@@ -1,5 +1,3 @@
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useHomeTaskProgress } from "./useHomeTaskProgress";
 
 const ProgressRow = ({
@@ -44,14 +42,9 @@ export const HomeProgress = () => {
 
   return (
     <section className="home-panel flex h-full flex-col p-4 min-[420px]:p-[18px] md:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="muted-label">루틴</p>
-          <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">숙제 진행도</h2>
-        </div>
-        <Link to="/tasks" className="secondary-button home-touch-target gap-1.5" aria-label="전체 숙제 보기">
-          전체 숙제 보기 <ArrowRight aria-hidden size={14} />
-        </Link>
+      <div>
+        <p className="muted-label">루틴</p>
+        <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">숙제 진행도</h2>
       </div>
       <div className="mt-4 grid flex-1 grid-cols-[92px_1fr] items-center gap-4 max-[360px]:grid-cols-1 min-[420px]:grid-cols-[104px_1fr] min-[420px]:gap-5 md:grid-cols-[116px_1fr]">
         <div className="relative mx-auto h-[92px] w-[92px] min-[420px]:h-[104px] min-[420px]:w-[104px] md:h-[116px] md:w-[116px]" aria-label={`전체 완료율 ${progress.total.percent}%`}>
@@ -68,7 +61,7 @@ export const HomeProgress = () => {
             <span className="text-[10px] font-bold text-ink-muted">전체</span>
           </div>
         </div>
-        <div className="divide-y divide-[rgb(var(--color-line-muted))]">
+        <div>
           <ProgressRow label="일일" {...progress.daily} />
           <ProgressRow label="주간" {...progress.weekly} />
           <ProgressRow label="기타" {...progress.other} />

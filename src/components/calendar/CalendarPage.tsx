@@ -7,7 +7,7 @@ import {
   startOfMonth,
 } from "date-fns";
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { frontlineMaps } from "../../data/frontline";
 import { getFrontlineByDateKey } from "../../domain/frontline/getTodayFrontline";
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
@@ -70,11 +70,6 @@ export const CalendarPage = () => {
   }, [todayKey]);
 
   const monthLabel = format(parseISO(todayKey), "M월");
-  const nextSevenDays = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => addDaysToDateKey(todayKey, index)),
-    [todayKey],
-  );
-
   return (
     <div className="space-y-5">
       <div className="px-1 pt-1">
@@ -132,43 +127,6 @@ export const CalendarPage = () => {
               {getNextPhaseCopy(todayHousing)}
             </p>
           </article>
-        </div>
-      </section>
-
-      <section className="space-y-2.5">
-        <div className="flex items-center justify-between gap-3 px-1">
-          <div className="flex items-center gap-2">
-            <CalendarDays aria-hidden size={15} className="text-primary" />
-            <h2 className="text-sm font-black text-ink">7일 일정</h2>
-          </div>
-          <span className="text-[11px] font-bold text-ink-muted">오늘부터 7일</span>
-        </div>
-        <div className="grid snap-x grid-cols-7 gap-1.5 overflow-x-auto pb-1 max-[560px]:grid-cols-[repeat(7,minmax(76px,1fr))]">
-          {nextSevenDays.map((dateKey, index) => {
-            const frontline = getFrontlineByDateKey(dateKey);
-            const housing = getHousingPhase(toKstDate(dateKey));
-            const isToday = index === 0;
-
-            return (
-              <article
-                key={dateKey}
-                className={[
-                  "calendar-cell min-h-[112px] snap-start rounded-[12px] border p-2 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
-                  isToday
-                    ? "border-primary bg-card ring-2 ring-primary/20"
-                    : "border-[rgb(var(--color-line-muted))] bg-card",
-                ].join(" ")}
-                style={{ animationDelay: `${index * 24}ms` }}
-              >
-                <p className="text-[10px] font-black text-primary">
-                  {isToday ? "오늘" : weekdays[getDay(parseISO(dateKey))]}
-                </p>
-                <p className="mt-0.5 text-sm font-black text-ink">{format(parseISO(dateKey), "M.d")}</p>
-                <p className="mt-3 truncate text-[11px] font-bold text-ink">{frontline.shortName}</p>
-                <p className="mt-1 truncate text-[10px] font-bold text-ink-muted">하우징 {phaseLabel[housing.phase]}</p>
-              </article>
-            );
-          })}
         </div>
       </section>
 
