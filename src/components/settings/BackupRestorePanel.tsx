@@ -6,7 +6,7 @@ import { clearCharacterImages } from "../../lib/imageStorage";
 import { importBackup } from "../../lib/importBackup";
 import { storageKeys } from "../../lib/storage";
 
-export const BackupRestorePanel = () => {
+const BackupRestoreActions = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [message, setMessage] = useState("");
   const [isBusy, setIsBusy] = useState(false);
@@ -58,10 +58,9 @@ export const BackupRestorePanel = () => {
   };
 
   return (
-    <section className="card space-y-4">
+    <div className="space-y-4">
       <div>
-        <p className="muted-label">local data</p>
-        <h2 className="text-lg font-bold">백업 및 복원</h2>
+        <h3 className="text-sm font-black text-ink">백업 및 복원</h3>
         <p className="mt-1 text-sm text-ink-muted">
           브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
         </p>
@@ -99,11 +98,11 @@ export const BackupRestorePanel = () => {
           {message}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 };
 
-export const DataManagementPanel = () => {
+const DataManagementActions = () => {
   const confirm = useConfirmDialog();
   const [message, setMessage] = useState("");
   const [isBusy, setIsBusy] = useState(false);
@@ -134,10 +133,9 @@ export const DataManagementPanel = () => {
   };
 
   return (
-    <section className="card space-y-4">
+    <div id="data" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4 border-t border-[rgb(var(--color-line-muted))] pt-4">
       <div>
-        <p className="muted-label">local data</p>
-        <h2 className="text-lg font-bold">데이터 관리</h2>
+        <h3 className="text-sm font-black text-ink">데이터 초기화</h3>
         <p className="mt-1 text-sm text-ink-muted">
           이 브라우저에 저장된 모든 앱 데이터를 삭제합니다. 먼저 백업을 권장합니다.
         </p>
@@ -156,6 +154,20 @@ export const DataManagementPanel = () => {
           {message}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 };
+
+export const DataSettingsPanel = () => (
+  <section className="card space-y-4">
+    <div>
+      <p className="muted-label">storage</p>
+      <h2 className="text-lg font-bold">데이터</h2>
+      <p className="mt-1 text-sm text-ink-muted">
+        이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다.
+      </p>
+    </div>
+    <BackupRestoreActions />
+    <DataManagementActions />
+  </section>
+);

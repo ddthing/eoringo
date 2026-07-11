@@ -18,11 +18,11 @@ export const HomeTodayCheckItem = ({
   const identity = (
     <>
       <TaskCheckControl checked={completed} className="h-[22px] w-[22px] rounded-full" />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-bold leading-5 text-ink">
+      <span className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-5 text-ink">
           {task.title}
         </span>
-        <span className="mt-0.5 inline-flex rounded-full bg-card-soft px-1.5 py-0.5 text-[9px] font-bold text-ink-muted">
+        <span className="inline-flex shrink-0 rounded-full bg-card-soft px-1.5 py-0.5 text-[9px] font-bold text-ink-muted">
           {taskGroupLabels[task.group]}
         </span>
       </span>
@@ -43,9 +43,9 @@ export const HomeTodayCheckItem = ({
   }
 
   return (
-    <div className="flex min-h-14 items-center gap-2 border-t border-[rgb(var(--color-line-muted))] px-1 first:border-t-0">
+    <div className="flex min-h-12 items-center gap-2 border-t border-[rgb(var(--color-line-muted))] px-1 first:border-t-0">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>
-      <div className="flex shrink-0 items-center rounded-full border border-[rgb(var(--color-line-soft))] bg-card/90 p-0.5">
+      <div className="flex shrink-0 items-center">
         <button
           type="button"
           className="grid h-11 w-11 place-items-center rounded-full text-ink-muted disabled:opacity-35"
@@ -55,7 +55,7 @@ export const HomeTodayCheckItem = ({
         >
           <Minus aria-hidden size={14} />
         </button>
-        <span className="min-w-9 text-center text-[11px] font-black tabular-nums text-ink">
+        <span className="min-w-10 rounded-full bg-card-soft px-2 py-1 text-center text-[11px] font-black tabular-nums text-ink">
           {count}/{task.maxCount}
         </span>
         <button
