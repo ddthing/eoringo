@@ -72,3 +72,33 @@ export type DdayEvent = {
   date: string;
   characterId?: string;
 };
+
+export type HistoryTask = {
+  id: string;
+  title: string;
+  category: TaskCategory;
+  group: TaskGroup;
+  resetType: ResetType;
+  maxCount: number;
+  count: number;
+  completed: boolean;
+};
+
+export type CharacterHistory = {
+  character: Pick<Character, "id" | "name" | "server" | "isMain">;
+  tasks: HistoryTask[];
+  memo: string;
+  progress: {
+    daily: TaskProgress;
+    weekly: TaskProgress;
+    other: TaskProgress;
+    total: TaskProgress;
+  };
+  ddayEvents: DdayEvent[];
+};
+
+export type HistoryDay = {
+  date: string;
+  capturedAt: string;
+  characters: Record<string, CharacterHistory>;
+};
