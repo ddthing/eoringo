@@ -60,6 +60,7 @@ export const buildHistoryDay = ({
           category: task.category,
           group: task.group,
           resetType: task.resetType,
+          resetRuleId: task.resetRuleId,
           maxCount: task.maxCount,
           count,
           completed: count >= task.maxCount,

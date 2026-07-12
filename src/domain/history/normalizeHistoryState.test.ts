@@ -32,7 +32,7 @@ describe("normalizeHistoryState", () => {
     expect(state.entriesByDate["2026-07-01"].characters.a).toMatchObject({
       character: { id: "a", name: "모서리", server: "톤베리", isMain: true },
       memo: "",
-      tasks: [{ id: "task", title: "숙제", group: "custom", maxCount: 2, count: 2, completed: true }],
+      tasks: [{ id: "task", title: "숙제", group: "custom", resetRuleId: "daily-midnight", maxCount: 2, count: 2, completed: true }],
       progress: { daily: { total: 1, completed: 1, percent: 100 } },
       ddayEvents: [{ id: "event", title: "기념일", date: "2026-08-01", characterId: "a" }],
     });

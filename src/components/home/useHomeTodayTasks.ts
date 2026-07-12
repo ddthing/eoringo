@@ -32,7 +32,7 @@ export const useHomeTodayTasks = () => {
         getTaskScopeId(task, characterId),
         task.id,
         task.maxCount,
-        task.resetType,
+        task.resetRuleId,
       ),
     [characterId, toggleTask],
   );
@@ -44,7 +44,7 @@ export const useHomeTodayTasks = () => {
         task.id,
         count,
         task.maxCount,
-        task.resetType,
+        task.resetRuleId,
       ),
     [characterId, setTaskCount],
   );

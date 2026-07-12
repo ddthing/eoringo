@@ -10,7 +10,7 @@ describe("validateBackupPayload", () => {
     expect(
       validateBackupPayload({
         app: "에오링고",
-        version: 5,
+        version: 6,
         exportedAt: "2026-07-08T00:00:00.000Z",
         data: {
           [storageKeys.weeklyMemo]: { state: { memo: "이번 주 메모" }, version: 1 },
@@ -25,7 +25,7 @@ describe("validateBackupPayload", () => {
       }),
     ).toMatchObject({
       app: "에오링고",
-      version: 5,
+      version: 6,
     });
   });
 
@@ -43,7 +43,7 @@ describe("validateBackupPayload", () => {
     });
   });
 
-  it.each([1, 2, 3, 4])("keeps backup version %i compatible", (version) => {
+  it.each([1, 2, 3, 4, 5])("keeps backup version %i compatible", (version) => {
     expect(
       validateBackupPayload({ app: "에오링고", version, exportedAt: "", data: {} }),
     ).toMatchObject({ version });
@@ -72,5 +72,20 @@ describe("validateBackupPayload", () => {
     });
 
     expect(setItem).toHaveBeenCalledWith(storageKeys.history, JSON.stringify(history));
+  });
+
+  it("restores allowances from version 6 backups", async () => {
+    const allowances = { state: { value: 21, lastAccrualKey: "2026-07-12T12:00:00.000Z" }, version: 1 };
+    const setItem = vi.fn();
+    vi.stubGlobal("localStorage", { setItem, removeItem: vi.fn() });
+
+    await importBackup({
+      app: "에오링고",
+      version: 6,
+      exportedAt: "2026-07-12T12:00:00.000Z",
+      data: { [storageKeys.allowances]: allowances },
+    });
+
+    expect(setItem).toHaveBeenCalledWith(storageKeys.allowances, JSON.stringify(allowances));
   });
 });

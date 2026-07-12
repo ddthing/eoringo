@@ -8,7 +8,7 @@ type BackupImagePayload = {
 
 type SupportedBackupPayload = {
   app: "에오링고" | "FF14 Daily Board";
-  version: 1 | 2 | 3 | 4 | 5;
+  version: 1 | 2 | 3 | 4 | 5 | 6;
   exportedAt: string;
   data: Record<string, unknown>;
   images?: Record<string, BackupImagePayload>;
@@ -48,7 +48,7 @@ export const validateBackupPayload = (payload: unknown): SupportedBackupPayload 
   if (
     typeof payload.app !== "string" ||
     !supportedAppNames.has(payload.app) ||
-    ![1, 2, 3, 4, 5].includes(Number(payload.version))
+    ![1, 2, 3, 4, 5, 6].includes(Number(payload.version))
   ) {
     throw new Error("지원하지 않는 백업 파일입니다.");
   }
@@ -59,7 +59,7 @@ export const validateBackupPayload = (payload: unknown): SupportedBackupPayload 
 
   return {
     app: payload.app as SupportedBackupPayload["app"],
-    version: Number(payload.version) as 1 | 2 | 3 | 4 | 5,
+    version: Number(payload.version) as 1 | 2 | 3 | 4 | 5 | 6,
     exportedAt: typeof payload.exportedAt === "string" ? payload.exportedAt : "",
     data: payload.data,
     images: normalizeImages(payload.images),

@@ -8,6 +8,7 @@ import type {
   TaskProgress,
   ResetType,
 } from "../../types";
+import { getLegacyResetRuleId, isResetRuleId } from "../tasks/resetRules";
 
 export type PersistedHistoryState = {
   entriesByDate: Record<string, HistoryDay>;
@@ -44,6 +45,13 @@ const normalizeTask = (value: unknown): HistoryTask | null => {
     resetType: resetTypes.includes(value.resetType as ResetType)
       ? (value.resetType as ResetType)
       : "manual",
+    resetRuleId: isResetRuleId(value.resetRuleId)
+      ? value.resetRuleId
+      : getLegacyResetRuleId(
+          resetTypes.includes(value.resetType as ResetType)
+            ? (value.resetType as ResetType)
+            : "manual",
+        ),
     maxCount,
     count,
     completed: count >= maxCount,

@@ -1,6 +1,23 @@
-import type { TaskCategory, TaskGroup, TaskTemplate } from "../types";
+import { getLegacyResetRuleId } from "../domain/tasks/resetRules";
+import type { ResetRuleId, TaskCategory, TaskGroup, TaskTemplate } from "../types";
 
-const task = (template: TaskTemplate): TaskTemplate => template;
+const specialResetRules: Partial<Record<string, ResetRuleId>> = {
+  "daily-grand-company-supply": "daily-0500",
+  "daily-grand-company-provisioning": "daily-0500",
+  "daily-retainer": "interval-18h",
+  "daily-island-pasture": "daily-1700",
+  "weekly-gold-saucer-jumbo-cactpot": "weekly-sat-2100",
+  "grand-company-squadron-routine": "interval-18h",
+  "weekly-treasure-map": "interval-18h",
+};
+
+type TaskTemplateInput = Omit<TaskTemplate, "resetRuleId"> & { resetRuleId?: ResetRuleId };
+
+const task = (template: TaskTemplateInput): TaskTemplate => ({
+  ...template,
+  resetRuleId:
+    template.resetRuleId ?? specialResetRules[template.id] ?? getLegacyResetRuleId(template.resetType),
+});
 
 export const taskGroupLabels: Record<TaskGroup, string> = {
   roulette: "무작위 임무",
@@ -139,7 +156,7 @@ export const defaultTaskTemplates: TaskTemplate[] = [
     id: "daily-retainer",
     title: "집사 수행 확인",
     category: "daily",
-    resetType: "daily",
+    resetType: "eighteenHours",
     maxCount: 1,
     enabledByDefault: true,
     characterScoped: true,
@@ -148,8 +165,8 @@ export const defaultTaskTemplates: TaskTemplate[] = [
     isDefault: true,
   }),
   task({
-    id: "daily-island",
-    title: "무인도 확인",
+    id: "daily-island-pasture",
+    title: "무인도 목장",
     category: "daily",
     resetType: "daily",
     maxCount: 1,
@@ -208,16 +225,29 @@ export const defaultTaskTemplates: TaskTemplate[] = [
     isDefault: true,
   }),
   task({
-    id: "grand-company-squadron-weekly",
-    title: "총사령부 소대 임무 확인",
-    description: "총사령부 소대 임무와 보상을 확인합니다.",
+    id: "grand-company-squadron-routine",
+    title: "총사령부 소대 일반 임무",
+    description: "완료 후 18시간이 지나면 다시 수행할 수 있습니다.",
+    category: "daily",
+    resetType: "eighteenHours",
+    maxCount: 1,
+    enabledByDefault: true,
+    characterScoped: true,
+    group: "lifestyle",
+    priority: 223,
+    isDefault: true,
+  }),
+  task({
+    id: "grand-company-squadron-priority",
+    title: "총사령부 소대 중요 임무",
+    description: "주간 소대 중요 임무와 보상을 확인합니다.",
     category: "weekly",
     resetType: "weekly",
     maxCount: 1,
     enabledByDefault: true,
     characterScoped: true,
     group: "lifestyle",
-    priority: 223,
+    priority: 224,
     isDefault: true,
   }),
   task({
@@ -229,7 +259,8 @@ export const defaultTaskTemplates: TaskTemplate[] = [
     enabledByDefault: true,
     characterScoped: true,
     group: "lifestyle",
-    priority: 224,
+    priority: 225,
+    availabilityRuleId: "weekly-fri-1700",
     isDefault: true,
   }),
   task({
@@ -314,11 +345,12 @@ export const defaultTaskTemplates: TaskTemplate[] = [
     characterScoped: true,
     group: "event",
     priority: 290,
+    retentionDays: 14,
     isDefault: true,
   }),
   task({
-    id: "weekly-island",
-    title: "무인도 주간 확인",
+    id: "weekly-island-workshop",
+    title: "무인도 공방",
     category: "weekly",
     resetType: "weekly",
     maxCount: 1,

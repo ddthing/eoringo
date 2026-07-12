@@ -12,9 +12,16 @@ import {
   getSafeTaskMaxCount,
   getTaskCount,
 } from "../../domain/tasks/getTaskProgress";
-import { getResetKeys, isEighteenHourResetExpired } from "../../domain/tasks/resetRules";
+import {
+  getCurrentFixedResetKeys,
+  getLegacyResetRuleId,
+  getResetKeys,
+  isIntervalResetExpired,
+  isResetRuleId,
+  resetRuleRegistry,
+} from "../../domain/tasks/resetRules";
 import { createId, storageKeys } from "../../lib/storage";
-import type { ResetType, TaskCategory, TaskGroup, TaskTemplate } from "../../types";
+import type { ResetRuleId, ResetType, TaskCategory, TaskGroup, TaskTemplate } from "../../types";
 import {
   fallbackMigrationCharacterId,
   getMigrationCharacterId,
@@ -46,6 +53,7 @@ type PersistedTaskState = Partial<{
   disabledGlobalDefaultTaskIds: string[];
   dailyResetKey: string;
   weeklyResetKey: string;
+  resetKeysByRule: Partial<Record<ResetRuleId, string>>;
 }>;
 
 type TaskState = {
@@ -55,20 +63,21 @@ type TaskState = {
   disabledDefaultTaskIdsByCharacter: DisabledDefaultTaskIdsByCharacter;
   dailyResetKey: string;
   weeklyResetKey: string;
+  resetKeysByRule: Partial<Record<ResetRuleId, string>>;
   ensureCurrentResets: (date?: Date) => void;
-  toggleTask: (scopeId: string, taskId: string, maxCount?: number, resetType?: ResetType) => void;
+  toggleTask: (scopeId: string, taskId: string, maxCount?: number, resetRule?: ResetType | ResetRuleId) => void;
   setTaskCount: (
     scopeId: string,
     taskId: string,
     count: number,
     maxCount?: number,
-    resetType?: ResetType,
+    resetRule?: ResetType | ResetRuleId,
   ) => void;
   setTaskCompleted: (
     scopeId: string,
     taskId: string,
     completed: boolean,
-    resetType?: ResetType,
+    resetRule?: ResetType | ResetRuleId,
   ) => void;
   addCustomTask: (characterId: string, task: CustomTaskInput) => void;
   updateCustomTask: (characterId: string, taskId: string, patch: Partial<CustomTaskInput>) => void;
@@ -79,6 +88,7 @@ type TaskState = {
 };
 
 const resetKeys = getResetKeys();
+const initialFixedResetKeys = getCurrentFixedResetKeys();
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -87,6 +97,9 @@ const resetTypes: ResetType[] = ["daily", "weekly", "eighteenHours", "manual"];
 
 const normalizeResetType = (resetType: unknown): ResetType =>
   resetTypes.includes(resetType as ResetType) ? (resetType as ResetType) : "manual";
+
+const normalizeResetRuleReference = (value: ResetType | ResetRuleId | undefined): ResetRuleId =>
+  isResetRuleId(value) ? value : getLegacyResetRuleId(value as ResetType | undefined);
 
 const getResettableTasks = (customTasksByCharacter: Record<string, TaskTemplate[]>) => [
   ...defaultTaskTemplates,
@@ -99,6 +112,16 @@ const normalizeCustomTask = (task: Partial<TaskTemplate>, index = 0): TaskTempla
   description: task.description,
   category: task.category ?? "custom",
   resetType: normalizeResetType(task.resetType),
+  resetRuleId: isResetRuleId(task.resetRuleId)
+    ? task.resetRuleId
+    : getLegacyResetRuleId(normalizeResetType(task.resetType)),
+  availabilityRuleId: isResetRuleId(task.availabilityRuleId)
+    ? task.availabilityRuleId
+    : undefined,
+  retentionDays:
+    typeof task.retentionDays === "number" && Number.isFinite(task.retentionDays) && task.retentionDays > 0
+      ? Math.floor(task.retentionDays)
+      : undefined,
   maxCount: getSafeTaskMaxCount(task.maxCount),
   enabledByDefault: task.enabledByDefault ?? true,
   characterScoped: task.characterScoped ?? true,
@@ -117,13 +140,13 @@ const createCustomTask = (task: CustomTaskInput, priority: number): TaskTemplate
     isDefault: false,
   });
 
-const clearTasksByResetType = (
+const clearTasksByResetRuleId = (
   completedByCharacter: CompletedByScope,
   templates: TaskTemplate[],
-  resetType: Exclude<ResetType, "manual" | "eighteenHours">,
+  resetRuleId: ResetRuleId,
 ) => {
   const taskIdSet = new Set(
-    templates.filter((task) => task.resetType === resetType).map((task) => task.id),
+    templates.filter((task) => task.resetRuleId === resetRuleId).map((task) => task.id),
   );
 
   return Object.fromEntries(
@@ -187,9 +210,10 @@ const updateCompletedAt = (
   scopeId: string,
   taskId: string,
   count: number,
-  resetType = "manual" as ResetType,
+  resetRule: ResetType | ResetRuleId = "manual",
 ) => {
-  if (resetType !== "eighteenHours") {
+  const resetRuleId = normalizeResetRuleReference(resetRule);
+  if (resetRuleRegistry[resetRuleId].kind !== "interval") {
     return completedAtByCharacter;
   }
 
@@ -215,7 +239,7 @@ const clearExpiredEighteenHourTasks = (
   date: Date,
 ) => {
   const taskIdSet = new Set(
-    templates.filter((task) => task.resetType === "eighteenHours").map((task) => task.id),
+    templates.filter((task) => task.resetRuleId === "interval-18h").map((task) => task.id),
   );
   let nextCompletedByCharacter = completedByCharacter;
   let nextCompletedAtByCharacter = completedAtByCharacter;
@@ -224,10 +248,18 @@ const clearExpiredEighteenHourTasks = (
     Object.keys(taskState).forEach((taskId) => {
       if (
         taskIdSet.has(taskId) &&
-        isEighteenHourResetExpired(completedAtByCharacter[scopeId]?.[taskId], date)
+        isIntervalResetExpired(completedAtByCharacter[scopeId]?.[taskId], 18, date)
       ) {
-        nextCompletedByCharacter = removeCompletedTask(nextCompletedByCharacter, taskId);
-        nextCompletedAtByCharacter = removeCompletedAtTask(nextCompletedAtByCharacter, taskId);
+        nextCompletedByCharacter = removeCompletedTaskFromScope(
+          nextCompletedByCharacter,
+          scopeId,
+          taskId,
+        );
+        nextCompletedAtByCharacter = removeCompletedAtTaskFromScope(
+          nextCompletedAtByCharacter,
+          scopeId,
+          taskId,
+        );
       }
     });
   });
@@ -295,7 +327,54 @@ const mergeDisabledDefaultTaskIdsByCharacter = (
   );
 };
 
-export const normalizePersistedTaskState = (persistedState: unknown): PersistedTaskState => {
+const splitTaskIds = {
+  "daily-island": ["daily-island-pasture", "weekly-island-workshop"],
+  "weekly-island": ["weekly-island-workshop"],
+  "grand-company-squadron-weekly": [
+    "grand-company-squadron-routine",
+    "grand-company-squadron-priority",
+  ],
+} as const;
+
+const migrateSplitTaskValues = <T>(
+  valuesByScope: Record<string, Record<string, T>>,
+  fallbackForNewId?: (oldId: string, newId: string) => T | undefined,
+) =>
+  Object.fromEntries(
+    Object.entries(valuesByScope).map(([scopeId, values]) => {
+      const nextValues = { ...values };
+      Object.entries(splitTaskIds).forEach(([oldId, newIds]) => {
+        const oldValue = values[oldId];
+        newIds.forEach((newId) => {
+          const value = oldValue ?? fallbackForNewId?.(oldId, newId);
+          if (value !== undefined && nextValues[newId] === undefined) nextValues[newId] = value;
+        });
+        delete nextValues[oldId];
+      });
+      return [scopeId, nextValues];
+    }),
+  );
+
+const migrateSplitDisabledIds = (
+  disabledByCharacter: DisabledDefaultTaskIdsByCharacter,
+): DisabledDefaultTaskIdsByCharacter =>
+  Object.fromEntries(
+    Object.entries(disabledByCharacter).map(([characterId, ids]) => {
+      const nextIds = new Set(ids);
+      Object.entries(splitTaskIds).forEach(([oldId, newIds]) => {
+        if (!nextIds.has(oldId)) return;
+        nextIds.delete(oldId);
+        newIds.forEach((newId) => nextIds.add(newId));
+      });
+      return [characterId, Array.from(nextIds)];
+    }),
+  );
+
+export const normalizePersistedTaskState = (
+  persistedState: unknown,
+  _persistedVersion?: number,
+  migrationDate: Date = new Date(),
+): PersistedTaskState => {
   const state = isRecord(persistedState) ? persistedState : {};
   const migrationCharacterId = getMigrationCharacterId();
   const legacyCustomTaskTemplates = Array.isArray(state.customTaskTemplates)
@@ -336,14 +415,29 @@ export const normalizePersistedTaskState = (persistedState: unknown): PersistedT
         : []),
     ]),
   );
-  const allDisabledByCharacter = mergeDisabledDefaultTaskIdsByCharacter(
+  const allDisabledByCharacter = migrateSplitDisabledIds(mergeDisabledDefaultTaskIdsByCharacter(
     disabledDefaultTaskIdsByCharacter,
     disabledGlobalDefaultTaskIds.length > 0
       ? { [migrationCharacterId]: disabledGlobalDefaultTaskIds }
       : {},
+  ));
+  const completedByCharacter = migrateSplitTaskValues(
+    normalizeCompletedByCharacter(state.completedByCharacter),
   );
-  const completedByCharacter = normalizeCompletedByCharacter(state.completedByCharacter);
-  const completedAtByCharacter = normalizeCompletedAtByCharacter(state.completedAtByCharacter);
+  const completedAtByCharacter = migrateSplitTaskValues(
+    normalizeCompletedAtByCharacter(state.completedAtByCharacter),
+  );
+  Object.entries(completedByCharacter).forEach(([scopeId, completed]) => {
+    if (
+      completed["grand-company-squadron-routine"] !== undefined &&
+      completedAtByCharacter[scopeId]?.["grand-company-squadron-routine"] === undefined
+    ) {
+      completedAtByCharacter[scopeId] = {
+        ...(completedAtByCharacter[scopeId] ?? {}),
+        "grand-company-squadron-routine": migrationDate.toISOString(),
+      };
+    }
+  });
   const legacyGlobalCompleted = completedByCharacter.global ?? {};
   const legacyGlobalCompletedAt = completedAtByCharacter.global ?? {};
   delete completedByCharacter.global;
@@ -371,6 +465,7 @@ export const normalizePersistedTaskState = (persistedState: unknown): PersistedT
       typeof state.dailyResetKey === "string" ? state.dailyResetKey : resetKeys.dailyResetKey,
     weeklyResetKey:
       typeof state.weeklyResetKey === "string" ? state.weeklyResetKey : resetKeys.weeklyResetKey,
+    resetKeysByRule: getCurrentFixedResetKeys(migrationDate),
   };
 };
 
@@ -383,20 +478,25 @@ export const useTaskStore = create<TaskState>()(
       disabledDefaultTaskIdsByCharacter: {},
       dailyResetKey: resetKeys.dailyResetKey,
       weeklyResetKey: resetKeys.weeklyResetKey,
+      resetKeysByRule: initialFixedResetKeys,
       ensureCurrentResets: (date = new Date()) =>
         set((state) => {
           const nextKeys = getResetKeys(date);
+          const nextFixedResetKeys = getCurrentFixedResetKeys(date);
           const templates = getResettableTasks(state.customTaskTemplatesByCharacter);
           let completedByCharacter = state.completedByCharacter;
           let completedAtByCharacter = state.completedAtByCharacter;
 
-          if (state.dailyResetKey !== nextKeys.dailyResetKey) {
-            completedByCharacter = clearTasksByResetType(completedByCharacter, templates, "daily");
-          }
-
-          if (state.weeklyResetKey !== nextKeys.weeklyResetKey) {
-            completedByCharacter = clearTasksByResetType(completedByCharacter, templates, "weekly");
-          }
+          Object.entries(nextFixedResetKeys).forEach(([ruleId, nextKey]) => {
+            const previousKey = state.resetKeysByRule[ruleId as ResetRuleId];
+            if (previousKey !== undefined && previousKey !== nextKey) {
+              completedByCharacter = clearTasksByResetRuleId(
+                completedByCharacter,
+                templates,
+                ruleId as ResetRuleId,
+              );
+            }
+          });
 
           const clearedIntervalTasks = clearExpiredEighteenHourTasks(
             completedByCharacter,
@@ -412,6 +512,7 @@ export const useTaskStore = create<TaskState>()(
             completedAtByCharacter,
             dailyResetKey: nextKeys.dailyResetKey,
             weeklyResetKey: nextKeys.weeklyResetKey,
+            resetKeysByRule: nextFixedResetKeys,
           };
         }),
       toggleTask: (scopeId, taskId, maxCount = 1, resetType = "manual") =>
@@ -595,7 +696,7 @@ export const useTaskStore = create<TaskState>()(
     {
       name: storageKeys.tasks,
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 6,
       migrate: normalizePersistedTaskState,
       partialize: (state) => ({
         completedByCharacter: state.completedByCharacter,
@@ -604,6 +705,7 @@ export const useTaskStore = create<TaskState>()(
         disabledDefaultTaskIdsByCharacter: state.disabledDefaultTaskIdsByCharacter,
         dailyResetKey: state.dailyResetKey,
         weeklyResetKey: state.weeklyResetKey,
+        resetKeysByRule: state.resetKeysByRule,
       }),
     },
   ),

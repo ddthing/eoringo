@@ -76,7 +76,7 @@ export const TodayTodoPreview = () => {
                 key={task.id}
                 type="button"
                 className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[10px] border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5 text-left transition hover:border-primary/45 active:scale-[0.99]"
-                onClick={() => toggleTask(scopeId, task.id, task.maxCount, task.resetType)}
+                onClick={() => toggleTask(scopeId, task.id, task.maxCount, task.resetRuleId)}
                 aria-label={`${task.title} 완료 전환`}
               >
                 <TaskCheckControl checked={false} />
@@ -103,7 +103,7 @@ export const TodayTodoPreview = () => {
                       task.id,
                       currentCount + 1,
                       task.maxCount,
-                      task.resetType,
+                      task.resetRuleId,
                     )
                   }
                   disabled={currentCount >= task.maxCount}

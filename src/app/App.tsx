@@ -5,6 +5,7 @@ import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { AppShell } from "../components/layout/AppShell";
 import { syncHistoryAndResets } from "../domain/history/syncHistoryAndResets";
 import { getSoftAccentColor, hexToRgbString, normalizeHexColor } from "../lib/color";
+import { useAllowanceStore } from "../stores/useAllowanceStore";
 import { useThemeStore } from "../stores/useThemeStore";
 
 export const App = () => {
@@ -15,6 +16,7 @@ export const App = () => {
     const sync = () => {
       try {
         syncHistoryAndResets();
+        useAllowanceStore.getState().ensureCurrentAccruals();
       } catch (error) {
         console.error("History snapshot could not be saved before reset.", error);
       }

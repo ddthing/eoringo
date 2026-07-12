@@ -8,6 +8,7 @@ const customTask: TaskTemplate = {
   title: "삭제될 커스텀 숙제",
   category: "weekly",
   resetType: "weekly",
+  resetRuleId: "weekly-tue-1700",
   maxCount: 3,
   enabledByDefault: true,
   characterScoped: true,

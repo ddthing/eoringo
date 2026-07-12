@@ -272,9 +272,9 @@ export const CustomTaskList = () => {
                 <TaskItem
                   task={task}
                   count={count}
-                  onToggle={() => toggleTask(scopeId, task.id, task.maxCount, task.resetType)}
+                  onToggle={() => toggleTask(scopeId, task.id, task.maxCount, task.resetRuleId)}
                   onSetCount={(nextCount) =>
-                    setTaskCount(scopeId, task.id, nextCount, task.maxCount, task.resetType)
+                    setTaskCount(scopeId, task.id, nextCount, task.maxCount, task.resetRuleId)
                   }
                   onRemove={() => handleRemoveCustomTask(task)}
                   showMeta

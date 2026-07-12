@@ -218,8 +218,8 @@ export const TaskManagerPage = () => {
                             <GripVertical aria-hidden size={15} />
                           </button>
                         }
-                        onToggle={() => toggleTask(characterId, task.id, task.maxCount, task.resetType)}
-                        onSetCount={(count) => setTaskCount(characterId, task.id, count, task.maxCount, task.resetType)}
+                        onToggle={() => toggleTask(characterId, task.id, task.maxCount, task.resetRuleId)}
+                        onSetCount={(count) => setTaskCount(characterId, task.id, count, task.maxCount, task.resetRuleId)}
                       />
                     </div>
                   ))}

@@ -12,6 +12,7 @@ const task = (id: string, maxCount = 1): TaskTemplate => ({
   title: id,
   category: "daily",
   resetType: "daily",
+  resetRuleId: "daily-midnight",
   maxCount,
   enabledByDefault: true,
   characterScoped: true,

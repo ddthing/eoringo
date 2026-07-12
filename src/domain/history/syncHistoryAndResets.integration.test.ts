@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultTaskTemplates } from "../../data/tasks";
-import { getResetKeys } from "../tasks/resetRules";
+import { getCurrentFixedResetKeys, getResetKeys } from "../tasks/resetRules";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useHistoryStore } from "../../stores/useHistoryStore";
@@ -44,6 +44,10 @@ describe("syncHistoryAndResets integration", () => {
       },
       dailyResetKey: "2026-07-01",
       weeklyResetKey: getResetKeys(now).weeklyResetKey,
+      resetKeysByRule: {
+        ...getCurrentFixedResetKeys(now),
+        "daily-midnight": "2026-07-01",
+      },
     });
     useWeeklyMemoStore.setState({ memosByCharacter: { a: "지난 메모" } });
     useDdayStore.setState({

@@ -34,6 +34,16 @@ export type TaskCategory = "daily" | "weekly" | "custom";
 
 export type ResetType = "daily" | "weekly" | "eighteenHours" | "manual";
 
+export type ResetRuleId =
+  | "daily-midnight"
+  | "daily-0500"
+  | "daily-1700"
+  | "weekly-tue-1700"
+  | "weekly-fri-1700"
+  | "weekly-sat-2100"
+  | "interval-18h"
+  | "manual";
+
 export type TaskGroup =
   | "roulette"
   | "delivery"
@@ -50,6 +60,9 @@ export type TaskTemplate = {
   description?: string;
   category: TaskCategory;
   resetType: ResetType;
+  resetRuleId: ResetRuleId;
+  availabilityRuleId?: ResetRuleId;
+  retentionDays?: number;
   maxCount: number;
   enabledByDefault: boolean;
   characterScoped: boolean;
@@ -79,6 +92,7 @@ export type HistoryTask = {
   category: TaskCategory;
   group: TaskGroup;
   resetType: ResetType;
+  resetRuleId?: ResetRuleId;
   maxCount: number;
   count: number;
   completed: boolean;

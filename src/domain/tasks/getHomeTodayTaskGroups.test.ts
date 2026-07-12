@@ -12,6 +12,12 @@ const createTask = (
   title: id,
   category,
   resetType: category === "daily" ? "daily" : category === "weekly" ? "weekly" : "manual",
+  resetRuleId:
+    category === "daily"
+      ? "daily-midnight"
+      : category === "weekly"
+        ? "weekly-tue-1700"
+        : "manual",
   maxCount,
   enabledByDefault: true,
   characterScoped: true,

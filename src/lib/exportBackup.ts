@@ -8,7 +8,7 @@ export type BackupImagePayload = {
 
 export type BackupPayload = {
   app: "에오링고";
-  version: 5;
+  version: 6;
   exportedAt: string;
   data: Record<string, unknown>;
   images: Record<string, BackupImagePayload>;
@@ -54,7 +54,7 @@ export const exportBackup = async (): Promise<BackupPayload> => {
 
   return {
     app: "에오링고",
-    version: 5,
+    version: 6,
     exportedAt: new Date().toISOString(),
     data: Object.fromEntries(
       Object.values(storageKeys).map((key) => {

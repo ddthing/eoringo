@@ -75,9 +75,9 @@ export const DailyTaskList = ({ limit }: DailyTaskListProps) => {
               key={task.id}
               task={task}
               count={getTaskCount(completed[task.id])}
-              onToggle={() => toggleTask(scopeId, task.id, task.maxCount, task.resetType)}
+              onToggle={() => toggleTask(scopeId, task.id, task.maxCount, task.resetRuleId)}
               onSetCount={(count) =>
-                setTaskCount(scopeId, task.id, count, task.maxCount, task.resetType)
+                setTaskCount(scopeId, task.id, count, task.maxCount, task.resetRuleId)
               }
             />
           );
