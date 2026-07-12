@@ -1,5 +1,12 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { DEFAULT_KOREAN_SERVER, KOREAN_FF14_SERVERS } from "../../data/servers";
+import {
+  cancelCharacterImageTransaction,
+  commitCharacterImageTransaction,
+  createCharacterImageTransaction,
+  stageCharacterImage,
+} from "../../domain/characters/characterImageTransaction";
+import { deleteCharacterImage } from "../../lib/imageStorage";
 import { CharacterImagePicker } from "./CharacterImagePicker";
 
 export type CharacterFormValues = {
@@ -19,8 +26,12 @@ type CharacterFormProps = {
   initialValues?: CharacterFormValues;
   showMainOption?: boolean;
   submitLabel?: string;
-  onSubmit: (values: CharacterFormValues) => void;
+  onSubmit: (values: CharacterFormValues) => void | Promise<void>;
   onCancel: () => void;
+};
+
+const cleanupImages = async (imageIds: string[]) => {
+  await Promise.allSettled(imageIds.map((imageId) => deleteCharacterImage(imageId)));
 };
 
 export const CharacterForm = ({
@@ -31,19 +42,60 @@ export const CharacterForm = ({
   onCancel,
 }: CharacterFormProps) => {
   const [draft, setDraft] = useState<CharacterFormValues>(() => initialValues);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const imageTransactionRef = useRef(
+    createCharacterImageTransaction(initialValues.profileImageId),
+  );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(
+    () => () => {
+      void cleanupImages(imageTransactionRef.current.temporaryImageIds);
+    },
+    [],
+  );
+
+  const handleImageChange = (profileImageId?: string) => {
+    const update = stageCharacterImage(imageTransactionRef.current, profileImageId);
+    imageTransactionRef.current = update.transaction;
+    setDraft((value) => ({ ...value, profileImageId }));
+    void cleanupImages(update.cleanupImageIds);
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!draft.name.trim()) {
+    if (!draft.name.trim() || isFinalizing) {
       return;
     }
 
-    onSubmit({
-      ...draft,
-      name: draft.name.trim(),
-      server: draft.server || DEFAULT_KOREAN_SERVER,
-    });
+    setIsFinalizing(true);
+    const previousTransaction = imageTransactionRef.current;
+    const committed = commitCharacterImageTransaction(previousTransaction);
+    imageTransactionRef.current = committed.transaction;
+
+    try {
+      await onSubmit({
+        ...draft,
+        name: draft.name.trim(),
+        server: draft.server || DEFAULT_KOREAN_SERVER,
+      });
+      await cleanupImages(committed.cleanupImageIds);
+    } catch (error) {
+      imageTransactionRef.current = previousTransaction;
+      throw error;
+    } finally {
+      setIsFinalizing(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (isFinalizing) return;
+
+    setIsFinalizing(true);
+    const cancelled = cancelCharacterImageTransaction(imageTransactionRef.current);
+    imageTransactionRef.current = cancelled.transaction;
+    await cleanupImages(cancelled.cleanupImageIds);
+    onCancel();
   };
 
   return (
@@ -54,9 +106,8 @@ export const CharacterForm = ({
       <CharacterImagePicker
         imageId={draft.profileImageId}
         characterName={draft.name}
-        onChange={(profileImageId) =>
-          setDraft((value) => ({ ...value, profileImageId }))
-        }
+        onChange={handleImageChange}
+        disabled={isFinalizing}
       />
       <input
         className="field"
@@ -97,10 +148,15 @@ export const CharacterForm = ({
         </label>
       ) : null}
       <div className="flex gap-2">
-        <button type="submit" className="primary-button">
+        <button type="submit" className="primary-button" disabled={isFinalizing}>
           {submitLabel}
         </button>
-        <button type="button" className="secondary-button" onClick={onCancel}>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={handleCancel}
+          disabled={isFinalizing}
+        >
           취소
         </button>
       </div>

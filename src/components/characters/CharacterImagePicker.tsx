@@ -1,7 +1,7 @@
 import { type ChangeEvent, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "../common/ConfirmDialog";
-import { deleteCharacterImage, saveCharacterImage } from "../../lib/imageStorage";
+import { saveCharacterImage } from "../../lib/imageStorage";
 import { CharacterAvatar } from "./CharacterAvatar";
 import { CharacterImageEditor } from "./CharacterImageEditor";
 
@@ -9,12 +9,14 @@ type CharacterImagePickerProps = {
   imageId?: string;
   characterName: string;
   onChange: (imageId?: string) => void;
+  disabled?: boolean;
 };
 
 export const CharacterImagePicker = ({
   imageId,
   characterName,
   onChange,
+  disabled = false,
 }: CharacterImagePickerProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const confirm = useConfirmDialog();
@@ -47,11 +49,6 @@ export const CharacterImagePicker = ({
 
     try {
       const nextImageId = await saveCharacterImage(imageBlob);
-
-      if (imageId) {
-        await deleteCharacterImage(imageId);
-      }
-
       onChange(nextImageId);
       setEditingFile(null);
     } catch (error) {
@@ -66,17 +63,13 @@ export const CharacterImagePicker = ({
   const handleRemove = async () => {
     const confirmed = await confirm({
       title: "캐릭터 사진을 삭제할까요?",
-      description: "현재 캐릭터에 연결된 프로필 사진만 삭제됩니다.",
+      description: "프로필 수정을 저장하면 현재 캐릭터 사진이 삭제됩니다.",
       confirmLabel: "삭제",
       tone: "danger",
     });
 
     if (!confirmed) {
       return;
-    }
-
-    if (imageId) {
-      await deleteCharacterImage(imageId);
     }
 
     onChange(undefined);
@@ -96,7 +89,7 @@ export const CharacterImagePicker = ({
               type="button"
               className="secondary-button flex items-center gap-1.5"
               onClick={() => inputRef.current?.click()}
-              disabled={isSaving}
+              disabled={isSaving || disabled}
             >
               <ImagePlus aria-hidden size={14} />
               {isSaving ? "저장 중" : "사진 선택"}
@@ -106,7 +99,7 @@ export const CharacterImagePicker = ({
                 type="button"
                 className="secondary-button flex items-center gap-1.5 text-[rgb(var(--color-danger))]"
                 onClick={handleRemove}
-                disabled={isSaving}
+                disabled={isSaving || disabled}
               >
                 <Trash2 aria-hidden size={14} />
                 삭제
