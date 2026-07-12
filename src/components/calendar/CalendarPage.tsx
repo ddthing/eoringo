@@ -145,7 +145,7 @@ export const CalendarPage = () => {
             <button
               type="button"
               className={[
-                "min-h-10 rounded-[14px] px-3 py-1.5 text-xs font-bold transition",
+                "min-h-11 rounded-[14px] px-3 py-1.5 text-xs font-bold transition",
                 monthlyMode === "frontline" ? "bg-card text-primary shadow-soft" : "text-ink-muted",
               ].join(" ")}
               onClick={() => setMonthlyMode("frontline")}
@@ -155,7 +155,7 @@ export const CalendarPage = () => {
             <button
               type="button"
               className={[
-                "min-h-10 rounded-[14px] px-3 py-1.5 text-xs font-bold transition",
+                "min-h-11 rounded-[14px] px-3 py-1.5 text-xs font-bold transition",
                 monthlyMode === "housing" ? "bg-card text-primary shadow-soft" : "text-ink-muted",
               ].join(" ")}
               onClick={() => setMonthlyMode("housing")}
@@ -212,7 +212,7 @@ export const CalendarPage = () => {
       <section className="calendar-panel overflow-hidden px-4 py-2">
         <button
           type="button"
-          className="flex min-h-10 w-full items-center justify-between gap-3 text-left text-sm font-bold text-ink"
+          className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-bold text-ink"
           onClick={() => setLegendOpen((current) => !current)}
           aria-expanded={legendOpen}
         >

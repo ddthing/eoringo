@@ -131,7 +131,7 @@ export const CharacterManager = () => {
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                className="secondary-button px-2"
+                className="secondary-button h-11 w-11 px-0"
                 onClick={() => {
                   setIsAdding(false);
                   setEditingCharacter(character);
@@ -143,7 +143,7 @@ export const CharacterManager = () => {
               <button
                 type="button"
                 className={[
-                  "secondary-button px-2 disabled:opacity-100",
+                  "secondary-button h-11 w-11 px-0 disabled:opacity-100",
                   character.isMain ? "text-primary" : "text-ink-muted",
                 ].join(" ")}
                 onClick={() => setMainCharacter(character.id)}
@@ -155,7 +155,7 @@ export const CharacterManager = () => {
               </button>
               <button
                 type="button"
-                className="secondary-button px-2 text-[rgb(var(--color-danger))]"
+                className="secondary-button h-11 w-11 px-0 text-[rgb(var(--color-danger))]"
                 onClick={() => handleRemoveCharacter(character)}
                 aria-label={`${character.name} 삭제`}
               >

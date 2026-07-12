@@ -255,6 +255,14 @@ a {
   outline-offset: 2px;
 }
 
+button[aria-pressed] {
+  min-height: 44px;
+}
+
+input[type="number"] {
+  min-height: 44px;
+}
+
 @layer components {
   .card {
     @apply rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft;
@@ -298,15 +306,15 @@ a {
   }
 
   .primary-button {
-    @apply inline-flex min-h-9 items-center justify-center rounded-full border border-[rgb(var(--color-line-soft))] bg-primary px-3 py-1.5 text-xs font-black text-white transition hover:brightness-[0.98] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55;
+    @apply inline-flex min-h-11 items-center justify-center rounded-full border border-[rgb(var(--color-line-soft))] bg-primary px-3 py-1.5 text-xs font-black text-white transition hover:brightness-[0.98] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55;
   }
 
   .secondary-button {
-    @apply inline-flex min-h-9 items-center justify-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card/95 px-3 py-1.5 text-xs font-bold text-ink-muted transition hover:border-[rgb(var(--color-line-soft))] hover:bg-card active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55;
+    @apply inline-flex min-h-11 items-center justify-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card/95 px-3 py-1.5 text-xs font-bold text-ink-muted transition hover:border-[rgb(var(--color-line-soft))] hover:bg-card active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55;
   }
 
   .field {
-    @apply w-full rounded-[12px] border border-[rgb(var(--color-line-muted))] bg-card/95 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-ink-muted/55 focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/25;
+    @apply min-h-11 w-full rounded-[12px] border border-[rgb(var(--color-line-muted))] bg-card/95 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-ink-muted/55 focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/25;
   }
 
   .range-field {

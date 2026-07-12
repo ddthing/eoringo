@@ -114,7 +114,7 @@ export const TaskManagerPage = () => {
                 key={item}
                 type="button"
                 className={[
-                  "min-h-9 rounded-[9px] px-3 text-xs font-black transition",
+                  "min-h-11 rounded-[9px] px-3 text-xs font-black transition",
                   view === item ? "bg-card text-primary shadow-sm" : "text-ink-muted",
                 ].join(" ")}
                 onClick={() => setView(item)}
@@ -125,7 +125,7 @@ export const TaskManagerPage = () => {
             ))}
           </div>
         </div>
-        <label className="mt-3 flex min-h-10 items-center gap-2 rounded-[12px] border border-[rgb(var(--color-line-muted))] bg-card px-3 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+        <label className="mt-3 flex min-h-11 items-center gap-2 rounded-[12px] border border-[rgb(var(--color-line-muted))] bg-card px-3 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
           <Search aria-hidden size={16} className="text-ink-muted" />
           <input
             type="search"
@@ -137,7 +137,7 @@ export const TaskManagerPage = () => {
             aria-label="숙제 검색"
           />
           {query ? (
-            <button type="button" className="grid h-8 w-8 place-items-center text-ink-muted" onClick={() => setQuery("")} aria-label="검색어 지우기">
+            <button type="button" className="grid h-11 w-11 place-items-center text-ink-muted" onClick={() => setQuery("")} aria-label="검색어 지우기">
               <X aria-hidden size={15} />
             </button>
           ) : null}
@@ -158,7 +158,7 @@ export const TaskManagerPage = () => {
             value={quickTitle}
             disabled={isOrderEditing}
           onChange={(event) => setQuickTitle(event.target.value)}
-          className="min-h-10 min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-ink-muted/60"
+          className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-ink-muted/60"
           placeholder={`${view === "daily" ? "오늘" : "주간"} 숙제 빠르게 추가`}
           aria-label="숙제 빠르게 추가"
         />

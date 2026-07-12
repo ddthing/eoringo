@@ -48,7 +48,7 @@ export const TaskItem = ({
       <button
         type="button"
         onClick={onToggle}
-        className="flex min-h-10 min-w-0 flex-1 items-center gap-2.5 text-left transition active:scale-[0.99]"
+        className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 text-left transition active:scale-[0.99]"
         aria-pressed={checked}
         disabled={disabled}
       >
@@ -84,7 +84,7 @@ export const TaskItem = ({
         <div className="flex shrink-0 items-center self-center rounded-full border border-[rgb(var(--color-line-soft))] bg-card/80 p-0.5">
           <button
             type="button"
-            className="grid h-10 w-10 place-items-center rounded-full text-ink-muted disabled:opacity-35"
+            className="grid h-11 w-11 place-items-center rounded-full text-ink-muted disabled:opacity-35"
             onClick={() => onSetCount(cappedCount - 1)}
             disabled={disabled || cappedCount <= 0}
             aria-label={`${task.title} 줄이기`}
@@ -96,7 +96,7 @@ export const TaskItem = ({
           </span>
           <button
             type="button"
-            className="grid h-10 w-10 place-items-center rounded-full text-primary disabled:opacity-35"
+            className="grid h-11 w-11 place-items-center rounded-full text-primary disabled:opacity-35"
             onClick={() => onSetCount(cappedCount + 1)}
             disabled={disabled || cappedCount >= task.maxCount}
             aria-label={`${task.title} 늘리기`}
@@ -108,7 +108,7 @@ export const TaskItem = ({
       {onRemove ? (
         <button
           type="button"
-          className="min-h-10 shrink-0 self-center rounded-full px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-danger))]"
+          className="min-h-11 shrink-0 self-center rounded-full px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-danger))]"
           onClick={onRemove}
         >
           삭제

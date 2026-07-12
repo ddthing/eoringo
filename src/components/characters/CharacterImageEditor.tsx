@@ -296,7 +296,7 @@ export const CharacterImageEditor = ({
           </div>
           <button
             type="button"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted transition active:scale-95"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted transition active:scale-95"
             onClick={onCancel}
             disabled={isSaving}
             aria-label="닫기"

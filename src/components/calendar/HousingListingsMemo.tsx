@@ -19,7 +19,7 @@ export const HousingListingsMemo = () => (
             href="https://x.com/ff14gingerS"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline decoration-primary/35 underline-offset-2 transition hover:text-primary/80"
+            className="inline-flex min-h-11 items-center text-primary underline decoration-primary/35 underline-offset-2 transition hover:text-primary/80"
           >
             @ff14gingers
           </a>
@@ -30,7 +30,7 @@ export const HousingListingsMemo = () => (
         href={housingListingsSheetUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-primary px-3 text-xs font-black text-white transition hover:brightness-[0.98] active:scale-[0.98]"
+        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-primary px-3 text-xs font-black text-white transition hover:brightness-[0.98] active:scale-[0.98]"
       >
         원본 시트 보기
         <ExternalLink aria-hidden size={13} />
