@@ -9,6 +9,7 @@ type CharacterSwitcherProps = {
   embedded?: boolean;
   layout?: "horizontal" | "stacked";
   showCurrentSummary?: boolean;
+  showSelectionCheck?: boolean;
   onCharacterSelect?: () => void;
 };
 
@@ -17,6 +18,7 @@ export const CharacterSwitcher = ({
   embedded = false,
   layout = "horizontal",
   showCurrentSummary = true,
+  showSelectionCheck = false,
   onCharacterSelect,
 }: CharacterSwitcherProps) => {
   const characters = useCharacterStore((state) => state.characters);
@@ -82,7 +84,7 @@ export const CharacterSwitcher = ({
               <CharacterAvatar imageId={character.profileImageId} name={character.name} size="sm" />
               <span className="min-w-0 flex-1 truncate">{character.name}</span>
               <CharacterMainBadge isMain={character.isMain} />
-              {layout === "stacked" && isActive ? (
+              {isActive && (layout === "stacked" || showSelectionCheck) ? (
                 <Check aria-hidden size={16} strokeWidth={3} />
               ) : null}
             </button>

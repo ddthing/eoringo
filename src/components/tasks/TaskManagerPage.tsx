@@ -140,7 +140,10 @@ export const TaskManagerPage = () => {
       </header>
 
       <TaskOverview />
-      <CharacterSwitcher compact />
+      <section className="space-y-1.5" aria-labelledby="task-character-label">
+        <p id="task-character-label" className="muted-label px-0.5">숙제 대상</p>
+        <CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck />
+      </section>
 
       <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border-y border-[rgb(var(--color-line-soft))] py-3">
         <Plus aria-hidden size={18} className="shrink-0 text-primary" />

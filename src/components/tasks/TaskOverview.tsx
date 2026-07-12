@@ -9,9 +9,6 @@ import { useTaskStore } from "../../stores/useTaskStore";
 
 export const TaskOverview = () => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
-  const activeCharacter = useCharacterStore((state) =>
-    state.characters.find((character) => character.id === state.activeCharacterId),
-  );
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
   const disabledDefaultTaskIds = useCurrentDisabledDefaultTaskIds();
   const customTaskTemplates = useCurrentCustomTaskTemplates();
@@ -55,23 +52,18 @@ export const TaskOverview = () => {
   }, [activeCharacterId, completedByCharacter, weeklyTasks]);
 
   return (
-    <section className="grid grid-cols-3 gap-2">
-      <div className="memo-card bg-card/82 p-2.5">
-        <p className="muted-label">현재</p>
-        <p className="mt-1 truncate text-sm font-bold">{activeCharacter?.name ?? "나의 모험가"}</p>
-        <p className="truncate text-[11px] text-ink-muted">{activeCharacter?.server ?? "톤베리"}</p>
-      </div>
-      <div className="memo-card bg-card/82 p-2.5">
+    <section className="grid grid-cols-2 gap-2" aria-label="숙제 진행도 요약">
+      <div className="memo-card bg-card/82 p-3">
         <p className="muted-label">오늘</p>
-        <p className="mt-1 text-lg font-bold text-primary">{dailyProgress.percent}%</p>
-        <p className="text-[11px] text-ink-muted">
+        <p className="mt-1 text-xl font-bold tabular-nums text-primary">{dailyProgress.percent}%</p>
+        <p className="text-xs tabular-nums text-ink-muted">
           {dailyProgress.completed}/{dailyProgress.total}
         </p>
       </div>
-      <div className="memo-card bg-card/82 p-2.5">
+      <div className="memo-card bg-card/82 p-3">
         <p className="muted-label">이번 주</p>
-        <p className="mt-1 text-lg font-bold text-primary">{weeklyProgress.percent}%</p>
-        <p className="text-[11px] text-ink-muted">
+        <p className="mt-1 text-xl font-bold tabular-nums text-primary">{weeklyProgress.percent}%</p>
+        <p className="text-xs tabular-nums text-ink-muted">
           {weeklyProgress.completed}/{weeklyProgress.total}
         </p>
       </div>
