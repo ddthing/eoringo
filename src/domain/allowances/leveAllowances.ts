@@ -36,6 +36,9 @@ export const getCurrentLeveAccrualDate = (date: Date = new Date()) => {
 export const getCurrentLeveAccrualKey = (date: Date = new Date()) =>
   getCurrentLeveAccrualDate(date).toISOString();
 
+export const getNextLeveAccrualDate = (date: Date = new Date()) =>
+  new Date(getCurrentLeveAccrualDate(date).getTime() + ACCRUAL_INTERVAL_MS);
+
 export const normalizeLeveAllowanceSnapshot = (
   value: unknown,
   date: Date = new Date(),

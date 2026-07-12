@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getCurrentLeveAccrualKey,
+  getNextLeveAccrualDate,
   normalizeLeveAllowanceSnapshot,
   setLeveAllowanceValue,
 } from "./leveAllowances";
@@ -17,6 +18,8 @@ describe("leve allowance accruals", () => {
       "2026-07-12T12:00:00.000Z",
     );
   });
+
+  it("returns the next 12-hour accrual boundary",()=>{expect(getNextLeveAccrualDate(new Date("2026-07-12T01:00:00.000Z")).toISOString()).toBe("2026-07-12T12:00:00.000Z");});
 
   it("catches up missed accruals and caps at 100", () => {
     expect(

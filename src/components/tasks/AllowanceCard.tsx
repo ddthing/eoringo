@@ -1,9 +1,15 @@
 import { Minus, Plus } from "lucide-react";
 import { useAllowanceStore } from "../../stores/useAllowanceStore";
+import { getNextLeveAccrualDate, LEVE_ALLOWANCE_MAX } from "../../domain/allowances/leveAllowances";
+import { formatInTimeZone } from "date-fns-tz";
+import { getKstDateKey, KST_TIME_ZONE } from "../../lib/date";
 
 export const AllowanceCard = () => {
   const value = useAllowanceStore((state) => state.value);
   const setValue = useAllowanceStore((state) => state.setValue);
+  const now = new Date();
+  const next = getNextLeveAccrualDate(now);
+  const dayLabel = getKstDateKey(next) === getKstDateKey(now) ? "오늘" : "내일";
 
   return (
     <section className="card" aria-live="polite">
@@ -21,7 +27,7 @@ export const AllowanceCard = () => {
           <Plus aria-hidden />
         </button>
       </div>
-      <p className="mt-3 text-center text-xs text-ink-muted">매일 09:00 · 21:00에 3장 충전</p>
+      <p className="mt-3 text-center text-xs text-ink-muted">{value >= LEVE_ALLOWANCE_MAX ? "최대 보유 중" : `다음 +3 · ${dayLabel} ${formatInTimeZone(next,KST_TIME_ZONE,"HH:mm")}`}</p>
     </section>
   );
 };

@@ -3,6 +3,7 @@ import { Edit3, Plus, X } from "lucide-react";
 import { taskGroupLabels } from "../../data/tasks";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
 import { getTaskScopeId } from "../../domain/tasks/getTaskScopeId";
+import { matchesManagedTask, type ResetFilter } from "../../domain/tasks/taskResetPresentation";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useTaskStore } from "../../stores/useTaskStore";
@@ -46,7 +47,13 @@ const createDraftFromTask = (task: TaskTemplate): Draft => ({
   enabledByDefault: task.enabledByDefault,
 });
 
-export const CustomTaskList = () => {
+type Props = {
+  query?: string;
+  status?: "enabled" | "hidden" | "all";
+  resetFilter?: ResetFilter;
+};
+
+export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "all" }: Props) => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const customTasks = useCurrentCustomTaskTemplates();
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
@@ -63,6 +70,12 @@ export const CustomTaskList = () => {
   const enabledCustomTasks = useMemo(
     () => customTasks.filter((task) => task.enabledByDefault),
     [customTasks],
+  );
+  const displayedCustomTasks = useMemo(
+    () => customTasks.filter((task) =>
+      matchesManagedTask(task, query, resetFilter)
+      && (status === "all" || (status === "enabled" ? task.enabledByDefault : !task.enabledByDefault)),
+    [customTasks, query, resetFilter, status],
   );
   const completed = Object.fromEntries(
     enabledCustomTasks.map((task) => [
@@ -262,8 +275,12 @@ export const CustomTaskList = () => {
           <p className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted">
             직접 추가한 숙제가 없습니다.
           </p>
+        ) : displayedCustomTasks.length === 0 ? (
+          <p className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted">
+            조건에 맞는 커스텀 숙제가 없습니다.
+          </p>
         ) : (
-          customTasks.map((task) => {
+          displayedCustomTasks.map((task) => {
             const scopeId = getTaskScopeId(task, activeCharacterId);
             const count = getTaskCount(completedByCharacter[scopeId]?.[task.id]);
 
