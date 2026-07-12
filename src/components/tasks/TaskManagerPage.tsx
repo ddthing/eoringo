@@ -1,5 +1,5 @@
-import { FormEvent, useMemo, useState } from "react";
-import { ChevronDown, GripVertical, Plus, Search, Settings2, X } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChevronDown, Plus, Search, Settings2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { taskGroupLabels } from "../../data/tasks";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
@@ -13,6 +13,7 @@ import type { TaskCategory, TaskGroup, TaskTemplate } from "../../types";
 import { CharacterSwitcher } from "../characters/CharacterSwitcher";
 import { TaskItem } from "./TaskItem";
 import { TaskOverview } from "./TaskOverview";
+import { TaskOrderControls } from "./TaskOrderControls";
 
 const groupOrder: TaskGroup[] = [
   "roulette", "delivery", "combat", "pvp", "housing", "lifestyle", "event", "custom",
@@ -47,6 +48,9 @@ export const TaskManagerPage = () => {
   const [query, setQuery] = useState("");
   const [quickTitle, setQuickTitle] = useState("");
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [isOrderEditing, setIsOrderEditing] = useState(false);
+
+  useEffect(() => { setIsOrderEditing(false); setDraggingTaskId(null); }, [characterId, view]);
   const category: TaskCategory = view;
   const normalizedQuery = query.trim().toLocaleLowerCase("ko");
 
@@ -114,6 +118,7 @@ export const TaskManagerPage = () => {
                   view === item ? "bg-card text-primary shadow-sm" : "text-ink-muted",
                 ].join(" ")}
                 onClick={() => setView(item)}
+                disabled={isOrderEditing}
               >
                 {item === "daily" ? "오늘" : "주간"}
               </button>
@@ -126,6 +131,7 @@ export const TaskManagerPage = () => {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            disabled={isOrderEditing}
             className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted/60"
             placeholder="숙제 검색"
             aria-label="숙제 검색"
@@ -141,19 +147,22 @@ export const TaskManagerPage = () => {
       <TaskOverview />
       <section className="space-y-1.5" aria-labelledby="task-character-label">
         <p id="task-character-label" className="muted-label px-0.5">숙제 대상</p>
-        <CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck />
+        <CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck disabled={isOrderEditing} />
       </section>
+
+      <div className={`flex min-h-11 items-center justify-between rounded-[12px] px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-black text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
 
       <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border-y border-[rgb(var(--color-line-soft))] py-3">
         <Plus aria-hidden size={18} className="shrink-0 text-primary" />
         <input
-          value={quickTitle}
+            value={quickTitle}
+            disabled={isOrderEditing}
           onChange={(event) => setQuickTitle(event.target.value)}
           className="min-h-10 min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-ink-muted/60"
           placeholder={`${view === "daily" ? "오늘" : "주간"} 숙제 빠르게 추가`}
           aria-label="숙제 빠르게 추가"
         />
-        <button type="submit" className="primary-button" disabled={!quickTitle.trim()}>추가</button>
+        <button type="submit" className="primary-button" disabled={isOrderEditing || !quickTitle.trim()}>추가</button>
       </form>
 
       <div className="space-y-3">
@@ -194,29 +203,8 @@ export const TaskManagerPage = () => {
                         task={task}
                         count={getTaskCount(completed?.[task.id])}
                         showGroup={false}
-                        dragHandle={
-                          <button
-                            type="button"
-                            draggable
-                            className="grid h-10 w-7 shrink-0 cursor-grab place-items-center rounded-[8px] text-ink-muted/55 transition hover:bg-card-soft hover:text-ink-muted active:cursor-grabbing"
-                            onDragStart={(event) => {
-                              event.dataTransfer.effectAllowed = "move";
-                              setDraggingTaskId(task.id);
-                            }}
-                            onDragEnd={() => setDraggingTaskId(null)}
-                            onKeyDown={(event) => {
-                              const targetIndex = event.key === "ArrowUp" ? index - 1 : event.key === "ArrowDown" ? index + 1 : -1;
-                              if (targetIndex >= 0 && targetIndex < filteredTasks.length) {
-                                event.preventDefault();
-                                moveTask(scopeKey, tasks, task.id, filteredTasks[targetIndex].id);
-                              }
-                            }}
-                            aria-label={`${task.title} 순서 변경. 위아래 화살표 사용`}
-                            title="드래그해서 순서 변경"
-                          >
-                            <GripVertical aria-hidden size={15} />
-                          </button>
-                        }
+                        dragHandle={isOrderEditing ? <TaskOrderControls title={task.title} canMoveUp={index>0} canMoveDown={index<filteredTasks.length-1} onMoveUp={()=>moveTask(scopeKey,tasks,task.id,filteredTasks[index-1].id)} onMoveDown={()=>moveTask(scopeKey,tasks,task.id,filteredTasks[index+1].id)} onDragStart={event=>{event.dataTransfer.effectAllowed="move";setDraggingTaskId(task.id);}} onDragEnd={()=>setDraggingTaskId(null)}/> : undefined}
+                        disabled={isOrderEditing}
                         onToggle={() => toggleTask(characterId, task.id, task.maxCount, task.resetRuleId)}
                         onSetCount={(count) => setTaskCount(characterId, task.id, count, task.maxCount, task.resetRuleId)}
                       />

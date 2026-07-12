@@ -10,6 +10,7 @@ type CharacterSwitcherProps = {
   layout?: "horizontal" | "stacked";
   showCurrentSummary?: boolean;
   showSelectionCheck?: boolean;
+  disabled?: boolean;
   onCharacterSelect?: () => void;
 };
 
@@ -19,6 +20,7 @@ export const CharacterSwitcher = ({
   layout = "horizontal",
   showCurrentSummary = true,
   showSelectionCheck = false,
+  disabled = false,
   onCharacterSelect,
 }: CharacterSwitcherProps) => {
   const characters = useCharacterStore((state) => state.characters);
@@ -80,6 +82,7 @@ export const CharacterSwitcher = ({
                   : "border-[rgb(var(--color-line-muted))] bg-card/70 text-ink-muted",
               ].join(" ")}
               aria-pressed={isActive}
+              disabled={disabled}
             >
               <CharacterAvatar imageId={character.profileImageId} name={character.name} size="sm" />
               <span className="min-w-0 flex-1 truncate">{character.name}</span>

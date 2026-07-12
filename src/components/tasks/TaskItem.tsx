@@ -13,6 +13,7 @@ type TaskItemProps = {
   showMeta?: boolean;
   showGroup?: boolean;
   dragHandle?: ReactNode;
+  disabled?: boolean;
 };
 
 const resetLabels: Record<TaskTemplate["resetType"], string> = {
@@ -31,6 +32,7 @@ export const TaskItem = ({
   showMeta = false,
   showGroup = true,
   dragHandle,
+  disabled = false,
 }: TaskItemProps) => {
   const cappedCount = Math.min(count, task.maxCount);
   const checked = cappedCount >= task.maxCount;
@@ -48,6 +50,7 @@ export const TaskItem = ({
         onClick={onToggle}
         className="flex min-h-10 min-w-0 flex-1 items-center gap-2.5 text-left transition active:scale-[0.99]"
         aria-pressed={checked}
+        disabled={disabled}
       >
         <TaskCheckControl checked={checked} />
         <span className="min-w-0 flex-1">
@@ -83,7 +86,7 @@ export const TaskItem = ({
             type="button"
             className="grid h-10 w-10 place-items-center rounded-full text-ink-muted disabled:opacity-35"
             onClick={() => onSetCount(cappedCount - 1)}
-            disabled={cappedCount <= 0}
+            disabled={disabled || cappedCount <= 0}
             aria-label={`${task.title} 줄이기`}
           >
             <Minus aria-hidden size={14} />
@@ -95,7 +98,7 @@ export const TaskItem = ({
             type="button"
             className="grid h-10 w-10 place-items-center rounded-full text-primary disabled:opacity-35"
             onClick={() => onSetCount(cappedCount + 1)}
-            disabled={cappedCount >= task.maxCount}
+            disabled={disabled || cappedCount >= task.maxCount}
             aria-label={`${task.title} 늘리기`}
           >
             <Plus aria-hidden size={14} />
