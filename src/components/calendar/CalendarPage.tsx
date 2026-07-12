@@ -14,6 +14,7 @@ import { getHousingPhase } from "../../domain/housing/getHousingPhase";
 import { addDaysToDateKey, getKstDateKey } from "../../lib/date";
 import type { FrontlineMap, HousingPhaseResult } from "../../types";
 import { HousingListingsMemo } from "./HousingListingsMemo";
+import { CalendarAnniversaryManager } from "./CalendarAnniversaryManager";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -203,6 +204,8 @@ export const CalendarPage = () => {
           </div>
         </div>
       </section>
+
+      <CalendarAnniversaryManager />
 
       <HousingListingsMemo />
 

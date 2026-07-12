@@ -1,0 +1,2 @@
+import {describe,expect,it} from "vitest";import {sortAnniversaries,validateAnniversaryDraft} from "./anniversaryManagement";
+describe("anniversary management",()=>{it("validates required fields",()=>{expect(validateAnniversaryDraft("","")).toEqual({title:"기념일 이름을 입력해주세요.",date:"날짜를 선택해주세요."});});it("sorts by date then Korean title",()=>{expect(sortAnniversaries([{id:"b",title:"하나",date:"2026-08-01"},{id:"a",title:"가나",date:"2026-08-01"},{id:"c",title:"먼저",date:"2026-07-01"}]).map(e=>e.id)).toEqual(["c","a","b"]);});});
