@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import { ChevronDown, GripVertical, Plus, Search, Settings2, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { taskGroupLabels } from "../../data/tasks";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
@@ -10,8 +11,6 @@ import { reorderTaskIds, useTaskUiStore } from "../../stores/task/useTaskUiStore
 import { useTaskStore } from "../../stores/useTaskStore";
 import type { TaskCategory, TaskGroup, TaskTemplate } from "../../types";
 import { CharacterSwitcher } from "../characters/CharacterSwitcher";
-import { CustomTaskList } from "../dashboard/CustomTaskList";
-import { DefaultTaskManager } from "./DefaultTaskManager";
 import { TaskItem } from "./TaskItem";
 import { TaskOverview } from "./TaskOverview";
 
@@ -239,15 +238,9 @@ export const TaskManagerPage = () => {
         ) : null}
       </div>
 
-      <details className="border-t border-[rgb(var(--color-line-soft))] pt-2">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-black text-ink-muted">
-          <Settings2 aria-hidden size={16} /> 상세 관리
-        </summary>
-        <div className="mt-2 space-y-3">
-          <DefaultTaskManager />
-          <CustomTaskList />
-        </div>
-      </details>
+      <Link to="/tasks/manage" className="flex min-h-11 items-center justify-center gap-2 border-t border-[rgb(var(--color-line-soft))] pt-2 text-sm font-black text-ink-muted">
+        <Settings2 aria-hidden size={16} /> 상세 관리
+      </Link>
     </div>
   );
 };

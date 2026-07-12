@@ -5,6 +5,7 @@ import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useTaskStore } from "../../stores/useTaskStore";
 import type { TaskGroup } from "../../types";
+import { matchesManagedTask, resetRuleLabels, type ResetFilter } from "../../domain/tasks/taskResetPresentation";
 
 const resetLabels = {
   daily: "일일",
@@ -24,7 +25,8 @@ const groupOrder: TaskGroup[] = [
   "custom",
 ];
 
-export const DefaultTaskManager = () => {
+type Props={query?:string;status?:"enabled"|"hidden"|"all";resetFilter?:ResetFilter};
+export const DefaultTaskManager = ({query="",status="enabled",resetFilter="all"}:Props) => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const activeCharacter = useCharacterStore((state) =>
     state.characters.find((character) => character.id === state.activeCharacterId),
@@ -46,7 +48,7 @@ export const DefaultTaskManager = () => {
       </p>
       <div className="space-y-2">
         {groupOrder.map((group) => {
-          const tasks = defaultTaskTemplates.filter((task) => task.group === group);
+          const tasks = defaultTaskTemplates.filter((task) => task.group === group && matchesManagedTask(task,query,resetFilter) && (status==="all" || (status==="hidden")===disabledSet.has(task.id)));
 
           if (tasks.length === 0) {
             return null;
@@ -94,7 +96,9 @@ export const DefaultTaskManager = () => {
                           <p className="truncate text-sm font-semibold">{task.title}</p>
                           <p className="truncate text-xs text-ink-muted">
                             {[
-                              resetLabels[task.resetType],
+                              resetRuleLabels[task.resetRuleId] ?? resetLabels[task.resetType],
+                              task.availabilityRuleId ? "금요일 17:00부터 참여 가능" : undefined,
+                              task.retentionDays ? `최대 ${task.retentionDays}일 보유` : undefined,
                               task.characterScoped ? undefined : "공통",
                               task.note,
                             ]

@@ -4,6 +4,7 @@ import { CalendarPage } from "../components/calendar/CalendarPage";
 import { HomeDashboard } from "../components/home/HomeDashboard";
 import { SettingsPage } from "../components/settings/SettingsPage";
 import { TaskManagerPage } from "../components/tasks/TaskManagerPage";
+import { TaskManagementPage } from "../components/tasks/TaskManagementPage";
 import { App } from "./App";
 
 const CharactersCompatibilityRedirect = () => (
@@ -17,6 +18,7 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
     children: [
       { index: true, element: <HomeDashboard /> },
       { path: "tasks", element: <TaskManagerPage /> },
+      { path: "tasks/manage", element: <TaskManagementPage /> },
       { path: "calendar", element: <CalendarPage /> },
       { path: legacyCharactersPath.slice(1), element: <CharactersCompatibilityRedirect /> },
       { path: "settings", element: <SettingsPage /> },
