@@ -1,10 +1,16 @@
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, CheckCircle2, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { TaskCategory } from "../../types";
 import { HomeTodayCheckItem } from "./HomeTodayCheckItem";
 import { useHomeTodayTasks } from "./useHomeTodayTasks";
 
 export const HomeTodayCheck = () => {
-  const { groups, toggle, setCount } = useHomeTodayTasks();
+  const { characterId, groups, toggle, setCount } = useHomeTodayTasks();
+  const [expansion, setExpansion] = useState<{
+    characterId: string;
+    categories: Partial<Record<TaskCategory, boolean>>;
+  }>(() => ({ characterId, categories: {} }));
   const total = groups.reduce((sum, group) => sum + group.total, 0);
   const completed = groups.reduce((sum, group) => sum + group.completed, 0);
 
@@ -22,7 +28,12 @@ export const HomeTodayCheck = () => {
       </div>
 
       <div className="mt-4 grid gap-2.5">
-        {groups.map((group) => (
+        {groups.map((group) => {
+          const isExpanded = expansion.characterId === characterId
+            && expansion.categories[group.category] === true;
+          const visibleTasks = isExpanded ? group.pendingTasks : group.displayedTasks;
+
+          return (
           <section
             key={group.category}
             className="rounded-[16px] border border-[rgb(var(--color-line-muted))] bg-card-soft/42 px-3 py-2.5"
@@ -46,7 +57,7 @@ export const HomeTodayCheck = () => {
             ) : (
               <>
                 <div>
-                  {group.displayedTasks.map((entry) => (
+                  {visibleTasks.map((entry) => (
                     <HomeTodayCheckItem
                       key={entry.task.id}
                       {...entry}
@@ -55,15 +66,32 @@ export const HomeTodayCheck = () => {
                     />
                   ))}
                 </div>
-                {group.remainingCount > 0 ? (
-                  <p className="border-t border-[rgb(var(--color-line-muted))] pt-2 text-[11px] font-bold text-ink-muted">
-                    + 미완료 {group.remainingCount}개
-                  </p>
+                {group.pendingTasks.length > 2 ? (
+                  <button
+                    type="button"
+                    className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-[rgb(var(--color-line-muted))] pt-1 text-[11px] font-black text-primary transition hover:bg-card-soft/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+                    aria-expanded={isExpanded}
+                    onClick={() => setExpansion((current) => ({
+                      characterId,
+                      categories: {
+                        ...(current.characterId === characterId ? current.categories : {}),
+                        [group.category]: !isExpanded,
+                      },
+                    }))}
+                  >
+                    {isExpanded ? "접기" : `미완료 ${group.remainingCount}개 모두 펼치기`}
+                    <ChevronDown
+                      aria-hidden
+                      size={14}
+                      className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    />
+                  </button>
                 ) : null}
               </>
             )}
           </section>
-        ))}
+          );
+        })}
       </div>
 
       <Link to="/tasks" className="secondary-button home-touch-target mt-3 w-full gap-1.5">

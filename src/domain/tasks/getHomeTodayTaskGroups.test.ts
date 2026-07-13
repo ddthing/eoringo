@@ -42,7 +42,7 @@ describe("getHomeTodayTaskGroups", () => {
     ]);
   });
 
-  it("shows incomplete tasks in priority order and limits each category", () => {
+  it("preserves provided order for incomplete tasks and limits each category", () => {
     const tasks = [
       createTask("third", "daily", 30),
       createTask("first-done", "daily", 10),
@@ -50,7 +50,8 @@ describe("getHomeTodayTaskGroups", () => {
     ];
     const [daily] = getHomeTodayTaskGroups(tasks, { "first-done": true }, 1);
 
-    expect(daily.displayedTasks.map(({ task }) => task.id)).toEqual(["second"]);
+    expect(daily.displayedTasks.map(({ task }) => task.id)).toEqual(["third"]);
+    expect(daily.pendingTasks.map(({ task }) => task.id)).toEqual(["third", "second"]);
     expect(daily.remainingCount).toBe(1);
     expect(daily.completed).toBe(1);
   });

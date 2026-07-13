@@ -300,7 +300,6 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
                     setTaskCount(scopeId, task.id, nextCount, task.maxCount, task.resetRuleId)
                   }
                   onRemove={() => handleRemoveCustomTask(task)}
-                  showMeta
                 />
                 <div className="mt-1 flex justify-end gap-2">
                   <button

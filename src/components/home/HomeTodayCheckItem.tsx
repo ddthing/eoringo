@@ -1,7 +1,7 @@
-import { Minus, Plus } from "lucide-react";
 import { taskGroupLabels } from "../../data/tasks";
 import type { HomeTodayTaskEntry } from "../../domain/tasks/getHomeTodayTaskGroups";
 import { TaskCheckControl } from "../tasks/TaskCheckControl";
+import { TaskCountStepper } from "../tasks/TaskCountStepper";
 
 type HomeTodayCheckItemProps = HomeTodayTaskEntry & {
   onToggle: () => void;
@@ -45,29 +45,12 @@ export const HomeTodayCheckItem = ({
   return (
     <div className="flex min-h-12 items-center gap-2 border-t border-[rgb(var(--color-line-muted))] px-1 first:border-t-0">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>
-      <div className="flex shrink-0 items-center">
-        <button
-          type="button"
-          className="grid h-11 w-11 place-items-center rounded-full text-ink-muted disabled:opacity-35"
-          onClick={() => onSetCount(count - 1)}
-          disabled={count <= 0}
-          aria-label={`${task.title} 줄이기`}
-        >
-          <Minus aria-hidden size={14} />
-        </button>
-        <span className="min-w-10 rounded-full bg-card-soft px-2 py-1 text-center text-[11px] font-black tabular-nums text-ink">
-          {count}/{task.maxCount}
-        </span>
-        <button
-          type="button"
-          className="grid h-11 w-11 place-items-center rounded-full text-primary disabled:opacity-35"
-          onClick={() => onSetCount(count + 1)}
-          disabled={count >= task.maxCount}
-          aria-label={`${task.title} 늘리기`}
-        >
-          <Plus aria-hidden size={14} />
-        </button>
-      </div>
+      <TaskCountStepper
+        title={task.title}
+        count={count}
+        maxCount={task.maxCount}
+        onChange={onSetCount}
+      />
     </div>
   );
 };

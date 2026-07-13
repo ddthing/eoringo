@@ -1,35 +1,24 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Plus, Search, Settings2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Search, Settings2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { taskGroupLabels } from "../../data/tasks";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
 import { getVisibleTaskTemplatesByCategory } from "../../domain/tasks/getVisibleTaskTemplates";
+import {
+  getTaskOrderScopeKey,
+  sortTasksBySavedOrder,
+  taskGroupOrder,
+} from "../../domain/tasks/taskOrdering";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { reorderTaskIds, useTaskUiStore } from "../../stores/task/useTaskUiStore";
 import { useTaskStore } from "../../stores/useTaskStore";
-import type { TaskCategory, TaskGroup, TaskTemplate } from "../../types";
+import type { TaskCategory, TaskTemplate } from "../../types";
 import { CharacterSwitcher } from "../characters/CharacterSwitcher";
 import { TaskItem } from "./TaskItem";
 import { TaskOverview } from "./TaskOverview";
 import { TaskOrderControls } from "./TaskOrderControls";
-
-const groupOrder: TaskGroup[] = [
-  "roulette", "delivery", "combat", "pvp", "housing", "lifestyle", "event", "custom",
-];
-
-const sortBySavedOrder = (tasks: TaskTemplate[], savedOrder: string[]) => {
-  const indexById = new Map(savedOrder.map((id, index) => [id, index]));
-  return [...tasks].sort((a, b) => {
-    const aIndex = indexById.get(a.id);
-    const bIndex = indexById.get(b.id);
-    if (aIndex !== undefined && bIndex !== undefined) return aIndex - bIndex;
-    if (aIndex !== undefined) return -1;
-    if (bIndex !== undefined) return 1;
-    return a.priority - b.priority;
-  });
-};
 
 export const TaskManagerPage = () => {
   const characterId = useCharacterStore((state) => state.activeCharacterId);
@@ -38,7 +27,6 @@ export const TaskManagerPage = () => {
   const completed = useTaskStore((state) => state.completedByCharacter[characterId]);
   const toggleTask = useTaskStore((state) => state.toggleTask);
   const setTaskCount = useTaskStore((state) => state.setTaskCount);
-  const addCustomTask = useTaskStore((state) => state.addCustomTask);
   const view = useTaskUiStore((state) => state.view);
   const collapsedGroups = useTaskUiStore((state) => state.collapsedGroups);
   const orderByGroup = useTaskUiStore((state) => state.orderByGroup);
@@ -46,7 +34,6 @@ export const TaskManagerPage = () => {
   const toggleGroup = useTaskUiStore((state) => state.toggleGroup);
   const setGroupOrder = useTaskUiStore((state) => state.setGroupOrder);
   const [query, setQuery] = useState("");
-  const [quickTitle, setQuickTitle] = useState("");
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [isOrderEditing, setIsOrderEditing] = useState(false);
 
@@ -60,9 +47,9 @@ export const TaskManagerPage = () => {
   );
 
   const groups = useMemo(
-    () => groupOrder.map((group) => {
-      const scopeKey = `${characterId}:${view}:${group}`;
-      const tasks = sortBySavedOrder(
+    () => taskGroupOrder.map((group) => {
+      const scopeKey = getTaskOrderScopeKey(characterId, view, group);
+      const tasks = sortTasksBySavedOrder(
         visibleTasks.filter((task) => task.group === group),
         orderByGroup[scopeKey] ?? [],
       );
@@ -79,22 +66,6 @@ export const TaskManagerPage = () => {
     ),
     [characterId, normalizedQuery, orderByGroup, view, visibleTasks],
   );
-
-  const handleQuickAdd = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const title = quickTitle.trim();
-    if (!title) return;
-    addCustomTask(characterId, {
-      title,
-      category,
-      resetType: view,
-      maxCount: 1,
-      characterScoped: true,
-      group: "custom",
-      enabledByDefault: true,
-    });
-    setQuickTitle("");
-  };
 
   const moveTask = (scopeKey: string, tasks: TaskTemplate[], sourceId: string, targetId: string) => {
     setGroupOrder(scopeKey, reorderTaskIds(tasks.map((task) => task.id), sourceId, targetId));
@@ -151,19 +122,6 @@ export const TaskManagerPage = () => {
       </section>
 
       <div className={`flex min-h-11 items-center justify-between rounded-[12px] px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-black text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
-
-      <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border-y border-[rgb(var(--color-line-soft))] py-3">
-        <Plus aria-hidden size={18} className="shrink-0 text-primary" />
-        <input
-            value={quickTitle}
-            disabled={isOrderEditing}
-          onChange={(event) => setQuickTitle(event.target.value)}
-          className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-ink-muted/60"
-          placeholder={`${view === "daily" ? "오늘" : "주간"} 숙제 빠르게 추가`}
-          aria-label="숙제 빠르게 추가"
-        />
-        <button type="submit" className="primary-button" disabled={isOrderEditing || !quickTitle.trim()}>추가</button>
-      </form>
 
       <div className="space-y-3">
         {groups.map(({ group, scopeKey, tasks, filteredTasks }) => {

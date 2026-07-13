@@ -1,8 +1,8 @@
-import { Minus, Plus } from "lucide-react";
 import { taskGroupLabels } from "../../data/tasks";
 import type { TaskTemplate } from "../../types";
 import type { ReactNode } from "react";
 import { TaskCheckControl } from "./TaskCheckControl";
+import { TaskCountStepper } from "./TaskCountStepper";
 
 type TaskItemProps = {
   task: TaskTemplate;
@@ -10,17 +10,9 @@ type TaskItemProps = {
   onToggle: () => void;
   onSetCount: (count: number) => void;
   onRemove?: () => void;
-  showMeta?: boolean;
   showGroup?: boolean;
   dragHandle?: ReactNode;
   disabled?: boolean;
-};
-
-const resetLabels: Record<TaskTemplate["resetType"], string> = {
-  daily: "일일",
-  weekly: "주간",
-  eighteenHours: "18시간",
-  manual: "수동",
 };
 
 export const TaskItem = ({
@@ -29,7 +21,6 @@ export const TaskItem = ({
   onToggle,
   onSetCount,
   onRemove,
-  showMeta = false,
   showGroup = true,
   dragHandle,
   disabled = false,
@@ -67,43 +58,21 @@ export const TaskItem = ({
             ) : null}
             {task.title}
           </span>
-          {showMeta || task.description || task.note ? (
+          {task.description || task.note ? (
             <span className="mt-0.5 block truncate text-[11px] text-ink-muted">
-              {[
-                showMeta ? resetLabels[task.resetType] : undefined,
-                showMeta ? (task.characterScoped ? "캐릭터별" : "공통") : undefined,
-                task.note ?? task.description,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
+              {task.note ?? task.description}
             </span>
           ) : null}
         </span>
       </button>
       {task.maxCount > 1 ? (
-        <div className="flex shrink-0 items-center self-center rounded-full border border-[rgb(var(--color-line-soft))] bg-card/80 p-0.5">
-          <button
-            type="button"
-            className="grid h-11 w-11 place-items-center rounded-full text-ink-muted disabled:opacity-35"
-            onClick={() => onSetCount(cappedCount - 1)}
-            disabled={disabled || cappedCount <= 0}
-            aria-label={`${task.title} 줄이기`}
-          >
-            <Minus aria-hidden size={14} />
-          </button>
-          <span className="min-w-8 text-center text-[11px] font-bold text-ink">
-            {cappedCount}/{task.maxCount}
-          </span>
-          <button
-            type="button"
-            className="grid h-11 w-11 place-items-center rounded-full text-primary disabled:opacity-35"
-            onClick={() => onSetCount(cappedCount + 1)}
-            disabled={disabled || cappedCount >= task.maxCount}
-            aria-label={`${task.title} 늘리기`}
-          >
-            <Plus aria-hidden size={14} />
-          </button>
-        </div>
+        <TaskCountStepper
+          title={task.title}
+          count={cappedCount}
+          maxCount={task.maxCount}
+          onChange={onSetCount}
+          disabled={disabled}
+        />
       ) : null}
       {onRemove ? (
         <button

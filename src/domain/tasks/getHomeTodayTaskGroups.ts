@@ -20,6 +20,7 @@ export type HomeTodayTaskGroup = {
   label: string;
   total: number;
   completed: number;
+  pendingTasks: HomeTodayTaskEntry[];
   displayedTasks: HomeTodayTaskEntry[];
   remainingCount: number;
   state: "empty" | "complete" | "pending";
@@ -33,7 +34,6 @@ export const getHomeTodayTaskGroups = (
   homeTodayTaskCategories.map((category) => {
     const categoryTasks = tasks
       .filter((task) => task.category === category)
-      .sort((a, b) => a.priority - b.priority)
       .map((task) => {
         const count = getTaskCount(completedByTaskId[task.id]);
 
@@ -52,6 +52,7 @@ export const getHomeTodayTaskGroups = (
       label: homeTodayTaskCategoryLabels[category],
       total: categoryTasks.length,
       completed,
+      pendingTasks,
       displayedTasks,
       remainingCount: Math.max(0, pendingTasks.length - displayedTasks.length),
       state:
