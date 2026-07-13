@@ -17,7 +17,7 @@ export const HomeTodayCheckItem = ({
 }: HomeTodayCheckItemProps) => {
   const identity = (
     <>
-      <TaskCheckControl checked={completed} className="h-[22px] w-[22px] rounded-full" />
+      <TaskCheckControl checked={completed} />
       <span className="flex min-w-0 flex-1 items-center gap-1.5">
         <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-5 text-ink">
           {task.title}
