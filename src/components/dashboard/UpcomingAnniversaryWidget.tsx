@@ -4,6 +4,8 @@ import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { CalendarDays, Plus, X } from "lucide-react";
+import { isValidAnniversaryDate } from "../../domain/dday/anniversaryManagement";
+import { AnniversaryDateField } from "../common/AnniversaryDateField";
 
 const formatDisplayDate = (dateKey: string) => dateKey.split("-").join(".");
 const emptyEvents = [] as const;
@@ -24,15 +26,19 @@ export const UpcomingAnniversaryWidget = () => {
     })
     .slice(0, 3);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!title.trim() || !date) return;
-
-    addEvent(activeCharacterId, { title: title.trim(), date });
+  const closeForm = () => {
     setTitle("");
     setDate("");
     setIsFormOpen(false);
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!title.trim() || !isValidAnniversaryDate(date)) return;
+
+    addEvent(activeCharacterId, { title: title.trim(), date });
+    closeForm();
   };
 
   return (
@@ -45,7 +51,7 @@ export const UpcomingAnniversaryWidget = () => {
         <button
           type="button"
           className="secondary-button home-touch-target gap-1.5"
-          onClick={() => setIsFormOpen((current) => !current)}
+          onClick={() => (isFormOpen ? closeForm() : setIsFormOpen(true))}
           aria-expanded={isFormOpen}
         >
           {isFormOpen ? <X aria-hidden size={14} /> : <Plus aria-hidden size={14} />}
@@ -63,15 +69,13 @@ export const UpcomingAnniversaryWidget = () => {
             onChange={(event) => setTitle(event.target.value)}
             placeholder="기념일 이름"
           />
-          <input
-            className="field"
-            type="date"
+          <AnniversaryDateField
             name="home-anniversary-date"
-            aria-label="기념일 날짜"
+            ariaLabel="기념일 날짜"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={setDate}
           />
-          <button type="submit" className="primary-button w-fit" disabled={!title.trim() || !date}>
+          <button type="submit" className="primary-button w-fit" disabled={!title.trim() || !isValidAnniversaryDate(date)}>
             추가
           </button>
         </form>

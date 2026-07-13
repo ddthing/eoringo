@@ -75,6 +75,7 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
     () => customTasks.filter((task) =>
       matchesManagedTask(task, query, resetFilter)
       && (status === "all" || (status === "enabled" ? task.enabledByDefault : !task.enabledByDefault)),
+    ),
     [customTasks, query, resetFilter, status],
   );
   const completed = Object.fromEntries(
@@ -88,6 +89,11 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
   const resetForm = () => {
     setDraft(emptyDraft);
     setEditingTaskId(null);
+  };
+
+  const closeForm = () => {
+    resetForm();
+    setIsFormOpen(false);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -112,8 +118,7 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
       addCustomTask(activeCharacterId, payload);
     }
 
-    resetForm();
-    setIsFormOpen(false);
+    closeForm();
   };
 
   const startEdit = (task: TaskTemplate) => {
@@ -151,9 +156,10 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
           className="secondary-button flex items-center gap-2"
           onClick={() => {
             if (isFormOpen) {
-              resetForm();
+              closeForm();
+              return;
             }
-            setIsFormOpen((value) => !value);
+            setIsFormOpen(true);
           }}
         >
           {isFormOpen ? <X aria-hidden size={16} /> : <Plus aria-hidden size={16} />}
@@ -264,7 +270,7 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
             <button type="submit" className="primary-button">
               {editingTaskId ? "저장" : "추가"}
             </button>
-            <button type="button" className="secondary-button" onClick={resetForm}>
+            <button type="button" className="secondary-button" onClick={closeForm}>
               취소
             </button>
           </div>

@@ -4,6 +4,8 @@ import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useConfirmDialog } from "../common/ConfirmDialog";
+import { isValidAnniversaryDate } from "../../domain/dday/anniversaryManagement";
+import { AnniversaryDateField } from "../common/AnniversaryDateField";
 
 const emptyEvents = [] as const;
 
@@ -22,17 +24,21 @@ export const DdayCard = () => {
     [characters],
   );
 
+  const closeForm = () => {
+    setTitle("");
+    setDate("");
+    setIsFormOpen(false);
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!title.trim() || !date) {
+    if (!title.trim() || !isValidAnniversaryDate(date)) {
       return;
     }
 
     addEvent(activeCharacterId, { title: title.trim(), date });
-    setTitle("");
-    setDate("");
-    setIsFormOpen(false);
+    closeForm();
   };
 
   const handleRemoveEvent = async (eventId: string, title: string) => {
@@ -60,7 +66,7 @@ export const DdayCard = () => {
         <button
           type="button"
           className="secondary-button flex items-center gap-1.5"
-          onClick={() => setIsFormOpen((value) => !value)}
+          onClick={() => (isFormOpen ? closeForm() : setIsFormOpen(true))}
         >
           {isFormOpen ? <X aria-hidden size={14} /> : <Plus aria-hidden size={14} />}
           {isFormOpen ? "닫기" : "기록"}
@@ -77,13 +83,11 @@ export const DdayCard = () => {
             onChange={(event) => setTitle(event.target.value)}
             placeholder="기념일 이름"
           />
-          <input
-            className="field"
-            type="date"
+          <AnniversaryDateField
             name="anniversary-date"
-            aria-label="기념일 날짜"
+            ariaLabel="기념일 날짜"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={setDate}
           />
           <button type="submit" className="primary-button w-fit">
             추가
