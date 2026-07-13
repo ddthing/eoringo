@@ -20,6 +20,7 @@ export type HomeTodayTaskGroup = {
   label: string;
   total: number;
   completed: number;
+  allTasks: HomeTodayTaskEntry[];
   pendingTasks: HomeTodayTaskEntry[];
   displayedTasks: HomeTodayTaskEntry[];
   remainingCount: number;
@@ -52,6 +53,7 @@ export const getHomeTodayTaskGroups = (
       label: homeTodayTaskCategoryLabels[category],
       total: categoryTasks.length,
       completed,
+      allTasks: categoryTasks,
       pendingTasks,
       displayedTasks,
       remainingCount: Math.max(0, pendingTasks.length - displayedTasks.length),

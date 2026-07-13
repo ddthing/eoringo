@@ -54,6 +54,12 @@ describe("getHomeTodayTaskGroups", () => {
     expect(daily.pendingTasks.map(({ task }) => task.id)).toEqual(["third", "second"]);
     expect(daily.remainingCount).toBe(1);
     expect(daily.completed).toBe(1);
+    expect(daily.allTasks.map(({ task }) => task.id)).toEqual([
+      "third",
+      "first-done",
+      "second",
+    ]);
+    expect(daily.allTasks[1]).toMatchObject({ count: 1, completed: true });
   });
 
   it("preserves counts for multi-count tasks", () => {
