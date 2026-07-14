@@ -10,7 +10,7 @@ export const TaskCheckControl = ({ checked, className = "" }: TaskCheckControlPr
     className={[
       "grid h-5 w-5 shrink-0 place-items-center rounded-[7px] border transition-all duration-200",
       checked
-        ? "border-primary bg-primary text-white shadow-[0_1px_4px_rgb(30_35_40/0.08)]"
+        ? "border-primary bg-primary text-primary-foreground shadow-[0_1px_4px_rgb(var(--color-shadow)/0.12)]"
         : "border-[rgb(var(--color-line-soft))] bg-card text-ink-muted",
       className,
     ].join(" ")}

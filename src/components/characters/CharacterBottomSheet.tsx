@@ -93,7 +93,7 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
   return (
     <div
       ref={dialogRef}
-      className="character-sheet-backdrop fixed inset-0 z-[60] flex items-end overscroll-contain bg-ink/35 backdrop-blur-[3px]"
+      className="character-sheet-backdrop fixed inset-0 z-[60] flex items-end overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] backdrop-blur-[3px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="character-sheet-title"

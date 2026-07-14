@@ -25,6 +25,7 @@ export default {
         primary: {
           DEFAULT: "rgb(var(--color-primary) / <alpha-value>)",
           soft: "rgb(var(--color-primary-soft) / <alpha-value>)",
+          foreground: "rgb(var(--color-primary-foreground) / <alpha-value>)",
         },
         accent: {
           DEFAULT: "rgb(var(--color-accent) / <alpha-value>)",
@@ -48,7 +49,7 @@ export default {
         },
       },
       boxShadow: {
-        soft: "0 10px 28px rgb(30 35 40 / 0.08), 0 1px 2px rgb(30 35 40 / 0.06)",
+        soft: "0 10px 28px rgb(var(--color-shadow) / 0.12), 0 1px 2px rgb(var(--color-shadow) / 0.08)",
       },
     },
   },

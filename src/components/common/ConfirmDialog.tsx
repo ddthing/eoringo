@@ -136,7 +136,7 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
       {request ? (
         <div
           ref={dialogRef}
-          className="fixed inset-0 z-[70] grid place-items-end overflow-y-auto overscroll-contain bg-ink/35 p-3 backdrop-blur-[3px] sm:place-items-center"
+          className="fixed inset-0 z-[70] grid place-items-end overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[3px] sm:place-items-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
@@ -193,7 +193,7 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
                 className={[
                   "primary-button",
                   request.tone === "danger"
-                    ? "border-[rgb(var(--color-danger)/0.28)] bg-[rgb(var(--color-danger))]"
+                    ? "border-[rgb(var(--color-danger)/0.28)] bg-[rgb(var(--color-danger))] text-[rgb(var(--color-danger-foreground))]"
                     : "",
                 ].join(" ")}
                 onClick={() => closeDialog(true)}

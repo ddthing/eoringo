@@ -24,7 +24,9 @@ export const BottomNav = () => (
               className={({ isActive }) =>
                 [
                   "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[13px] text-[11px] font-bold transition",
-                  isActive ? "bg-primary text-white shadow-soft" : "text-ink-muted",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-soft"
+                    : "text-ink-muted",
                 ].join(" ")
               }
             >

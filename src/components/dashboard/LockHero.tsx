@@ -98,9 +98,9 @@ export const LockHero = () => {
           className="absolute inset-0 h-full w-full scale-105 object-cover opacity-42 blur-[1px] grayscale-[0.12]"
         />
       ) : (
-        <div className="absolute inset-0 bg-[linear-gradient(145deg,rgb(255_255_253/0.98),rgb(var(--color-card-soft)/0.92)_52%,rgb(238_241_235/0.94))]" />
+        <div className="hero-ambient-base absolute inset-0" />
       )}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(255_255_253/0.72),rgb(255_255_253/0.9)_48%,rgb(255_255_253/0.98))]" />
+      <div className="hero-ambient-overlay absolute inset-0" />
 
       <div className="relative flex min-h-[224px] flex-col justify-between p-4">
         <div className="flex items-start justify-between gap-3">

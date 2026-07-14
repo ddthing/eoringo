@@ -30,7 +30,7 @@ export const HousingListingsMemo = () => (
         href={housingListingsSheetUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-primary px-3 text-xs font-black text-white transition hover:brightness-[0.98] active:scale-[0.98]"
+        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-primary px-3 text-xs font-black text-primary-foreground transition hover:brightness-[0.98] active:scale-[0.98]"
       >
         원본 시트 보기
         <ExternalLink aria-hidden size={13} />

@@ -21,10 +21,10 @@ export const TaskManagementToolbar = ({query,status,resetFilter,resultCount,onQu
       <input value={query} onChange={(event)=>onQueryChange(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="숙제 검색…" aria-label="관리할 숙제 검색" />
     </label>
     <div className="flex gap-1 overflow-x-auto" aria-label="숙제 상태 필터">
-      {statusFilters.map(([value,label])=><button type="button" key={value} aria-pressed={status===value} onClick={()=>onStatusChange(value)} className={`${chipClassName} ${status===value?"bg-primary text-white":""}`}>{label}</button>)}
+      {statusFilters.map(([value,label])=><button type="button" key={value} aria-pressed={status===value} onClick={()=>onStatusChange(value)} className={`${chipClassName} ${status===value?"bg-primary text-primary-foreground":""}`}>{label}</button>)}
     </div>
     <div className="flex gap-1 overflow-x-auto" aria-label="초기화 필터">
-      {resetFilters.map(([value,label])=><button type="button" key={value} aria-pressed={resetFilter===value} onClick={()=>onResetFilterChange(value)} className={`${chipClassName} ${resetFilter===value?"bg-primary text-white":""}`}>{label}</button>)}
+      {resetFilters.map(([value,label])=><button type="button" key={value} aria-pressed={resetFilter===value} onClick={()=>onResetFilterChange(value)} className={`${chipClassName} ${resetFilter===value?"bg-primary text-primary-foreground":""}`}>{label}</button>)}
     </div>
   </section>
 );

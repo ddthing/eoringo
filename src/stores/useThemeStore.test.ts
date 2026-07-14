@@ -12,6 +12,7 @@ describe("theme store normalization", () => {
     ).toMatchObject({
       themeColorId: "custom",
       customAccentColor: "#8d8a94",
+      appearanceMode: "system",
     });
   });
 
@@ -24,6 +25,16 @@ describe("theme store normalization", () => {
     ).toMatchObject({
       themeColorId: "gray",
       customAccentColor: defaultCustomAccentColor,
+      appearanceMode: "system",
+    });
+  });
+
+  it("keeps valid appearance modes and normalizes invalid values", () => {
+    expect(normalizeThemeState({ appearanceMode: "dark" })).toMatchObject({
+      appearanceMode: "dark",
+    });
+    expect(normalizeThemeState({ appearanceMode: "sepia" })).toMatchObject({
+      appearanceMode: "system",
     });
   });
 });

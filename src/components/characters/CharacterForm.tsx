@@ -139,6 +139,7 @@ export const CharacterForm = ({
         <label className="flex items-center gap-2 text-xs font-medium text-ink-muted">
           <input
             type="checkbox"
+            className="h-4 w-4 accent-primary"
             checked={draft.isMain}
             onChange={(event) =>
               setDraft((value) => ({ ...value, isMain: event.target.checked }))

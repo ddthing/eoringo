@@ -24,21 +24,21 @@ const phaseLabel: Record<HousingPhaseResult["phase"], string> = {
 };
 
 const phasePillClassName: Record<HousingPhaseResult["phase"], string> = {
-  entry: "border-[rgb(199_217_196)] bg-[rgb(235_243_231)] text-[rgb(88_124_82)]",
-  result: "border-[rgb(225_205_174)] bg-[rgb(249_240_226)] text-[rgb(139_109_64)]",
+  entry: "calendar-tone-housing-entry",
+  result: "calendar-tone-housing-result",
 };
 
 const frontlineCellClassName: Record<FrontlineMap["id"], string> = {
-  "seal-rock": "border-[rgb(205_220_202)] bg-[rgb(239_246_236)] text-[rgb(92_121_85)]",
-  "borderland-ruins": "border-[rgb(218_211_202)] bg-[rgb(246_242_236)] text-[rgb(121_108_94)]",
-  onsal: "border-[rgb(197_219_216)] bg-[rgb(235_246_244)] text-[rgb(82_120_116)]",
-  "worqor-chitte": "border-[rgb(203_216_226)] bg-[rgb(238_245_250)] text-[rgb(84_109_128)]",
-  "fields-of-glory": "border-[rgb(212_209_225)] bg-[rgb(243_241_248)] text-[rgb(103_96_126)]",
+  "seal-rock": "calendar-tone-frontline-seal-rock",
+  "borderland-ruins": "calendar-tone-frontline-borderland-ruins",
+  onsal: "calendar-tone-frontline-onsal",
+  "worqor-chitte": "calendar-tone-frontline-worqor-chitte",
+  "fields-of-glory": "calendar-tone-frontline-fields-of-glory",
 };
 
 const housingCellClassName: Record<HousingPhaseResult["phase"], string> = {
-  entry: "border-[rgb(205_220_202)] bg-[rgb(239_246_236)] text-[rgb(92_121_85)]",
-  result: "border-[rgb(225_205_174)] bg-[rgb(249_240_226)] text-[rgb(139_109_64)]",
+  entry: "calendar-tone-housing-entry",
+  result: "calendar-tone-housing-result",
 };
 
 const toKstDate = (dateKey: string) => new Date(`${dateKey}T00:00:00+09:00`);

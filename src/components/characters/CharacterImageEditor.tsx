@@ -279,7 +279,7 @@ export const CharacterImageEditor = ({
   return (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-50 grid place-items-end overflow-y-auto overscroll-contain bg-ink/20 p-3 backdrop-blur-[2px] sm:place-items-center"
+      className="fixed inset-0 z-50 grid place-items-end overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[2px] sm:place-items-center"
       role="dialog"
       aria-modal="true"
       aria-label="캐릭터 사진 편집"

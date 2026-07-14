@@ -47,6 +47,25 @@ describe("theme colors", () => {
 
     expect(mintBlock).toContain("--color-accent: 142 191 130");
     expect(mintBlock).toContain("--color-accent-soft: 232 244 225");
+    expect(mintBlock).toContain("--color-accent-ink: 68 116 58");
     expect(mintBlock).not.toBe(grayBlock);
+  });
+
+  it("defines dark semantic tokens and dark Mint accents", () => {
+    const globalsCss = readFileSync(
+      new URL("../styles/globals.css", import.meta.url),
+      "utf8",
+    );
+    const darkBlock = globalsCss.match(
+      /html\[data-color-mode="dark"\]\s*\{([^}]+)\}/,
+    )?.[1];
+    const darkMintBlock = globalsCss.match(
+      /html\[data-color-mode="dark"\]\[data-theme-color="mint"\]\s*\{([^}]+)\}/,
+    )?.[1];
+
+    expect(darkBlock).toContain("--color-bg: 21 24 29");
+    expect(darkBlock).toContain("--color-card: 29 33 39");
+    expect(darkMintBlock).toContain("--color-accent-soft: 45 57 49");
+    expect(darkMintBlock).toContain("--color-accent-ink: 169 218 158");
   });
 });
