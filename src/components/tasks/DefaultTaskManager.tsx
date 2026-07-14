@@ -4,6 +4,7 @@ import { matchesManagedTask, type ResetFilter } from "../../domain/tasks/taskRes
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useTaskStore } from "../../stores/useTaskStore";
+import { selectCompletedAtForCharacter } from "../../stores/task/selectors";
 import type { TaskGroup } from "../../types";
 import { ManagedTaskGroup } from "./ManagedTaskGroup";
 
@@ -15,7 +16,7 @@ export const DefaultTaskManager=({query="",status="enabled",resetFilter="all",no
   const character=useCharacterStore(state=>state.characters.find(item=>item.id===state.activeCharacterId));
   const disabledIds=useCurrentDisabledDefaultTaskIds();
   const toggleTask=useTaskStore(state=>state.toggleDefaultTaskEnabled);
-  const completedAt=useTaskStore(state=>state.completedAtByCharacter[characterId]??{});
+  const completedAt=useTaskStore(state=>selectCompletedAtForCharacter(state.completedAtByCharacter,characterId));
   const [openGroups,setOpenGroups]=useState<TaskGroup[]>(["roulette","delivery","combat"]);
   const disabledSet=useMemo(()=>new Set(disabledIds),[disabledIds]);
   const groups=useMemo(()=>groupOrder.flatMap(group=>{const tasks=defaultTaskTemplates.filter(task=>task.group===group&&matchesManagedTask(task,query,resetFilter)&&(status==="all"||(status==="hidden")===disabledSet.has(task.id)));return tasks.length?[{group,tasks}]:[];}),[disabledSet,query,resetFilter,status]);

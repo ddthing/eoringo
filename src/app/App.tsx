@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { ConfirmDialogProvider } from "../components/common/ConfirmDialog";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { AppShell } from "../components/layout/AppShell";
@@ -16,8 +16,10 @@ import {
 } from "../lib/color";
 import { useAllowanceStore } from "../stores/useAllowanceStore";
 import { useThemeStore } from "../stores/useThemeStore";
+import { getRouteErrorBoundaryKey } from "./errorBoundaryReset";
 
 export const App = () => {
+  const location = useLocation();
   const themeColorId = useThemeStore((state) => state.themeColorId);
   const customAccentColor = useThemeStore((state) => state.customAccentColor);
   const appearanceMode = useThemeStore((state) => state.appearanceMode);
@@ -95,7 +97,7 @@ export const App = () => {
   return (
     <ConfirmDialogProvider>
       <AppShell>
-        <ErrorBoundary>
+        <ErrorBoundary key={getRouteErrorBoundaryKey(location.pathname)}>
           <Outlet />
         </ErrorBoundary>
       </AppShell>
