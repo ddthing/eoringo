@@ -1,9 +1,9 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { getDaysFromTodayKst } from "../../lib/date";
 import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useCharacterStore } from "../../stores/useCharacterStore";
-import { CalendarDays, Plus, X } from "lucide-react";
+import { CalendarDays, Pencil, Plus, X } from "lucide-react";
 import { isValidAnniversaryDate } from "../../domain/dday/anniversaryManagement";
 import { AnniversaryDateField } from "../common/AnniversaryDateField";
 
@@ -13,10 +13,12 @@ const emptyEvents = [] as const;
 export const UpcomingAnniversaryWidget = () => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const events = useDdayStore((state) => state.eventsByCharacter[activeCharacterId] ?? emptyEvents);
   const addEvent = useDdayStore((state) => state.addEvent);
+  const updateEvent = useDdayStore((state) => state.updateEvent);
   const upcomingEvents = [...events]
     .sort((a, b) => {
       const daysA = Math.abs(getDaysFromTodayKst(a.date));
@@ -29,16 +31,32 @@ export const UpcomingAnniversaryWidget = () => {
   const closeForm = () => {
     setTitle("");
     setDate("");
+    setEditingEventId(null);
     setIsFormOpen(false);
   };
+
+  useEffect(() => {
+    closeForm();
+  }, [activeCharacterId]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!title.trim() || !isValidAnniversaryDate(date)) return;
 
-    addEvent(activeCharacterId, { title: title.trim(), date });
+    if (editingEventId) {
+      updateEvent(activeCharacterId, editingEventId, { title: title.trim(), date });
+    } else {
+      addEvent(activeCharacterId, { title: title.trim(), date });
+    }
     closeForm();
+  };
+
+  const startEdit = (eventId: string, eventTitle: string, eventDate: string) => {
+    setTitle(eventTitle);
+    setDate(eventDate);
+    setEditingEventId(eventId);
+    setIsFormOpen(true);
   };
 
   return (
@@ -76,7 +94,7 @@ export const UpcomingAnniversaryWidget = () => {
             onChange={setDate}
           />
           <button type="submit" className="primary-button w-fit" disabled={!title.trim() || !isValidAnniversaryDate(date)}>
-            추가
+            {editingEventId ? "수정 저장" : "추가"}
           </button>
         </form>
       ) : null}
@@ -90,7 +108,7 @@ export const UpcomingAnniversaryWidget = () => {
           {upcomingEvents.map((event) => (
             <div
               key={event.id}
-              className="grid min-h-12 grid-cols-[4.5rem_1fr] items-center gap-2 rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
+              className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2 rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
             >
               <span className="rounded-full bg-card px-2.5 py-1 text-center text-xs font-black tabular-nums text-primary">
                 {getDdayLabel(event.date)}
@@ -101,6 +119,14 @@ export const UpcomingAnniversaryWidget = () => {
                   {formatDisplayDate(event.date)}
                 </p>
               </div>
+              <button
+                type="button"
+                className="grid h-11 w-11 place-items-center rounded-full text-primary transition hover:bg-primary-soft active:scale-95"
+                aria-label={`${event.title} 기념일 수정`}
+                onClick={() => startEdit(event.id, event.title, event.date)}
+              >
+                <Pencil aria-hidden size={15} />
+              </button>
             </div>
           ))}
         </div>

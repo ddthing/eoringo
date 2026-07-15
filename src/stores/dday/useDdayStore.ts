@@ -7,6 +7,11 @@ import { getMigrationCharacterId } from "../character/getMigrationCharacterId";
 type DdayState = {
   eventsByCharacter: Record<string, DdayEvent[]>;
   addEvent: (characterId: string, event: Omit<DdayEvent, "id" | "characterId">) => void;
+  updateEvent: (
+    characterId: string,
+    id: string,
+    patch: Pick<DdayEvent, "title" | "date">,
+  ) => void;
   removeEvent: (characterId: string, id: string) => void;
   removeCharacterData: (characterId: string) => void;
 };
@@ -26,6 +31,20 @@ const normalizeEvents = (events: unknown, characterId: string): DdayEvent[] =>
     }))
     .filter((event) => dateKeyPattern.test(event.date))
     .sort((a, b) => a.date.localeCompare(b.date));
+
+export const updateDdayEvents = (
+  events: DdayEvent[],
+  id: string,
+  patch: Pick<DdayEvent, "title" | "date">,
+) => {
+  if (!events.some((event) => event.id === id)) {
+    return events;
+  }
+
+  return events
+    .map((event) => (event.id === id ? { ...event, ...patch } : event))
+    .sort((a, b) => a.date.localeCompare(b.date));
+};
 
 export const normalizeDdayState = (persistedState: unknown) => {
   const state = isRecord(persistedState) ? persistedState : {};
@@ -65,6 +84,22 @@ export const useDdayStore = create<DdayState>()(
             ].sort((a, b) => a.date.localeCompare(b.date)),
           },
         })),
+      updateEvent: (characterId, id, patch) =>
+        set((state) => {
+          const currentEvents = state.eventsByCharacter[characterId] ?? [];
+          const nextEvents = updateDdayEvents(currentEvents, id, patch);
+
+          if (nextEvents === currentEvents) {
+            return state;
+          }
+
+          return {
+            eventsByCharacter: {
+              ...state.eventsByCharacter,
+              [characterId]: nextEvents,
+            },
+          };
+        }),
       removeEvent: (characterId, id) =>
         set((state) => ({
           eventsByCharacter: {

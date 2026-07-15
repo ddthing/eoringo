@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import {
   sortAnniversaries,
@@ -17,17 +17,20 @@ export const CalendarAnniversaryManager = () => {
   const characterId = useCharacterStore((state) => state.activeCharacterId);
   const events = useDdayStore((state) => state.eventsByCharacter[characterId] ?? emptyEvents);
   const addEvent = useDdayStore((state) => state.addEvent);
+  const updateEvent = useDdayStore((state) => state.updateEvent);
   const removeEvent = useDdayStore((state) => state.removeEvent);
   const confirm = useConfirmDialog();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [errors, setErrors] = useState(emptyErrors);
   const sortedEvents = useMemo(() => sortAnniversaries([...events]), [events]);
 
   const resetDraft = () => {
     setTitle("");
     setDate("");
+    setEditingEventId(null);
     setErrors(emptyErrors);
   };
 
@@ -46,8 +49,20 @@ export const CalendarAnniversaryManager = () => {
     setErrors(nextErrors);
     if (nextErrors.title || nextErrors.date) return;
 
-    addEvent(characterId, { title: title.trim(), date });
+    if (editingEventId) {
+      updateEvent(characterId, editingEventId, { title: title.trim(), date });
+    } else {
+      addEvent(characterId, { title: title.trim(), date });
+    }
     closeForm();
+  };
+
+  const startEdit = (eventId: string, eventTitle: string, eventDate: string) => {
+    setTitle(eventTitle);
+    setDate(eventDate);
+    setEditingEventId(eventId);
+    setErrors(emptyErrors);
+    setIsFormOpen(true);
   };
 
   const handleRemove = async (eventId: string, name: string) => {
@@ -101,7 +116,9 @@ export const CalendarAnniversaryManager = () => {
           </label>
           {errors.date ? <p className="text-xs text-[rgb(var(--color-danger))]" aria-live="polite">{errors.date}</p> : null}
           <div className="flex gap-2">
-            <button className="primary-button min-h-11" type="submit">기념일 저장</button>
+            <button className="primary-button min-h-11" type="submit">
+              {editingEventId ? "수정 저장" : "기념일 저장"}
+            </button>
             <button className="secondary-button min-h-11" type="button" onClick={closeForm}>취소</button>
           </div>
         </form>
@@ -115,14 +132,24 @@ export const CalendarAnniversaryManager = () => {
               <p className="truncate text-sm font-bold">{event.title}</p>
               <p className="text-xs text-ink-muted">{event.date.split("-").join(".")}</p>
             </div>
-            <button
-              type="button"
-              className="grid h-11 w-11 place-items-center rounded-full text-[rgb(var(--color-danger))]"
-              aria-label={`${event.title} 기념일 삭제`}
-              onClick={() => handleRemove(event.id, event.title)}
-            >
-              <Trash2 aria-hidden size={16} />
-            </button>
+            <div className="flex shrink-0 items-center">
+              <button
+                type="button"
+                className="grid h-11 w-11 place-items-center rounded-full text-primary transition hover:bg-primary-soft active:scale-95"
+                aria-label={`${event.title} 기념일 수정`}
+                onClick={() => startEdit(event.id, event.title, event.date)}
+              >
+                <Pencil aria-hidden size={16} />
+              </button>
+              <button
+                type="button"
+                className="grid h-11 w-11 place-items-center rounded-full text-[rgb(var(--color-danger))] transition hover:bg-[rgb(var(--color-danger)/0.08)] active:scale-95"
+                aria-label={`${event.title} 기념일 삭제`}
+                onClick={() => handleRemove(event.id, event.title)}
+              >
+                <Trash2 aria-hidden size={16} />
+              </button>
+            </div>
           </div>
         )) : (
           <div className="rounded-[14px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/50 p-4 text-center">

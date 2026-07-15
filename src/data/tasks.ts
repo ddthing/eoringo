@@ -7,7 +7,6 @@ const specialResetRules: Partial<Record<string, ResetRuleId>> = {
   "daily-retainer": "interval-18h",
   "daily-island-pasture": "daily-1700",
   "weekly-gold-saucer-jumbo-cactpot": "weekly-sat-2100",
-  "grand-company-squadron-routine": "interval-18h",
   "weekly-treasure-map": "interval-18h",
 };
 
@@ -155,6 +154,7 @@ export const defaultTaskTemplates: TaskTemplate[] = [
   task({
     id: "daily-retainer",
     title: "집사 수행 확인",
+    description: "파견 후 18시간 후 확인할 수 있습니다.",
     category: "daily",
     resetType: "eighteenHours",
     maxCount: 1,
@@ -225,22 +225,10 @@ export const defaultTaskTemplates: TaskTemplate[] = [
     isDefault: true,
   }),
   task({
-    id: "grand-company-squadron-routine",
-    title: "총사령부 소대 일반 임무",
-    description: "완료 후 18시간이 지나면 다시 수행할 수 있습니다.",
-    category: "daily",
-    resetType: "eighteenHours",
-    maxCount: 1,
-    enabledByDefault: true,
-    characterScoped: true,
-    group: "lifestyle",
-    priority: 223,
-    isDefault: true,
-  }),
-  task({
     id: "grand-company-squadron-priority",
-    title: "총사령부 소대 중요 임무",
-    description: "주간 소대 중요 임무와 보상을 확인합니다.",
+    title: "총사령부 소대 특수 임무 확인",
+    description:
+      "파견 후 18시간 후 확인할 수 있습니다. 동일한 임무는 화요일 17:00에 초기화되며, 파견 실패 시 즉시 재파견할 수 있습니다.",
     category: "weekly",
     resetType: "weekly",
     maxCount: 1,

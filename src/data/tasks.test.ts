@@ -50,8 +50,24 @@ describe("default task reset rules", () => {
     expect(ids.has("grand-company-squadron-weekly")).toBe(false);
     expect(ids.has("daily-island-pasture")).toBe(true);
     expect(ids.has("weekly-island-workshop")).toBe(true);
-    expect(ids.has("grand-company-squadron-routine")).toBe(true);
+    expect(ids.has("grand-company-squadron-routine")).toBe(false);
     expect(ids.has("grand-company-squadron-priority")).toBe(true);
+  });
+
+  it("describes retainer and squadron checks from dispatch time", () => {
+    const byId = new Map(defaultTaskTemplates.map((task) => [task.id, task]));
+
+    expect(byId.get("daily-retainer")).toMatchObject({
+      title: "집사 수행 확인",
+      description: "파견 후 18시간 후 확인할 수 있습니다.",
+      resetRuleId: "interval-18h",
+    });
+    expect(byId.get("grand-company-squadron-priority")).toMatchObject({
+      title: "총사령부 소대 특수 임무 확인",
+      description:
+        "파견 후 18시간 후 확인할 수 있습니다. 동일한 임무는 화요일 17:00에 초기화되며, 파견 실패 시 즉시 재파견할 수 있습니다.",
+      resetRuleId: "weekly-tue-1700",
+    });
   });
 
   it("stores fashion availability and Wondrous Tails retention metadata", () => {

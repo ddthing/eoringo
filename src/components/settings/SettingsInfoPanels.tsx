@@ -1,4 +1,4 @@
-import { Bell, Info } from "lucide-react";
+import { Bell, ExternalLink, Info } from "lucide-react";
 
 export const NotificationSettingsPanel = () => (
   <section className="card space-y-3">
@@ -32,5 +32,20 @@ export const AppInfoPanel = () => (
       <Info aria-hidden size={16} />
       데이터는 직접 백업하거나 초기화하기 전까지 현재 브라우저에 보관됩니다.
     </div>
+    <div className="rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card-soft/55 p-3">
+      <p className="text-xs font-black uppercase tracking-[0.08em] text-primary">Credits</p>
+      <p className="mt-2 text-sm font-bold text-ink">Thanks to ADD, 꼭짓점, 미여워, KILL</p>
+      <p className="mt-1 text-xs font-semibold text-ink-muted">Special thanks to 루피</p>
+    </div>
+    <a
+      href="https://coner.luv3r.me/"
+      target="_blank"
+      rel="noreferrer"
+      className="secondary-button min-h-11 w-fit gap-1.5"
+      aria-label="문의하기, 새 탭에서 열림"
+    >
+      문의하기
+      <ExternalLink aria-hidden size={14} />
+    </a>
   </section>
 );
