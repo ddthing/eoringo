@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Pencil, Plus, Trash2, X } from "lucide-react";
 import { getDdayLabel } from "../../domain/dday/getDdayLabel";
 import {
   sortAnniversaries,
@@ -152,9 +152,9 @@ export const CalendarAnniversaryManager = () => {
             </div>
           </div>
         )) : (
-          <div className="rounded-[14px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/50 p-4 text-center">
-            <p className="text-sm font-bold text-ink-muted">등록된 기념일이 없습니다.</p>
-            <button type="button" className="mt-2 min-h-11 text-xs font-black text-primary" onClick={() => setIsFormOpen(true)}>기념일 추가</button>
+          <div className="home-empty-state min-h-20">
+            <CalendarDays aria-hidden size={17} />
+            <p>등록된 기념일이 없습니다.</p>
           </div>
         )}
       </div>

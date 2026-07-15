@@ -64,7 +64,7 @@ export const UpcomingAnniversaryWidget = () => {
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
           <p className="muted-label">기념일</p>
-          <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">기념일</h2>
+          <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">기념일 관리</h2>
         </div>
         <button
           type="button"
@@ -73,7 +73,7 @@ export const UpcomingAnniversaryWidget = () => {
           aria-expanded={isFormOpen}
         >
           {isFormOpen ? <X aria-hidden size={14} /> : <Plus aria-hidden size={14} />}
-          {isFormOpen ? "닫기" : "기록"}
+          {isFormOpen ? "닫기" : "추가"}
         </button>
       </div>
       {isFormOpen ? (
@@ -101,7 +101,7 @@ export const UpcomingAnniversaryWidget = () => {
       {upcomingEvents.length === 0 ? (
         <div className="home-empty-state min-h-20">
           <CalendarDays aria-hidden size={17} />
-          <p>다가오는 기념일이 없습니다.</p>
+          <p>등록된 기념일이 없습니다.</p>
         </div>
       ) : (
         <div className="grid gap-1.5">
