@@ -2,41 +2,49 @@
 
 ## Summary
 
-Add secure account authentication and remote synchronization so the same private app data is available on mobile and desktop. Existing data created before authentication is introduced must be recoverable into the user's first permanent account. The design prioritizes security, predictable maintenance, and recoverability over maximum feature breadth.
+Add secure account authentication and remote synchronization so the same private app data is available on mobile and desktop. Existing data created before authentication is introduced must be recoverable into the user's first permanent account. The design prioritizes security, zero-cost operation, predictable maintenance, and recoverability over maximum feature breadth.
 
 ## Goals
 
-- Support anonymous guest use, Google OAuth, X OAuth 2.0, and passwordless six-digit email OTP authentication.
+- Support anonymous guest use and Google OAuth in the first release.
 - Preserve a guest user's data when they attach a permanent sign-in method.
 - Allow existing browser-local data to be explicitly imported into the user's signed-in account.
 - Synchronize private user data across devices with conflict detection and offline recovery.
 - Minimize database schema and policy duplication while retaining strict per-user isolation.
 - Make security rules and migrations testable and reviewable as code.
+- Operate only within no-charge service tiers, with service restriction instead of automatic billing when limits are approached.
 
 ## Non-goals
 
 - Username-and-password authentication.
+- X OAuth or passwordless email authentication in the first release.
 - Public profiles, public data, or sharing data between users.
 - A custom authentication server.
 - Automatic merging of local data on shared devices without user confirmation.
 - Permanent deletion without a recovery window.
+- Paid plans, paid add-ons, custom domains, paid image transformations, phone MFA, or paid backup products.
+- Guaranteed uptime while relying on a free service tier.
 
 ## Authentication
 
-### Supported methods
+### First-release methods
 
 - Anonymous Supabase Auth user for guest mode.
 - Google OAuth.
-- X OAuth 2.0; legacy OAuth 1.0a is excluded.
-- Passwordless email using a six-digit OTP.
 - A user-selected nickname stored as profile data, not used as an authentication credential.
 - Optional TOTP MFA enrollment for permanent accounts.
 
-The app delegates credential storage, passwordless email delivery, OAuth sessions, token rotation, and identity verification to Supabase Auth. OAuth client secrets and privileged Supabase keys are never included in the browser bundle.
+The app delegates OAuth sessions, token rotation, and identity verification to Supabase Auth. OAuth client secrets and privileged Supabase keys are never included in the browser bundle.
+
+### Deferred methods
+
+X OAuth 2.0 and passwordless email OTP are not implemented or shown in the first release. The account and data model remains compatible with adding identities later, but no dormant provider code, SMTP dependency, X API request, or secret is shipped. A deferred provider requires a new design review that confirms its official no-charge terms, production suitability, security controls, and maintenance impact at that time.
+
+Supabase's built-in email sender is not used for public authentication because it is intended for testing, is restricted to authorized team addresses, and has a very low rate limit. X login is deferred because current X API access is usage-priced and therefore cannot satisfy a durable zero-cost guarantee.
 
 ### Guest conversion
 
-A new installation creates an anonymous authenticated user before accepting synchronized data. If a Google, X, or email identity is not already associated with another account, that identity is linked to the current anonymous user. The Supabase user ID remains unchanged, so the guest's data remains attached without copying it.
+A new installation creates an anonymous authenticated user before accepting synchronized data. If a Google identity is not already associated with another account, that identity is linked to the current anonymous user. The Supabase user ID remains unchanged, so the guest's data remains attached without copying it.
 
 ### Existing-account merge
 
@@ -114,21 +122,51 @@ Character-scoped documents additionally verify that the referenced character bel
 
 ### Abuse controls
 
-- CAPTCHA protects anonymous creation and email OTP requests.
+- CAPTCHA protects anonymous account creation.
 - Authentication and mutation endpoints use rate limits.
 - Anonymous-user creation is monitored. Empty anonymous accounts with no activity are cleaned up after 30 days; anonymous accounts containing user data are not automatically purged.
 - Payload limits prevent storage and processing exhaustion.
-- Logs redact tokens, cookies, OAuth codes, email OTPs, and user content.
+- Logs redact tokens, cookies, OAuth codes, and user content.
 - Dependency and secret scanning run in CI.
 
 ### Storage
 
-- Character images use a private bucket.
+- Character images use a private bucket. Uploads are limited to 768 by 768 pixels, 512 KiB per file, and 10 MiB total per user.
 - Object paths start with the authenticated user's immutable ID.
 - Storage policies enforce that the first path segment matches the authenticated user.
-- File type, decoded content, dimensions, and byte size are checked before acceptance.
+- A low-frequency Edge Function verifies file signature, decoded content, dimensions, ownership, and byte size before acceptance; client MIME metadata is not trusted.
 - Randomized object names prevent predictable overwrite behavior.
 - Database backups and Storage backups are treated separately because database backups do not include Storage objects.
+
+## Zero-Cost Operating Contract
+
+### Billing boundary
+
+- Use a Supabase Free organization and project only.
+- Do not attach a payment method for this project.
+- Do not enable a paid plan, paid add-on, custom domain, image transformation, phone MFA, point-in-time recovery, branching compute, or auto-upgrade behavior.
+- A quota or policy change must restrict the affected feature rather than activate billing.
+- Review official provider pricing and limits before every production release because free-tier terms can change.
+
+As of 2026-08-01, the design budget is below the published Supabase Free limits: 500 MB database storage, 1 GB file storage, 5 GB uncached plus 5 GB cached egress, 50,000 monthly active users, 500,000 Edge Function invocations, and two million Realtime messages. These values are planning inputs, not permanent guarantees.
+
+### Usage controls
+
+- Compress character images in the browser, then enforce the 512 KiB file and 10 MiB user limits again on the server.
+- Keep default task definitions in application code rather than duplicating them per user.
+- Use direct RLS-protected Data API operations for normal reads and writes.
+- Reserve Edge Functions for validated image upload, local-data migration, existing-account merge, and account deletion.
+- Do not use Realtime in the first release.
+- Record aggregate usage without logging user content or credentials.
+- The operator checks the provider usage dashboard monthly and before every release. At 70% of any storage or traffic quota, stop nonessential retention growth.
+- At 90%, use a documented feature flag to block new image uploads, keep existing data readable, and prominently offer data export.
+- If the provider restricts the project, preserve the local mutation queue, show a service-unavailable state, and retry only with bounded backoff.
+
+### Free-tier availability and backup
+
+Supabase may pause an inactive free project. The app treats this as a recoverable service interruption and preserves local queued changes until the project is resumed. The first release does not claim an uptime guarantee.
+
+The free plan does not provide the paid automatic-backup guarantees used by higher plans. Every user can export a complete portable backup including remote records and images. The app retains the last verified local snapshot and queued mutations. Before database migrations or destructive administrative work, the operator runs a documented manual logical export to an encrypted local destination. Backup restore is tested before release and after any backup-format change.
 
 ## Synchronization
 
@@ -150,9 +188,9 @@ Ordinary non-destructive changes use the newest valid update. Deletes, guest-to-
 ### Read and reconnect flow
 
 - Load the authenticated user's server documents at app startup.
-- Subscribe to relevant Supabase Realtime changes.
-- Treat Realtime as an invalidation signal and refetch the affected document instead of trusting event payloads as authoritative state.
-- Refetch after window focus, network restoration, token refresh, and Realtime reconnection.
+- Refetch after window focus, network restoration, token refresh, and an explicit manual refresh.
+- After a successful write, fetch the confirmed server document and revision.
+- A second device receives changes on its next focus, reconnect, app launch, or manual refresh; instant background propagation is intentionally excluded from the first release.
 - Show explicit `saved`, `syncing`, `offline`, `conflict`, and `error` states.
 
 ## Existing Local Data Migration
@@ -173,7 +211,7 @@ An import failure rolls back the remote transaction and preserves all local sour
 
 ## Error Handling and Recovery
 
-- Authentication cancellation returns to the unchanged guest session.
+- Google authentication cancellation returns to the unchanged guest session.
 - Expired merge tickets require restarting the merge; they are never refreshed automatically.
 - Network failures preserve queued local mutations and retry with bounded backoff.
 - Validation failures identify the affected domain without exposing internal schema or SQL details.
@@ -190,7 +228,7 @@ For every operation, user A must be unable to read, create for, modify, delete, 
 
 ### Authentication tests
 
-- Guest data survives linking a new Google, X, or email identity.
+- Guest data survives linking a new Google identity.
 - Cancelled OAuth leaves the guest session and data intact.
 - A previously used identity follows the explicit existing-account merge flow.
 - Expired, reused, tampered, or cross-user merge tickets fail.
@@ -202,7 +240,7 @@ For every operation, user A must be unable to read, create for, modify, delete, 
 - Simultaneous edits with matching and stale revisions.
 - Offline queue replay, duplicate mutation replay, and reconnect.
 - Delete-versus-update conflicts.
-- Realtime disconnect and refetch fallback.
+- Cross-device refresh on app launch, focus, reconnect, and manual refresh.
 
 ### Migration tests
 
@@ -212,18 +250,19 @@ For every operation, user A must be unable to read, create for, modify, delete, 
 - Idempotent retry with the same migration ID.
 - Digest verification and local-source retention.
 
-Security tests are release gates. A deployment is blocked if cross-user isolation, RLS, Storage policy, or privileged-key scanning tests fail.
+Security and zero-cost checks are release gates. A deployment is blocked if cross-user isolation, RLS, Storage policy, privileged-key scanning, provider-plan verification, or forbidden-paid-feature checks fail.
 
 ## Rollout
 
 1. Create a separate development Supabase project and local migration workflow.
 2. Add Auth and RLS with deny-by-default policies before connecting production data.
-3. Implement guest creation and permanent identity linking.
+3. Implement guest creation and Google identity linking.
 4. Implement versioned documents and synchronization behind a feature flag.
 5. Implement existing local-data migration and recovery.
 6. Implement existing-account merge and conflict review.
 7. Run automated authorization tests and a manual security review.
-8. Deploy to a limited test group, monitor failures and abuse signals, then expand gradually.
+8. Verify the organization is still on the Free plan with no payment method or paid add-on enabled.
+9. Deploy to a limited test group, monitor failures, abuse signals, and free-tier usage, then expand gradually.
 
 ## Security References
 
@@ -231,6 +270,10 @@ Security tests are release gates. A deployment is blocked if cross-user isolatio
 - Supabase data security: https://supabase.com/docs/guides/database/secure-data
 - Supabase anonymous sign-ins: https://supabase.com/docs/guides/auth/auth-anonymous
 - Supabase passwordless email: https://supabase.com/docs/guides/auth/auth-email-passwordless
+- Supabase custom SMTP limitations: https://supabase.com/docs/guides/auth/auth-smtp
 - Supabase X OAuth 2.0: https://supabase.com/docs/guides/auth/social-login/auth-twitter
 - Supabase TOTP MFA: https://supabase.com/docs/guides/auth/auth-mfa/totp
 - Supabase database-function security: https://supabase.com/docs/guides/database/functions
+- Supabase pricing: https://supabase.com/pricing
+- Supabase cost control: https://supabase.com/docs/guides/platform/cost-control
+- X API pricing: https://docs.x.com/x-api/getting-started/pricing
