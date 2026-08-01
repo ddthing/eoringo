@@ -8,6 +8,10 @@
     "build": "tsc -b && vite build",
     "check": "pnpm run test && pnpm run build",
     "preview": "vite preview",
+    "supabase:reset": "supabase db reset --local",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "test:db": "supabase test db",
     "test": "vitest run"
   },
   "dependencies": {
@@ -27,6 +31,7 @@
     "@types/react-dom": "^18.3.5",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
+    "supabase": "^2.111.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",

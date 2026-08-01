@@ -1,0 +1,1 @@
+-- Intentionally empty. Tests create isolated users and data inside transactions.
