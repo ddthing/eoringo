@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { importBackup, validateBackupPayload } from "./importBackup";
+import { clearCharacterImages, saveCharacterImageById } from "./imageStorage";
 import { storageKeys } from "./storage";
+
+vi.mock("./imageStorage", () => ({
+  clearCharacterImages: vi.fn().mockResolvedValue(undefined),
+  saveCharacterImageById: vi.fn().mockResolvedValue("character-image-test"),
+}));
 
 describe("validateBackupPayload", () => {
   afterEach(() => {
@@ -87,5 +93,42 @@ describe("validateBackupPayload", () => {
     });
 
     expect(setItem).toHaveBeenCalledWith(storageKeys.allowances, JSON.stringify(allowances));
+  });
+
+  it("restores every known storage key and character image", async () => {
+    const setItem = vi.fn();
+    const removeItem = vi.fn();
+    const values = Object.fromEntries(
+      Object.values(storageKeys).map((key, index) => [key, { state: { index }, version: 1 }]),
+    );
+    vi.stubGlobal("localStorage", { setItem, removeItem });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(new Blob(["image"], { type: "image/webp" }), { status: 200 }),
+      ),
+    );
+
+    await importBackup({
+      app: "FF14 Daily Board",
+      version: 6,
+      exportedAt: "2026-08-01T00:00:00.000Z",
+      data: values,
+      images: {
+        "character-image-test": {
+          type: "image/webp",
+          dataUrl: "data:image/webp;base64,aW1hZ2U=",
+        },
+      },
+    });
+
+    Object.entries(values).forEach(([key, value]) => {
+      expect(setItem).toHaveBeenCalledWith(key, JSON.stringify(value));
+    });
+    expect(clearCharacterImages).toHaveBeenCalledOnce();
+    expect(saveCharacterImageById).toHaveBeenCalledWith(
+      "character-image-test",
+      expect.objectContaining({ type: "image/webp" }),
+    );
   });
 });

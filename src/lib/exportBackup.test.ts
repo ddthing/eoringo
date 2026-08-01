@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { exportBackup } from "./exportBackup";
+import { getAllCharacterImages } from "./imageStorage";
 import { storageKeys } from "./storage";
 
 vi.mock("./imageStorage", () => ({
@@ -7,6 +8,7 @@ vi.mock("./imageStorage", () => ({
 }));
 
 afterEach(() => {
+  vi.mocked(getAllCharacterImages).mockResolvedValue({});
   vi.unstubAllGlobals();
 });
 
@@ -29,5 +31,41 @@ describe("exportBackup", () => {
     expect(backup.version).toBe(6);
     expect(backup.data[storageKeys.history]).toEqual(history);
     expect(backup.data[storageKeys.allowances]).toEqual(allowances);
+  });
+
+  it("exports every persisted storage key and IndexedDB character image", async () => {
+    const values = Object.fromEntries(
+      Object.values(storageKeys).map((key, index) => [key, { state: { index }, version: 1 }]),
+    );
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn((key: string) => JSON.stringify(values[key])),
+    });
+    vi.mocked(getAllCharacterImages).mockResolvedValueOnce({
+      "character-image-test": new Blob(["image"], { type: "image/webp" }),
+    });
+
+    class FileReaderMock {
+      result: string | ArrayBuffer | null = null;
+      error: DOMException | null = null;
+      onload: FileReader["onload"] = null;
+      onerror: FileReader["onerror"] = null;
+
+      readAsDataURL(blob: Blob) {
+        this.result = `data:${blob.type};base64,aW1hZ2U=`;
+        this.onload?.call(this as unknown as FileReader, {} as ProgressEvent<FileReader>);
+      }
+    }
+
+    vi.stubGlobal("FileReader", FileReaderMock);
+
+    const backup = await exportBackup();
+
+    expect(backup.data).toEqual(values);
+    expect(backup.images).toEqual({
+      "character-image-test": {
+        type: "image/webp",
+        dataUrl: "data:image/webp;base64,aW1hZ2U=",
+      },
+    });
   });
 });
