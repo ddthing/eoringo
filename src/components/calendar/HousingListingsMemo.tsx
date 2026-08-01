@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 
 const housingListingsSheetUrl =
-  "https://docs.google.com/spreadsheets/d/1Y0UiNqNyBfmLLjpQNLv2KOkQYnFXP8iipDJmODzyozg/edit";
+  "https://docs.google.com/spreadsheets/d/1RGvXw8fIwbY0F9xxZo-59cdtnJd80rWva5Z2ZYruEHY/edit?gid=935403919#gid=935403919";
 
 export const HousingListingsMemo = () => (
   <section className="calendar-panel p-4">
