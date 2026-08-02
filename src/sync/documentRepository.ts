@@ -1,0 +1,153 @@
+import { z } from "zod";
+import { documentCodecs, type DocumentType } from "./codecs";
+
+export type DocumentIdentity = {
+  documentType: DocumentType;
+  characterId: string | null;
+};
+
+export type RemoteDocument = DocumentIdentity & {
+  id: string;
+  payload: unknown;
+  schemaVersion: number;
+  revision: number;
+  updatedAt: string;
+};
+
+export type DocumentWrite = DocumentIdentity & {
+  payload: unknown;
+  schemaVersion: number;
+};
+
+export type DocumentUpdate = DocumentWrite & {
+  id: string;
+  expectedRevision: number;
+};
+
+export type DocumentUpdateResult =
+  | { ok: true; document: RemoteDocument }
+  | { ok: false; kind: "conflict"; current: RemoteDocument | null };
+
+export type RawDocumentRow = {
+  id: unknown;
+  user_id: unknown;
+  character_id: unknown;
+  document_type: unknown;
+  payload: unknown;
+  schema_version: unknown;
+  revision: unknown;
+  updated_at: unknown;
+  deleted_at: unknown;
+};
+
+export type DocumentDataSource = {
+  getVerifiedUserId: () => Promise<string>;
+  list: (userId: string) => Promise<RawDocumentRow[]>;
+  find: (userId: string, identity: DocumentIdentity) => Promise<RawDocumentRow | null>;
+  insert: (userId: string, write: DocumentWrite) => Promise<RawDocumentRow>;
+  update: (
+    userId: string,
+    update: DocumentUpdate,
+  ) => Promise<RawDocumentRow | null>;
+};
+
+const documentTypeSchema = z.enum([
+  "characters",
+  "tasks",
+  "dday",
+  "memo",
+  "allowance",
+  "history",
+]);
+
+const rowEnvelopeSchema = z
+  .object({
+    id: z.uuid(),
+    user_id: z.uuid(),
+    character_id: z.uuid().nullable(),
+    document_type: documentTypeSchema,
+    payload: z.unknown(),
+    schema_version: z.number().int().min(1).max(1000),
+    revision: z.number().int().nonnegative().safe(),
+    updated_at: z.iso.datetime({ offset: true }),
+    deleted_at: z.iso.datetime({ offset: true }).nullable(),
+  })
+  .strict();
+
+const assertWrite = (write: DocumentWrite): DocumentWrite => {
+  const codec = documentCodecs[write.documentType];
+
+  if (write.schemaVersion !== codec.schemaVersion) {
+    throw new Error("Unsupported document schema version.");
+  }
+
+  return {
+    ...write,
+    payload: codec.parse(write.payload),
+  };
+};
+
+const decodeRow = (row: RawDocumentRow, expectedUserId: string): RemoteDocument => {
+  const envelope = rowEnvelopeSchema.parse(row);
+
+  if (envelope.user_id !== expectedUserId || envelope.deleted_at !== null) {
+    throw new Error("Document ownership or lifecycle verification failed.");
+  }
+
+  const codec = documentCodecs[envelope.document_type];
+
+  if (envelope.schema_version !== codec.schemaVersion) {
+    throw new Error("Unsupported document schema version.");
+  }
+
+  return {
+    id: envelope.id,
+    characterId: envelope.character_id,
+    documentType: envelope.document_type,
+    payload: codec.parse(envelope.payload),
+    schemaVersion: envelope.schema_version,
+    revision: envelope.revision,
+    updatedAt: envelope.updated_at,
+  };
+};
+
+export const createDocumentRepository = (source: DocumentDataSource) => ({
+  async list(): Promise<RemoteDocument[]> {
+    const userId = await source.getVerifiedUserId();
+    const rows = await source.list(userId);
+
+    return rows.map((row) => decodeRow(row, userId));
+  },
+
+  async find(identity: DocumentIdentity): Promise<RemoteDocument | null> {
+    const userId = await source.getVerifiedUserId();
+    const row = await source.find(userId, identity);
+
+    return row ? decodeRow(row, userId) : null;
+  },
+
+  async insert(write: DocumentWrite): Promise<RemoteDocument> {
+    const validated = assertWrite(write);
+    const userId = await source.getVerifiedUserId();
+    const row = await source.insert(userId, validated);
+
+    return decodeRow(row, userId);
+  },
+
+  async update(update: DocumentUpdate): Promise<DocumentUpdateResult> {
+    const validated = assertWrite(update);
+    const userId = await source.getVerifiedUserId();
+    const row = await source.update(userId, { ...update, ...validated });
+
+    if (row) {
+      return { ok: true, document: decodeRow(row, userId) };
+    }
+
+    const current = await source.find(userId, update);
+    return {
+      ok: false,
+      kind: "conflict",
+      current: current ? decodeRow(current, userId) : null,
+    };
+  },
+});
