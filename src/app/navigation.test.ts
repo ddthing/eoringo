@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  authCallbackPath,
   bottomNavItems,
   charactersSettingsTarget,
   legacyCharactersPath,
@@ -19,5 +20,9 @@ describe("navigation structure", () => {
   it("keeps the legacy character URL mapped to the Settings character anchor", () => {
     expect(legacyCharactersPath).toBe("/characters");
     expect(charactersSettingsTarget).toBe("/settings#characters");
+  });
+
+  it("uses one exact OAuth callback path", () => {
+    expect(authCallbackPath).toBe("/auth/callback");
   });
 });

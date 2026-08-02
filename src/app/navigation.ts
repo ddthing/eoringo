@@ -7,3 +7,4 @@ export const bottomNavItems = [
 
 export const legacyCharactersPath = "/characters";
 export const charactersSettingsTarget = "/settings#characters";
+export const authCallbackPath = "/auth/callback";

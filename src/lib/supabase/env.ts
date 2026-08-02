@@ -8,6 +8,7 @@ export type RemoteSyncEnvironment =
       imageUploadsEnabled: boolean;
       supabaseUrl: string;
       publishableKey: string;
+      turnstileSiteKey: string;
     };
 
 type EnvironmentSource = Record<string, string | boolean | undefined>;
@@ -65,6 +66,7 @@ export const parseRemoteSyncEnvironment = (
 
   const rawUrl = source.VITE_SUPABASE_URL;
   const publishableKey = source.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const turnstileSiteKey = source.VITE_TURNSTILE_SITE_KEY;
 
   if (typeof rawUrl !== "string" || !rawUrl.trim()) {
     throw new Error("VITE_SUPABASE_URL is required when remote sync is enabled.");
@@ -72,6 +74,13 @@ export const parseRemoteSyncEnvironment = (
 
   if (typeof publishableKey !== "string" || !isPublishableKey(publishableKey)) {
     throw new Error("VITE_SUPABASE_PUBLISHABLE_KEY must be a publishable Supabase key.");
+  }
+
+  if (
+    typeof turnstileSiteKey !== "string" ||
+    !/^[A-Za-z0-9_-]{20,128}$/.test(turnstileSiteKey)
+  ) {
+    throw new Error("VITE_TURNSTILE_SITE_KEY is required when remote sync is enabled.");
   }
 
   let supabaseUrl: URL;
@@ -97,6 +106,7 @@ export const parseRemoteSyncEnvironment = (
     imageUploadsEnabled,
     supabaseUrl: supabaseUrl.toString().replace(/\/$/, ""),
     publishableKey,
+    turnstileSiteKey,
   };
 };
 

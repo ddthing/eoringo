@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseRemoteSyncEnvironment } from "./env";
 
 const publishableKey = "sb_publishable_test-value";
+const turnstileSiteKey = "1x00000000000000000000AA";
 
 describe("parseRemoteSyncEnvironment", () => {
   it("keeps the app safely local-only when remote sync is disabled", () => {
@@ -24,6 +25,7 @@ describe("parseRemoteSyncEnvironment", () => {
           VITE_IMAGE_UPLOADS_ENABLED: "true",
           VITE_SUPABASE_URL: "http://127.0.0.1:54321/",
           VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+          VITE_TURNSTILE_SITE_KEY: turnstileSiteKey,
         },
         { production: false },
       ),
@@ -32,6 +34,7 @@ describe("parseRemoteSyncEnvironment", () => {
       imageUploadsEnabled: true,
       supabaseUrl: "http://127.0.0.1:54321",
       publishableKey,
+      turnstileSiteKey,
     });
   });
 
@@ -42,20 +45,29 @@ describe("parseRemoteSyncEnvironment", () => {
           VITE_REMOTE_SYNC_ENABLED: "true",
           VITE_SUPABASE_URL: "https://project.supabase.co",
           VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+          VITE_TURNSTILE_SITE_KEY: turnstileSiteKey,
         },
         { production: true },
       ),
-    ).toMatchObject({ enabled: true, imageUploadsEnabled: false });
+    ).toMatchObject({ enabled: true, imageUploadsEnabled: false, turnstileSiteKey });
   });
 
   it.each([
-    ["missing URL", { VITE_REMOTE_SYNC_ENABLED: "true", VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey }],
+    [
+      "missing URL",
+      {
+        VITE_REMOTE_SYNC_ENABLED: "true",
+        VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+        VITE_TURNSTILE_SITE_KEY: turnstileSiteKey,
+      },
+    ],
     [
       "malformed key",
       {
         VITE_REMOTE_SYNC_ENABLED: "true",
         VITE_SUPABASE_URL: "https://project.supabase.co",
         VITE_SUPABASE_PUBLISHABLE_KEY: "not-a-publishable-key",
+        VITE_TURNSTILE_SITE_KEY: turnstileSiteKey,
       },
     ],
     [
@@ -63,6 +75,15 @@ describe("parseRemoteSyncEnvironment", () => {
       {
         VITE_REMOTE_SYNC_ENABLED: "true",
         VITE_SUPABASE_URL: "http://localhost:54321",
+        VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+        VITE_TURNSTILE_SITE_KEY: turnstileSiteKey,
+      },
+    ],
+    [
+      "missing CAPTCHA site key",
+      {
+        VITE_REMOTE_SYNC_ENABLED: "true",
+        VITE_SUPABASE_URL: "https://project.supabase.co",
         VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
       },
     ],

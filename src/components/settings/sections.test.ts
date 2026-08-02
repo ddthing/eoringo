@@ -7,6 +7,7 @@ describe("Settings sections", () => {
       "characters",
       "theme",
       "notifications",
+      "account",
       "backup",
       "data",
       "about",
@@ -16,6 +17,7 @@ describe("Settings sections", () => {
   it("recognizes known hashes and ignores unknown anchors", () => {
     expect(getSettingsSectionId("#characters")).toBe("characters");
     expect(getSettingsSectionId("#about")).toBe("about");
+    expect(getSettingsSectionId("#account")).toBe("account");
     expect(getSettingsSectionId("#unknown")).toBeNull();
     expect(getSettingsSectionId("")).toBeNull();
   });

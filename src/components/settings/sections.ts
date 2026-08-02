@@ -2,6 +2,7 @@ export const settingsSectionIds = [
   "characters",
   "theme",
   "notifications",
+  "account",
   "backup",
   "data",
   "about",

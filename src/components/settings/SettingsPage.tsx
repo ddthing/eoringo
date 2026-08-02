@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { AccountPanel } from "../auth/AccountPanel";
 import { CharacterManager } from "../characters/CharacterManager";
 import { DataSettingsPanel } from "./BackupRestorePanel";
 import { AppInfoPanel, NotificationSettingsPanel } from "./SettingsInfoPanels";
@@ -66,6 +67,9 @@ export const SettingsPage = () => {
       </div>
       <div id="notifications" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)]">
         <NotificationSettingsPanel />
+      </div>
+      <div id="account" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)]">
+        <AccountPanel />
       </div>
       <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)]">
         <DataSettingsPanel />

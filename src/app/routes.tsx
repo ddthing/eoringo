@@ -1,5 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { charactersSettingsTarget, legacyCharactersPath } from "./navigation";
+import {
+  authCallbackPath,
+  charactersSettingsTarget,
+  legacyCharactersPath,
+} from "./navigation";
+import { AuthCallbackPage } from "../components/auth/AuthCallbackPage";
 import { CalendarPage } from "../components/calendar/CalendarPage";
 import { HomeDashboard } from "../components/home/HomeDashboard";
 import { SettingsPage } from "../components/settings/SettingsPage";
@@ -20,6 +25,7 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
       { path: "tasks", element: <TaskManagerPage /> },
       { path: "tasks/manage", element: <TaskManagementPage /> },
       { path: "calendar", element: <CalendarPage /> },
+      { path: authCallbackPath.slice(1), element: <AuthCallbackPage /> },
       { path: legacyCharactersPath.slice(1), element: <CharactersCompatibilityRedirect /> },
       { path: "settings", element: <SettingsPage /> },
     ],
