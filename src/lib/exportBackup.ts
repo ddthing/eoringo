@@ -8,10 +8,14 @@ export type BackupImagePayload = {
 
 export type BackupPayload = {
   app: "에오링고";
-  version: 6;
+  version: 7;
   exportedAt: string;
   data: Record<string, unknown>;
   images: Record<string, BackupImagePayload>;
+  manifest: {
+    storageKeyCount: number;
+    imageCount: number;
+  };
 };
 
 const readBackupValue = (key: string) => {
@@ -52,15 +56,22 @@ export const exportBackup = async (): Promise<BackupPayload> => {
     ] as const),
   );
 
+  const data = Object.fromEntries(
+    Object.values(storageKeys).map((key) => {
+      return [key, readBackupValue(key)];
+    }),
+  );
+  const imagePayloads = Object.fromEntries(imagePayloadEntries);
+
   return {
     app: "에오링고",
-    version: 6,
+    version: 7,
     exportedAt: new Date().toISOString(),
-    data: Object.fromEntries(
-      Object.values(storageKeys).map((key) => {
-        return [key, readBackupValue(key)];
-      }),
-    ),
-    images: Object.fromEntries(imagePayloadEntries),
+    data,
+    images: imagePayloads,
+    manifest: {
+      storageKeyCount: Object.keys(data).length,
+      imageCount: Object.keys(imagePayloads).length,
+    },
   };
 };

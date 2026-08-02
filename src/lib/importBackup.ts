@@ -8,7 +8,7 @@ type BackupImagePayload = {
 
 type SupportedBackupPayload = {
   app: "에오링고" | "FF14 Daily Board";
-  version: 1 | 2 | 3 | 4 | 5 | 6;
+  version: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   exportedAt: string;
   data: Record<string, unknown>;
   images?: Record<string, BackupImagePayload>;
@@ -16,12 +16,21 @@ type SupportedBackupPayload = {
 
 const knownKeys = new Set<string>(Object.values(storageKeys));
 const supportedAppNames = new Set(["에오링고", "FF14 Daily Board"]);
+const supportedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const maxBackupImages = 50;
+const maxEncodedImageLength = 28 * 1024 * 1024;
+const maxDecodedImageBytes = 20 * 1024 * 1024;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isBackupImagePayload = (value: unknown): value is BackupImagePayload =>
-  isRecord(value) && typeof value.type === "string" && typeof value.dataUrl === "string";
+  isRecord(value) &&
+  typeof value.type === "string" &&
+  supportedImageTypes.has(value.type) &&
+  typeof value.dataUrl === "string" &&
+  value.dataUrl.length <= maxEncodedImageLength &&
+  value.dataUrl.startsWith(`data:${value.type};base64,`);
 
 const normalizeImages = (images: unknown) => {
   if (images === undefined) {
@@ -32,12 +41,22 @@ const normalizeImages = (images: unknown) => {
     throw new Error("백업 이미지 데이터가 올바르지 않습니다.");
   }
 
-  return Object.fromEntries(
-    Object.entries(images).filter(
-      (entry): entry is [string, BackupImagePayload] =>
-        typeof entry[0] === "string" && isBackupImagePayload(entry[1]),
-    ),
-  );
+  const entries = Object.entries(images);
+
+  if (
+    entries.length > maxBackupImages ||
+    entries.some(
+      ([imageId, image]) =>
+        imageId.length < 1 ||
+        imageId.length > 128 ||
+        ["__proto__", "constructor", "prototype"].includes(imageId) ||
+        !isBackupImagePayload(image),
+    )
+  ) {
+    throw new Error("백업 이미지 데이터가 올바르지 않습니다.");
+  }
+
+  return Object.fromEntries(entries) as Record<string, BackupImagePayload>;
 };
 
 export const validateBackupPayload = (payload: unknown): SupportedBackupPayload => {
@@ -48,7 +67,7 @@ export const validateBackupPayload = (payload: unknown): SupportedBackupPayload 
   if (
     typeof payload.app !== "string" ||
     !supportedAppNames.has(payload.app) ||
-    ![1, 2, 3, 4, 5, 6].includes(Number(payload.version))
+    ![1, 2, 3, 4, 5, 6, 7].includes(Number(payload.version))
   ) {
     throw new Error("지원하지 않는 백업 파일입니다.");
   }
@@ -59,7 +78,7 @@ export const validateBackupPayload = (payload: unknown): SupportedBackupPayload 
 
   return {
     app: payload.app as SupportedBackupPayload["app"],
-    version: Number(payload.version) as 1 | 2 | 3 | 4 | 5 | 6,
+    version: Number(payload.version) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
     exportedAt: typeof payload.exportedAt === "string" ? payload.exportedAt : "",
     data: payload.data,
     images: normalizeImages(payload.images),
@@ -74,6 +93,10 @@ const dataUrlToBlob = async (image: BackupImagePayload) => {
   }
 
   const blob = await response.blob();
+
+  if (!supportedImageTypes.has(blob.type || image.type) || blob.size > maxDecodedImageBytes) {
+    throw new Error("백업 이미지의 형식 또는 크기가 올바르지 않습니다.");
+  }
 
   return blob.type ? blob : new Blob([await blob.arrayBuffer()], { type: image.type });
 };

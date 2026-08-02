@@ -65,6 +65,32 @@ describe("validateBackupPayload", () => {
     );
   });
 
+  it("rejects remote or mismatched image URLs in backup files", () => {
+    expect(() =>
+      validateBackupPayload({
+        app: "에오링고",
+        version: 7,
+        exportedAt: "",
+        data: {},
+        images: {
+          image: { type: "image/webp", dataUrl: "https://attacker.example/image.webp" },
+        },
+      }),
+    ).toThrow("백업 이미지 데이터가 올바르지 않습니다.");
+
+    expect(() =>
+      validateBackupPayload({
+        app: "에오링고",
+        version: 7,
+        exportedAt: "",
+        data: {},
+        images: {
+          image: { type: "image/png", dataUrl: "data:image/webp;base64,aW1hZ2U=" },
+        },
+      }),
+    ).toThrow("백업 이미지 데이터가 올바르지 않습니다.");
+  });
+
   it("restores History from version 5 backups", async () => {
     const history = { state: { entriesByDate: {} }, version: 1 };
     const setItem = vi.fn();
