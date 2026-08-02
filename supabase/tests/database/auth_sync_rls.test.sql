@@ -97,17 +97,15 @@ select is(
   'owned document updates increment revision server-side'
 );
 
-select is(
-  (
-    with changed as (
+select results_eq(
+  $$with changed as (
       update public.user_documents
       set payload = '{}'::jsonb
       where user_id = '00000000-0000-0000-0000-000000000002'
       returning 1
     )
-    select count(*) from changed
-  ),
-  0::bigint,
+    select count(*)::bigint from changed$$,
+  $$values (0::bigint)$$,
   'user A cannot update user B document'
 );
 
