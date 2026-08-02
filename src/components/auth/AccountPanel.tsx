@@ -1,9 +1,16 @@
 import { CloudOff, Link2, LoaderCircle, ShieldCheck, UserRound } from "lucide-react";
-import { useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useState } from "react";
 import type { AuthErrorCode } from "../../auth/authTypes";
 import { useAuth } from "../../auth/useAuth";
 import { remoteSyncEnvironment } from "../../lib/supabase/env";
 import { CaptchaGate } from "./CaptchaGate";
+import { SyncStatus } from "../sync/SyncStatus";
+
+const LocalMigrationLauncher = lazy(() =>
+  import("../sync/LocalMigrationLauncher").then((module) => ({
+    default: module.LocalMigrationLauncher,
+  })),
+);
 
 const errorMessages: Record<AuthErrorCode, string> = {
   "account-merge-required":
@@ -128,6 +135,14 @@ export const AccountPanel = () => {
           {isBusy ? "계정 확인 중" : "Google 계정 연결"}
         </button>
       ) : null}
+
+      {isPermanent && auth.userId ? (
+        <Suspense fallback={<p className="text-sm text-ink-muted">데이터 확인 준비 중</p>}>
+          <LocalMigrationLauncher userId={auth.userId} />
+        </Suspense>
+      ) : null}
+
+      <SyncStatus />
 
       {auth.status === "error" ? (
         <button type="button" className="secondary-button" onClick={auth.retry}>

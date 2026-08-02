@@ -147,6 +147,34 @@ export const createMutationQueue = (
     return next;
   },
 
+  upsertLatest(input: SyncMutation): SyncMutation[] {
+    const mutation = parseSyncMutation(input);
+    const queue = parseQueue(storage.getItem(key));
+    const existing = queue.find(
+      (item) =>
+        item.documentType === mutation.documentType &&
+        item.characterId === mutation.characterId,
+    );
+    const replacement = existing
+      ? {
+          ...mutation,
+          mutationId: existing.mutationId,
+          operation: existing.operation,
+          documentId: existing.documentId,
+          expectedRevision: existing.expectedRevision,
+          createdAt: existing.createdAt,
+          retryCount: 0,
+        }
+      : mutation;
+    const next = existing
+      ? queue.map((item) =>
+          item.mutationId === existing.mutationId ? parseSyncMutation(replacement) : item,
+        )
+      : [...queue, replacement];
+    persistQueue(storage, key, next);
+    return next;
+  },
+
   remove(mutationId: string): SyncMutation[] {
     const queue = parseQueue(storage.getItem(key));
     const next = queue.filter((mutation) => mutation.mutationId !== mutationId);

@@ -40,6 +40,32 @@ describe("durable mutation queue", () => {
     expect(queue.enqueue(mutation)).toHaveLength(1);
   });
 
+  it("coalesces repeated edits without advancing the expected server revision", () => {
+    const queue = createMutationQueue(makeStorage());
+    const first = {
+      ...mutation,
+      operation: "update" as const,
+      documentId: "00000000-0000-4000-8000-000000000010",
+      expectedRevision: 4,
+    };
+    queue.upsertLatest(first);
+
+    expect(
+      queue.upsertLatest({
+        ...first,
+        mutationId: "00000000-0000-4000-8000-000000000002",
+        payload: { memosByCharacter: { character: "newest" } },
+        expectedRevision: 5,
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        mutationId: first.mutationId,
+        expectedRevision: 4,
+        payload: { memosByCharacter: { character: "newest" } },
+      }),
+    ]);
+  });
+
   it("rejects credentials and unknown envelope fields", () => {
     const queue = createMutationQueue(makeStorage());
 

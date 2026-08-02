@@ -16,6 +16,7 @@ const textExtensions = new Set([
   ".json",
   ".jsx",
   ".mjs",
+  ".md",
   ".sql",
   ".toml",
   ".ts",
@@ -67,6 +68,7 @@ const failures = [];
 
 roots
   .flatMap(collectFiles)
+  .filter((path) => !path.endsWith("verify-no-secrets.mjs"))
   .filter((path) => textExtensions.has(getExtension(path)))
   .forEach((path) => {
     const content = readFileSync(path, "utf8");

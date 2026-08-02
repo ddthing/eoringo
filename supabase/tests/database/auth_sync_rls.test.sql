@@ -36,7 +36,7 @@ values
   ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'character-b', 'B', 'Chocobo', true);
 
 insert into public.user_documents (user_id, document_type, payload, schema_version)
-values ('00000000-0000-0000-0000-000000000002', 'memo', '{}'::jsonb, 1);
+values ('00000000-0000-0000-0000-000000000002', 'memo', '{"memosByCharacter":{}}'::jsonb, 1);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);

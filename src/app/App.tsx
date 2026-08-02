@@ -16,6 +16,7 @@ import {
 } from "../lib/color";
 import { useAllowanceStore } from "../stores/useAllowanceStore";
 import { useThemeStore } from "../stores/useThemeStore";
+import { useRemoteSync } from "../sync/useRemoteSync";
 import { getRouteErrorBoundaryKey } from "./errorBoundaryReset";
 
 export const App = () => {
@@ -27,8 +28,13 @@ export const App = () => {
     window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
   const resolvedAppearance = resolveAppearance(appearanceMode, systemPrefersDark);
+  const remoteHydrationReady = useRemoteSync();
 
   useEffect(() => {
+    if (!remoteHydrationReady) {
+      return undefined;
+    }
+
     const sync = () => {
       try {
         syncHistoryAndResets();
@@ -42,7 +48,7 @@ export const App = () => {
     const timerId = window.setInterval(sync, 60_000);
 
     return () => window.clearInterval(timerId);
-  }, []);
+  }, [remoteHydrationReady]);
 
   useEffect(() => {
     if (appearanceMode !== "system") {
