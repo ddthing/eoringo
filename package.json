@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "check": "pnpm run test && pnpm run build",
+    "check": "pnpm run test && pnpm run verify:security && pnpm run verify:free-tier && pnpm run build && pnpm run verify:bundle",
     "preview": "vite preview",
     "supabase:reset": "supabase db reset --local",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "test:db": "supabase test db",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:bundle": "node scripts/verify-no-secrets.mjs dist",
+    "verify:free-tier": "node scripts/verify-no-paid-features.mjs",
+    "verify:security": "node scripts/verify-no-secrets.mjs src supabase .env.example"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.111.0",
