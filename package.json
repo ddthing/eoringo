@@ -6,17 +6,22 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "check": "pnpm run test && pnpm run verify:security && pnpm run verify:free-tier && pnpm run build && pnpm run verify:bundle",
+    "check": "pnpm run test && pnpm run orchestrator:typecheck && pnpm run orchestrator:test && pnpm run orchestrator:build && pnpm run verify:security && pnpm run verify:free-tier && pnpm run build && pnpm run verify:bundle",
     "preview": "vite preview",
     "supabase:reset": "supabase db reset --local",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "test:db": "supabase test db",
     "test:migration-local": "node scripts/test-local-migration.mjs",
+    "orchestrator:build": "pnpm --dir tools/codex-orchestrator run build",
+    "orchestrator:typecheck": "pnpm --dir tools/codex-orchestrator run typecheck",
+    "orchestrator:test": "pnpm --dir tools/codex-orchestrator run test",
+    "orchestrator:mock": "pnpm --dir tools/codex-orchestrator run test:mock",
+    "orchestrator:doctor": "pnpm --dir tools/codex-orchestrator run cli -- doctor",
     "test": "vitest run",
     "verify:bundle": "node scripts/verify-no-secrets.mjs dist",
     "verify:free-tier": "node scripts/verify-no-paid-features.mjs",
-    "verify:security": "node scripts/verify-no-secrets.mjs src supabase scripts docs .env.example"
+    "verify:security": "node scripts/verify-no-secrets.mjs src supabase scripts tools docs .env.example"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.111.0",

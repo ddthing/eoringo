@@ -21,3 +21,6 @@ Thumbs.db
 
 # Build metadata
 *.tsbuildinfo
+
+# Local Codex orchestrator run state and isolated workspaces
+.codex-orchestrator/
