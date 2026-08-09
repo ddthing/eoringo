@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, mkdtemp, readdir, readFile, stat } from "node:fs/promises";
-import { basename, join, relative, resolve, sep } from "node:path";
+import { cp, mkdtemp, readdir, readFile } from "node:fs/promises";
+import { basename, join, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { OrchestratorError } from "./errors.js";
 import type { PlanTask } from "./types.js";
@@ -30,6 +30,8 @@ const run = async (command: string, args: string[], cwd: string, allowFailure = 
 
 const git = (cwd: string, args: string[], allowFailure = false) => run("git", args, cwd, allowFailure);
 const normalize = (value: string): string => value.replaceAll("\\", "/").replace(/^\.\//, "");
+const pathsOverlap = (left: string, right: string): boolean =>
+  left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
 const safeName = (value: string): string => value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "task";
 
 const globRegex = (pattern: string): RegExp => {
@@ -87,6 +89,8 @@ const listHashes = async (root: string): Promise<Map<string, string>> => {
 export interface WorkspaceHandle {
   kind: "git" | "copy";
   path: string;
+  /** The directory the worker may use as its cwd; differs from path for repo subdirectories. */
+  workingPath: string;
   branch: string | null;
   taskId: string;
   baseline?: Map<string, string>;
@@ -101,6 +105,7 @@ export interface WorkspaceFinalizeResult {
 export class WorkspaceManager {
   readonly sourceCwd: string;
   readonly repoRoot: string | null;
+  readonly repoRelativeCwd: string;
   readonly baseCommit: string | null;
   readonly initialDirtyPaths: string[];
   readonly runId: string;
@@ -109,6 +114,7 @@ export class WorkspaceManager {
   private constructor(params: {
     sourceCwd: string;
     repoRoot: string | null;
+    repoRelativeCwd: string;
     baseCommit: string | null;
     initialDirtyPaths: string[];
     runId: string;
@@ -117,6 +123,7 @@ export class WorkspaceManager {
     Object.assign(this, params);
     this.sourceCwd = params.sourceCwd;
     this.repoRoot = params.repoRoot;
+    this.repoRelativeCwd = params.repoRelativeCwd;
     this.baseCommit = params.baseCommit;
     this.initialDirtyPaths = params.initialDirtyPaths;
     this.runId = params.runId;
@@ -128,11 +135,19 @@ export class WorkspaceManager {
     const inside = await git(cwd, ["rev-parse", "--is-inside-work-tree"], true);
     const tempRoot = await mkdtemp(join(tmpdir(), `codex-orchestrator-${safeName(runId)}-`));
     if (inside.code !== 0 || inside.stdout.trim() !== "true") {
-      return new WorkspaceManager({ sourceCwd: cwd, repoRoot: null, baseCommit: null, initialDirtyPaths: [], runId, tempRoot });
+      return new WorkspaceManager({ sourceCwd: cwd, repoRoot: null, repoRelativeCwd: ".", baseCommit: null, initialDirtyPaths: [], runId, tempRoot });
     }
     const root = (await git(cwd, ["rev-parse", "--show-toplevel"])).stdout.trim();
     const head = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
-    return new WorkspaceManager({ sourceCwd: cwd, repoRoot: root, baseCommit: head, initialDirtyPaths: await statusPaths(root), runId, tempRoot });
+    return new WorkspaceManager({
+      sourceCwd: cwd,
+      repoRoot: root,
+      repoRelativeCwd: normalize(relative(root, cwd)) || ".",
+      baseCommit: head,
+      initialDirtyPaths: await statusPaths(root),
+      runId,
+      tempRoot,
+    });
   }
 
   async createWorkspace(task: PlanTask, attempt: number, dependencyCommits: string[] = []): Promise<WorkspaceHandle> {
@@ -141,13 +156,26 @@ export class WorkspaceManager {
       const branch = `codex/orchestrator/${safeName(this.runId)}/${safeName(task.id)}-a${attempt}`;
       await git(this.repoRoot, ["worktree", "add", "-b", branch, directory, this.baseCommit]);
       for (const commit of dependencyCommits) await git(directory, ["cherry-pick", commit]);
-      return { kind: "git", path: directory, branch, taskId: task.id };
+      return {
+        kind: "git",
+        path: directory,
+        workingPath: this.repoRelativeCwd === "." ? directory : join(directory, this.repoRelativeCwd),
+        branch,
+        taskId: task.id,
+      };
     }
     await cp(this.sourceCwd, directory, {
       recursive: true,
       filter: (source) => ![".git", "node_modules", ".codex-orchestrator", "dist"].includes(basename(source)),
     });
-    return { kind: "copy", path: directory, branch: null, taskId: task.id, baseline: await listHashes(directory) };
+    return {
+      kind: "copy",
+      path: directory,
+      workingPath: directory,
+      branch: null,
+      taskId: task.id,
+      baseline: await listHashes(directory),
+    };
   }
 
   async finalizeWorkspace(handle: WorkspaceHandle, task: PlanTask): Promise<WorkspaceFinalizeResult> {
@@ -174,11 +202,11 @@ export class WorkspaceManager {
 
   async applyCommits(commits: string[]): Promise<string[]> {
     if (!this.repoRoot) throw new OrchestratorError("NON_GIT_APPLY_UNSUPPORTED", "Git 저장소가 아닌 작업공간에는 안전한 자동 적용을 지원하지 않습니다.");
-    const currentDirty = await statusPaths(this.repoRoot);
     const applied: string[] = [];
     for (const commit of commits) {
       const files = await commitFiles(this.repoRoot, commit);
-      const conflicts = files.filter((file) => currentDirty.includes(file));
+      const currentDirty = await statusPaths(this.repoRoot);
+      const conflicts = files.filter((file) => currentDirty.some((dirtyPath) => pathsOverlap(file, dirtyPath)));
       if (conflicts.length) throw new OrchestratorError("USER_CHANGES_CONFLICT", `사용자 변경과 겹쳐 적용을 중단했습니다: ${conflicts.join(", ")}`);
       const result = await git(this.repoRoot, ["cherry-pick", commit], true);
       if (result.code !== 0) {
@@ -191,7 +219,10 @@ export class WorkspaceManager {
   }
 
   #assertAllowed(changed: string[], task: PlanTask): void {
-    const unauthorized = changed.filter((file) => !pathAllowed(file, task.writableFiles));
+    const writableFiles = this.repoRoot && this.repoRelativeCwd !== "."
+      ? task.writableFiles.map((file) => normalize(join(this.repoRelativeCwd, file)))
+      : task.writableFiles;
+    const unauthorized = changed.filter((file) => !pathAllowed(file, writableFiles));
     if (unauthorized.length) {
       throw new OrchestratorError("UNAUTHORIZED_FILE_CHANGE", `${task.id}가 허용되지 않은 파일을 변경했습니다: ${unauthorized.join(", ")}`);
     }

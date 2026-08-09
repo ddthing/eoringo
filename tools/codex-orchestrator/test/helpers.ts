@@ -45,5 +45,7 @@ export const clearMockEnvironment = () => {
     "MOCK_MISSING_MODEL",
     "MOCK_REROUTE",
     "MOCK_TRACE_FILE",
+    "MOCK_THREAD_MODEL",
+    "MOCK_OMIT_RESULT_MODEL",
   ]) delete process.env[key];
 };

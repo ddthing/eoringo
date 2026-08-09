@@ -50,4 +50,22 @@ describe("WorkspaceManager", () => {
     await expect(manager.applyCommits([result.commit!])).rejects.toMatchObject({ code: "USER_CHANGES_CONFLICT" });
     expect((await runCommand("git", ["status", "--porcelain"], cwd)).stdout).toContain("README.md");
   });
+
+  it("keeps a repository subdirectory as the worker cwd and maps its allowlist", async () => {
+    const root = await createGitRepo();
+    const app = join(root, "app");
+    await mkdir(app, { recursive: true });
+    await writeFile(join(app, "README.md"), "app\n", "utf8");
+    await runCommand("git", ["add", "."], root);
+    await runCommand("git", ["commit", "-m", "add app"], root);
+
+    const manager = await WorkspaceManager.create(app, "subdir-run");
+    const task: PlanTask = { ...makeTask(), writableFiles: ["generated.md"] };
+    const handle = await manager.createWorkspace(task, 1);
+    expect(handle.workingPath).toBe(join(handle.path, "app"));
+    await writeFile(join(handle.workingPath, "generated.md"), "generated\n", "utf8");
+    const result = await manager.finalizeWorkspace(handle, task);
+    expect(result.changedFiles).toEqual(["app/generated.md"]);
+  });
+
 });

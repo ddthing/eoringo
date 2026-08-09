@@ -72,7 +72,10 @@ export interface PreflightResult {
   models: ModelEntry[];
   sol: ModelEntry;
   luna: ModelEntry;
+  solEfforts: string[];
+  lunaEfforts: string[];
   solEffort: string;
+  solEffortFallback: boolean;
   lunaFastEffort: string;
   lunaHardEffort: string;
   rateLimits: unknown;

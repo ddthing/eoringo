@@ -9,6 +9,7 @@ import {
   type PropsWithChildren,
 } from "react";
 import { AlertTriangle, X } from "lucide-react";
+import { Button, IconButton } from "../ui";
 
 type ConfirmTone = "default" | "danger";
 
@@ -171,35 +172,29 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
                   </p>
                 ) : null}
               </div>
-              <button
-                type="button"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted shadow-[0_1px_3px_rgb(30_35_40/0.08)] transition hover:text-ink active:scale-95"
+              <IconButton
+                label="닫기"
+                size="sm"
+                variant="secondary"
+                className="shrink-0"
                 onClick={() => closeDialog(false)}
-                aria-label="닫기"
               >
                 <X aria-hidden size={15} />
-              </button>
+              </IconButton>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="secondary-button"
+              <Button
+                variant="secondary"
                 onClick={() => closeDialog(false)}
               >
                 {request.cancelLabel}
-              </button>
-              <button
-                type="button"
-                className={[
-                  "primary-button",
-                  request.tone === "danger"
-                    ? "border-[rgb(var(--color-danger)/0.28)] bg-[rgb(var(--color-danger))] text-[rgb(var(--color-danger-foreground))]"
-                    : "",
-                ].join(" ")}
+              </Button>
+              <Button
+                variant={request.tone === "danger" ? "destructive" : "primary"}
                 onClick={() => closeDialog(true)}
               >
                 {request.confirmLabel}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

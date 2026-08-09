@@ -4,6 +4,7 @@ import type { AppearanceMode } from "../../domain/theme/appearance";
 import { themeColors } from "../../data/themes";
 import { isValidHexColor, normalizeHexColor } from "../../lib/color";
 import { useThemeStore } from "../../stores/useThemeStore";
+import { Badge, Card, SegmentedControl, SectionHeader } from "../ui";
 
 const appearanceOptions: Array<{
   id: AppearanceMode;
@@ -30,48 +31,21 @@ export const ThemeSettingsPanel = () => {
   }, [customAccentColor]);
 
   return (
-    <section className="card space-y-4">
-      <div>
-        <p className="muted-label">디자인</p>
-        <h2 className="text-lg font-bold">테마</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          대표 컬러 하나를 고르면 체크, 버튼, 스티커 색이 같은 계열로 정리됩니다.
-        </p>
-      </div>
+    <Card className="space-y-4">
+      <SectionHeader
+        eyebrow="디자인"
+        title="테마"
+        description="대표 컬러 하나를 고르면 체크, 버튼, 스티커 색이 같은 계열로 정리됩니다."
+      />
 
       <div>
         <p className="mb-2 text-xs font-black text-ink">화면 모드</p>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {appearanceOptions.map((option) => {
-            const selected = option.id === appearanceMode;
-            const Icon = option.icon;
-
-            return (
-              <button
-                key={option.id}
-                type="button"
-                className={[
-                  "flex min-h-14 items-center gap-2.5 rounded-[14px] border px-3 py-2 text-left outline-none transition-[background-color,border-color,color,transform] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
-                  selected
-                    ? "border-primary bg-primary-soft text-primary"
-                    : "border-[rgb(var(--color-line-muted))] bg-card/88 text-ink-muted hover:border-[rgb(var(--color-line-soft))] hover:bg-card-soft/65",
-                ].join(" ")}
-                onClick={() => setAppearanceMode(option.id)}
-                aria-pressed={selected}
-              >
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-card-soft">
-                  <Icon aria-hidden size={16} strokeWidth={2.2} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-black text-ink">{option.label}</span>
-                  <span className="block text-[11px] font-semibold text-ink-muted">
-                    {option.description}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          value={appearanceMode}
+          options={appearanceOptions.map(({ id, ...option }) => ({ value: id, ...option }))}
+          onChange={setAppearanceMode}
+          aria-label="화면 모드"
+        />
       </div>
 
       <div className="border-t border-[rgb(var(--color-line-muted))] pt-4">
@@ -139,7 +113,7 @@ export const ThemeSettingsPanel = () => {
                 나만의 포인트 컬러
               </p>
             </div>
-            <span className="sticker">Preview</span>
+            <Badge variant="accent">Preview</Badge>
           </div>
 
           <div className="mt-3 grid grid-cols-[3rem_1fr] gap-2">
@@ -178,6 +152,6 @@ export const ThemeSettingsPanel = () => {
           </div>
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 };

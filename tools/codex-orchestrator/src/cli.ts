@@ -57,13 +57,22 @@ const inspect = async (cwd: string, showModels: boolean): Promise<void> => {
     const result = await runPreflight(client, launch.codexCommand);
     const account = result.account.account!;
     console.log(`Codex: ${result.codexVersion}`);
-    console.log(`인증: ${account.type} / 요금제: ${String(account.planType)}`);
-    console.log(`Sol effort: ${result.solEffort}`);
-    console.log(`Luna fast/hard effort: ${result.lunaFastEffort}/${result.lunaHardEffort}`);
+    console.log(
+      `인증: ${account.type} / 요금제: ${String(account.planType)} / App Server 인증 필요: ${String(result.account.requiresOpenaiAuth)}`,
+    );
+    console.log(
+      `Sol effort: ${result.solEffort}${result.solEffortFallback ? ` (max 미지원; 사용 가능한 단계: ${result.solEfforts.join(", ")})` : ""}`,
+    );
+    console.log(
+      `Luna fast/hard effort: ${result.lunaFastEffort}/${result.lunaHardEffort} (사용 가능한 단계: ${result.lunaEfforts.join(", ")})`,
+    );
+    if (result.solEffortFallback) {
+      console.log(`Sol max fallback: ${result.solEffort}`);
+    }
     if (showModels) {
       for (const model of result.models) {
         const modelEfforts = (model.supportedReasoningEfforts ?? []).map((item) => item.reasoningEffort).join(", ");
-        console.log(`${model.model}${model.hidden ? " (hidden)" : ""}: ${modelEfforts || "effort 미제공"}`);
+        console.log(`${model.id} / ${model.model}${model.hidden ? " (hidden)" : ""}: ${modelEfforts || "effort 미제공"}`);
       }
     }
     console.log(`사용량: ${JSON.stringify(result.rateLimits)}`);
@@ -97,6 +106,26 @@ const main = async () => {
       summary: report.review.summary,
       attempts: report.attempts.length,
       appliedCommits: report.appliedCommits,
+      codexVersion: report.preflight.codexVersion,
+      authentication: {
+        type: report.preflight.account.account?.type ?? null,
+        planType: report.preflight.account.account?.planType ?? null,
+        requiresOpenaiAuth: report.preflight.account.requiresOpenaiAuth,
+      },
+      models: report.preflight.models.map((model) => ({
+        id: model.id,
+        model: model.model,
+        hidden: model.hidden ?? false,
+        reasoningEfforts: model.supportedReasoningEfforts ?? [],
+      })),
+      efforts: {
+        sol: report.preflight.solEffort,
+        solFallback: report.preflight.solEffortFallback,
+        lunaFast: report.preflight.lunaFastEffort,
+        lunaHard: report.preflight.lunaHardEffort,
+        supportedSol: report.preflight.solEfforts,
+        supportedLuna: report.preflight.lunaEfforts,
+      },
       rateLimitsBefore: report.preflight.rateLimits,
       rateLimitsAfter: report.rateLimitsAfter,
     }, null, 2));

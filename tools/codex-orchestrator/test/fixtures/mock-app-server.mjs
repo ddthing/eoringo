@@ -75,7 +75,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   if (message.method === "account/read") {
     const type = process.env.MOCK_ACCOUNT_TYPE || "chatgpt";
     const account = type === "none" ? null : type === "apiKey" ? { type: "apiKey" } : { type: "chatgpt", email: "mock@example.test", planType: process.env.MOCK_PLAN_TYPE || "pro" };
-    send({ id: message.id, result: { account, requiresOpenaiAuth: true } });
+    send({ id: message.id, result: { account, requiresOpenaiAuth: false } });
     return;
   }
   if (message.method === "model/list") {
@@ -91,7 +91,12 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   }
   if (message.method === "thread/start") {
     const id = `thread-${nextThread++}`;
-    send({ id: message.id, result: { thread: { id }, model: message.params.model, modelProvider: "openai" } });
+    const returnedModel = process.env.MOCK_THREAD_MODEL || message.params.model;
+    send({ id: message.id, result: {
+      thread: { id, model: returnedModel },
+      ...(process.env.MOCK_OMIT_RESULT_MODEL === "1" ? {} : { model: returnedModel }),
+      modelProvider: "openai",
+    } });
     return;
   }
   if (message.method === "turn/start") {

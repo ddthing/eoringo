@@ -49,6 +49,27 @@ const redactStderr = (value: string): string =>
     .replace(/Bearer\s+[^\s]+/gi, "Bearer [REDACTED]")
     .slice(-8_000);
 
+const API_AUTH_ENV_KEYS = new Set([
+  "OPENAI_API_KEY",
+  "CODEX_API_KEY",
+  "CODEX_OPENAI_API_KEY",
+  "AZURE_OPENAI_API_KEY",
+  "OPENAI_BASE_URL",
+  "OPENAI_API_BASE",
+  "AZURE_OPENAI_ENDPOINT",
+  "OPENAI_ORG_ID",
+  "OPENAI_PROJECT_ID",
+]);
+
+/** Keep ChatGPT-managed auth available while preventing accidental API-key mode. */
+export const buildCodexEnvironment = (): NodeJS.ProcessEnv => {
+  const environment = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => !API_AUTH_ENV_KEYS.has(key.toUpperCase())),
+  ) as NodeJS.ProcessEnv;
+  environment.LOG_FORMAT = "json";
+  return environment;
+};
+
 export class AppServerClient {
   readonly notifications = new EventEmitter();
   readonly launch: AppServerLaunchOptions;
@@ -71,7 +92,7 @@ export class AppServerClient {
         cwd: this.launch.cwd,
         stdio: ["pipe", "pipe", "pipe"],
         windowsHide: true,
-        env: { ...process.env, LOG_FORMAT: "json" },
+        env: buildCodexEnvironment(),
       });
     } catch (error) {
       throw new OrchestratorError(
@@ -131,7 +152,13 @@ export class AppServerClient {
         reject,
         timeout,
       });
-      this.#write({ method, id, ...(params === undefined ? {} : { params }) });
+      try {
+        this.#write({ method, id, ...(params === undefined ? {} : { params }) });
+      } catch (error) {
+        clearTimeout(timeout);
+        this.#pending.delete(id);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
     });
   }
 
@@ -145,10 +172,15 @@ export class AppServerClient {
     if (!thread || typeof thread.id !== "string") {
       throw new OrchestratorError("INVALID_THREAD_RESPONSE", "thread/start 응답에 thread.id가 없습니다.");
     }
-    if (typeof result.model === "string" && result.model !== params.model) {
+    const returnedModel = typeof result.model === "string"
+      ? result.model
+      : typeof thread.model === "string"
+        ? thread.model
+        : undefined;
+    if (typeof params.model === "string" && returnedModel && returnedModel !== params.model) {
       throw new OrchestratorError(
         "MODEL_SUBSTITUTED",
-        `요청 모델 ${String(params.model)} 대신 ${result.model}이 선택되어 실행을 중단합니다.`,
+        `요청 모델 ${String(params.model)} 대신 ${returnedModel}이 선택되어 실행을 중단합니다.`,
       );
     }
     return result;

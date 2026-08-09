@@ -5,12 +5,16 @@ import { AccountDataPanel } from "./AccountDataPanel";
 import { AppInfoPanel, NotificationSettingsPanel } from "./SettingsInfoPanels";
 import { ThemeSettingsPanel } from "./ThemeSettingsPanel";
 import { getSettingsSectionId } from "./sections";
+import { SectionHeader } from "../ui";
 
 const PageTitle = () => (
-  <div className="px-1">
-    <p className="muted-label">설정</p>
-    <h1 className="text-lg font-bold text-ink">앱 설정</h1>
-  </div>
+  <SectionHeader
+    className="px-1"
+    eyebrow="설정"
+    title="앱 설정"
+    description="캐릭터와 테마, 계정 데이터를 한곳에서 관리하세요."
+    headingLevel="h1"
+  />
 );
 
 export const SettingsPage = () => {

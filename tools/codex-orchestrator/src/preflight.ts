@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
 import { OrchestratorError, errorMessage } from "./errors.js";
 import type { AccountSnapshot, ModelEntry, PreflightResult } from "./types.js";
-import { AppServerClient, type AppServerLaunchOptions } from "./app-server/client.js";
+import { AppServerClient, buildCodexEnvironment, type AppServerLaunchOptions } from "./app-server/client.js";
 
-const REQUIRED_SOL = "gpt-5.6-sol";
-const REQUIRED_LUNA = "gpt-5.6-luna";
+export const REQUIRED_SOL = "gpt-5.6-sol";
+export const REQUIRED_LUNA = "gpt-5.6-luna";
 
 export interface LaunchConfiguration {
   appServer: AppServerLaunchOptions;
@@ -13,10 +13,21 @@ export interface LaunchConfiguration {
 
 export const resolveLaunchConfiguration = (cwd?: string): LaunchConfiguration => {
   const codexCommand = process.env.CODEX_ORCHESTRATOR_CODEX_PATH || "codex";
-  const command = process.env.CODEX_ORCHESTRATOR_APP_SERVER_COMMAND || codexCommand;
+  const isTestEnvironment = process.env.NODE_ENV === "test";
+  const command = isTestEnvironment
+    ? process.env.CODEX_ORCHESTRATOR_APP_SERVER_COMMAND || codexCommand
+    : codexCommand;
   let args = ["app-server", "--listen", "stdio://"];
-  if (process.env.CODEX_ORCHESTRATOR_APP_SERVER_ARGS) {
-    const parsed = JSON.parse(process.env.CODEX_ORCHESTRATOR_APP_SERVER_ARGS) as unknown;
+  if (isTestEnvironment && process.env.CODEX_ORCHESTRATOR_APP_SERVER_ARGS) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(process.env.CODEX_ORCHESTRATOR_APP_SERVER_ARGS) as unknown;
+    } catch {
+      throw new OrchestratorError(
+        "INVALID_APP_SERVER_ARGS",
+        "CODEX_ORCHESTRATOR_APP_SERVER_ARGS는 문자열 JSON 배열이어야 합니다.",
+      );
+    }
     if (!Array.isArray(parsed) || !parsed.every((value) => typeof value === "string")) {
       throw new OrchestratorError("INVALID_APP_SERVER_ARGS", "CODEX_ORCHESTRATOR_APP_SERVER_ARGS는 문자열 JSON 배열이어야 합니다.");
     }
@@ -29,20 +40,32 @@ export const readCodexVersion = async (command: string): Promise<string> => {
   if (process.env.NODE_ENV === "test" && process.env.CODEX_ORCHESTRATOR_MOCK_VERSION) {
     return process.env.CODEX_ORCHESTRATOR_MOCK_VERSION;
   }
+  const executableFailure = (error: unknown): OrchestratorError => {
+    const message = errorMessage(error);
+    const windowsAppsBlocked = /\\windowsapps\\/i.test(command) || /EPERM|access is denied/i.test(message);
+    const advice = windowsAppsBlocked
+      ? " WindowsApps 설치본 실행이 차단되었을 수 있습니다. 실행 가능한 standalone Codex CLI 경로를 CODEX_ORCHESTRATOR_CODEX_PATH에 지정하세요."
+      : " 실행 가능한 Codex CLI를 설치하거나 CODEX_ORCHESTRATOR_CODEX_PATH에 경로를 지정하세요.";
+    return new OrchestratorError("CODEX_NOT_EXECUTABLE", `codex 실행 파일을 사용할 수 없습니다: ${message}.${advice}`);
+  };
   return await new Promise<string>((resolve, reject) => {
     let stdout = "";
     let stderr = "";
     let child: ReturnType<typeof spawn>;
     try {
-      child = spawn(command, ["--version"], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+      child = spawn(command, ["--version"], {
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+        env: buildCodexEnvironment(),
+      });
     } catch (error) {
-      reject(new OrchestratorError("CODEX_NOT_EXECUTABLE", `codex 실행 파일을 사용할 수 없습니다: ${errorMessage(error)}. 실행 가능한 Codex CLI를 설치하거나 CODEX_ORCHESTRATOR_CODEX_PATH에 경로를 지정하세요.`));
+      reject(executableFailure(error));
       return;
     }
     child.stdout!.on("data", (chunk: Buffer) => (stdout += chunk.toString("utf8")));
     child.stderr!.on("data", (chunk: Buffer) => (stderr += chunk.toString("utf8")));
     child.once("error", (error) => {
-      reject(new OrchestratorError("CODEX_NOT_EXECUTABLE", `codex 실행 파일을 사용할 수 없습니다: ${errorMessage(error)}. 실행 가능한 Codex CLI를 설치하거나 CODEX_ORCHESTRATOR_CODEX_PATH에 경로를 지정하세요.`));
+      reject(executableFailure(error));
     });
     child.once("exit", (code) => {
       if (code !== 0) {
@@ -56,9 +79,9 @@ export const readCodexVersion = async (command: string): Promise<string> => {
   });
 };
 
-const modelDescription = (models: ModelEntry[]): string =>
+export const modelDescription = (models: ModelEntry[]): string =>
   models
-    .map((entry) => `${entry.model} [${(entry.supportedReasoningEfforts ?? []).map((x) => x.reasoningEffort).join(", ") || "effort 미제공"}]`)
+    .map((entry) => `${entry.id} / ${entry.model}${entry.hidden ? " (hidden)" : ""} [${(entry.supportedReasoningEfforts ?? []).map((x) => x.reasoningEffort).join(", ") || "effort 미제공"}]`)
     .join("\n");
 
 const requireChatGptPro = (snapshot: AccountSnapshot): void => {
@@ -69,13 +92,17 @@ const requireChatGptPro = (snapshot: AccountSnapshot): void => {
       "ChatGPT 로그인이 필요합니다. account/login/start에 type=chatgptDeviceCode를 사용해 로그인하세요.",
     );
   }
-  if (account.type.toLowerCase() === "apikey") {
+  if (typeof account.type !== "string" || !account.type.trim()) {
+    throw new OrchestratorError("CHATGPT_AUTH_REQUIRED", "account/read가 인증 유형을 반환하지 않았습니다.");
+  }
+  const accountType = account.type.toLowerCase();
+  if (accountType === "apikey" || accountType === "api_key") {
     throw new OrchestratorError(
       "API_KEY_AUTH_FORBIDDEN",
       "API 키 인증이 감지되어 중단했습니다. `codex logout` 후 ChatGPT device-code 로그인으로 전환하세요.",
     );
   }
-  if (account.type !== "chatgpt") {
+  if (accountType !== "chatgpt") {
     throw new OrchestratorError("CHATGPT_AUTH_REQUIRED", `ChatGPT 관리형 인증만 허용됩니다. 현재 유형: ${account.type}`);
   }
   if (String(account.planType ?? "").toLowerCase() !== "pro") {
@@ -86,15 +113,24 @@ const requireChatGptPro = (snapshot: AccountSnapshot): void => {
 export const listAllModels = async (client: AppServerClient): Promise<ModelEntry[]> => {
   const models: ModelEntry[] = [];
   let cursor: string | null = null;
+  const seenCursors = new Set<string>();
   do {
-    const response: { data: ModelEntry[]; nextCursor?: string | null } = await client.request("model/list", {
+    const response: { data: ModelEntry[]; nextCursor?: string | null; next_cursor?: string | null } = await client.request("model/list", {
       cursor,
       limit: 100,
       includeHidden: true,
     });
     if (!Array.isArray(response.data)) throw new OrchestratorError("INVALID_MODEL_LIST", "model/list 응답이 올바르지 않습니다.");
     models.push(...response.data);
-    cursor = response.nextCursor ?? null;
+    const nextCursor = response.nextCursor ?? response.next_cursor ?? null;
+    if (nextCursor !== null && (typeof nextCursor !== "string" || !nextCursor)) {
+      throw new OrchestratorError("INVALID_MODEL_LIST", "model/list의 nextCursor가 올바르지 않습니다.");
+    }
+    if (nextCursor && seenCursors.has(nextCursor)) {
+      throw new OrchestratorError("MODEL_LIST_PAGINATION_LOOP", "model/list 페이지네이션 커서가 반복되어 중단했습니다.");
+    }
+    if (nextCursor) seenCursors.add(nextCursor);
+    cursor = nextCursor;
   } while (cursor);
   return models;
 };
@@ -102,8 +138,22 @@ export const listAllModels = async (client: AppServerClient): Promise<ModelEntry
 const findExactModel = (models: ModelEntry[], required: string): ModelEntry | undefined =>
   models.find((entry) => entry.model === required && entry.id === required && entry.hidden !== true);
 
-const efforts = (model: ModelEntry): string[] =>
-  (model.supportedReasoningEfforts ?? []).map((entry) => entry.reasoningEffort).filter(Boolean);
+const effortOrder = ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"];
+
+const efforts = (model: ModelEntry): string[] => {
+  const advertised = (model.supportedReasoningEfforts ?? [])
+    .map((entry) => entry.reasoningEffort)
+    .filter((effort): effort is string => Boolean(effort));
+  const originalIndex = new Map(advertised.map((effort, index) => [effort, index]));
+
+  return [...new Set(advertised)].sort((left, right) => {
+    const leftRank = effortOrder.indexOf(left);
+    const rightRank = effortOrder.indexOf(right);
+    const normalizedLeftRank = leftRank === -1 ? effortOrder.length : leftRank;
+    const normalizedRightRank = rightRank === -1 ? effortOrder.length : rightRank;
+    return normalizedLeftRank - normalizedRightRank || originalIndex.get(left)! - originalIndex.get(right)!;
+  });
+};
 
 export const chooseEfforts = (sol: ModelEntry, luna: ModelEntry) => {
   const solEfforts = efforts(sol);
@@ -112,7 +162,10 @@ export const chooseEfforts = (sol: ModelEntry, luna: ModelEntry) => {
     throw new OrchestratorError("REASONING_EFFORTS_MISSING", "필수 모델의 추론 단계 정보가 없습니다.");
   }
   return {
+    solEfforts,
+    lunaEfforts,
     solEffort: solEfforts.includes("max") ? "max" : solEfforts.at(-1)!,
+    solEffortFallback: !solEfforts.includes("max"),
     lunaFastEffort: lunaEfforts[0]!,
     lunaHardEffort: lunaEfforts.at(-1)!,
   };

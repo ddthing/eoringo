@@ -62,8 +62,8 @@ Credentials and environment values are never written to run logs.
 
 The model catalog is paginated with `includeHidden: true`, but hidden models are not accepted as runnable requirements. Both `id` and `model` must exactly equal the required slug.
 
-- Sol uses `max` when advertised. Otherwise it uses the last supported effort returned by the catalog and reports that choice.
-- Luna uses the first advertised effort for easy/medium tasks and the last advertised effort for hard tasks.
+- Sol uses `max` when advertised. Otherwise it uses the highest supported effort, clearly reports that `max` is unavailable, and does not substitute a different model.
+- Luna uses the fastest and highest supported reasoning levels according to the standard effort order, regardless of catalog ordering.
 - A `model/rerouted` notification or a mismatched `thread/start` response is a hard failure.
 
 No provider/model fallback flag is enabled.
@@ -71,6 +71,7 @@ No provider/model fallback flag is enabled.
 ## Safety and user-change preservation
 
 - App Server transport is newline-delimited JSON over stdio only.
+- The production launch command is fixed to `codex app-server --listen stdio://`; the alternate command/argument environment variables are accepted only by the test runner for the Mock App Server.
 - Planner and reviewer use a read-only sandbox.
 - Workers use workspace-write only inside temporary worktrees.
 - Every changed path is checked against the Sol task's writable-file allowlist.
@@ -116,6 +117,8 @@ See `.env.example`. The implementation does not automatically load `.env`; value
 - `CODEX_ORCHESTRATOR_APP_SERVER_COMMAND` and `CODEX_ORCHESTRATOR_APP_SERVER_ARGS`: internal Mock App Server hooks, not production fallbacks.
 
 No `OPENAI_API_KEY` is accepted or required.
+
+`CODEX_ORCHESTRATOR_APP_SERVER_COMMAND` and `CODEX_ORCHESTRATOR_APP_SERVER_ARGS` are test-only Mock App Server hooks. They are ignored outside `NODE_ENV=test` so a deployment cannot silently switch transport or provider.
 
 ## Current limitations
 

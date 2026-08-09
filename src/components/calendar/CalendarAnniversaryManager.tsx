@@ -9,6 +9,7 @@ import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 import { AnniversaryDateField } from "../common/AnniversaryDateField";
+import { Button, IconButton, Input } from "../ui";
 
 const emptyEvents = [] as const;
 const emptyErrors = { title: "", date: "" };
@@ -82,21 +83,21 @@ export const CalendarAnniversaryManager = () => {
           <p className="muted-label">기념일</p>
           <h2 className="mt-1 text-base font-black">기념일 관리</h2>
         </div>
-        <button
-          type="button"
-          className="secondary-button min-h-11 gap-1.5"
+        <Button
+          variant="secondary"
+          className="gap-1.5"
           onClick={() => (isFormOpen ? closeForm() : setIsFormOpen(true))}
         >
           {isFormOpen ? <X aria-hidden size={15} /> : <Plus aria-hidden size={15} />}
           {isFormOpen ? "닫기" : "추가"}
-        </button>
+        </Button>
       </div>
 
       {isFormOpen ? (
         <form onSubmit={handleSubmit} className="mt-3 grid gap-2">
           <label className="text-xs font-bold">
             기념일 이름
-            <input
+            <Input
               className="field mt-1 min-h-11"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -116,10 +117,10 @@ export const CalendarAnniversaryManager = () => {
           </label>
           {errors.date ? <p className="text-xs text-[rgb(var(--color-danger))]" aria-live="polite">{errors.date}</p> : null}
           <div className="flex gap-2">
-            <button className="primary-button min-h-11" type="submit">
+            <Button type="submit">
               {editingEventId ? "수정 저장" : "기념일 저장"}
-            </button>
-            <button className="secondary-button min-h-11" type="button" onClick={closeForm}>취소</button>
+            </Button>
+            <Button variant="secondary" type="button" onClick={closeForm}>취소</Button>
           </div>
         </form>
       ) : null}
@@ -133,22 +134,22 @@ export const CalendarAnniversaryManager = () => {
               <p className="text-xs text-ink-muted">{event.date.split("-").join(".")}</p>
             </div>
             <div className="flex shrink-0 items-center">
-              <button
-                type="button"
-                className="grid h-11 w-11 place-items-center rounded-full text-primary transition hover:bg-primary-soft active:scale-95"
-                aria-label={`${event.title} 기념일 수정`}
+              <IconButton
+                label={`${event.title} 기념일 수정`}
+                variant="ghost"
+                className="text-primary"
                 onClick={() => startEdit(event.id, event.title, event.date)}
               >
                 <Pencil aria-hidden size={16} />
-              </button>
-              <button
-                type="button"
-                className="grid h-11 w-11 place-items-center rounded-full text-[rgb(var(--color-danger))] transition hover:bg-[rgb(var(--color-danger)/0.08)] active:scale-95"
-                aria-label={`${event.title} 기념일 삭제`}
+              </IconButton>
+              <IconButton
+                label={`${event.title} 기념일 삭제`}
+                variant="ghost"
+                className="text-[rgb(var(--color-danger))]"
                 onClick={() => handleRemove(event.id, event.title)}
               >
                 <Trash2 aria-hidden size={16} />
-              </button>
+              </IconButton>
             </div>
           </div>
         )) : (
