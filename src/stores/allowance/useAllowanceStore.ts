@@ -18,11 +18,22 @@ const initialAccrualKey = getCurrentLeveAccrualKey();
 
 export const useAllowanceStore = create<AllowanceState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       value: 0,
       lastAccrualKey: initialAccrualKey,
-      ensureCurrentAccruals: (date = new Date()) =>
-        set((state) => normalizeLeveAllowanceSnapshot(state, date)),
+      ensureCurrentAccruals: (date = new Date()) => {
+        const state = get();
+        const nextSnapshot = normalizeLeveAllowanceSnapshot(state, date);
+
+        if (
+          nextSnapshot.value === state.value
+          && nextSnapshot.lastAccrualKey === state.lastAccrualKey
+        ) {
+          return;
+        }
+
+        set(nextSnapshot);
+      },
       setValue: (value) => set({ value: setLeveAllowanceValue(value) }),
     }),
     {
