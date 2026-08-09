@@ -392,6 +392,11 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/migrate-local-data/deno.json"
 
+[functions.sync-character-images]
+enabled = true
+verify_jwt = true
+import_map = "./functions/sync-character-images/deno.json"
+
 [analytics]
 enabled = false
 port = 54327

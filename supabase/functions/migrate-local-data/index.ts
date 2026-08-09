@@ -1,3 +1,7 @@
+import { isAllowedOrigin, resolveAllowedOrigins } from "../_shared/cors.ts";
+import { isSafeJsonTree } from "../_shared/jsonSafety.ts";
+import { isUserId } from "../_shared/imageValidation.ts";
+
 const allowedDocumentTypes = new Set([
   "characters",
   "tasks",
@@ -7,7 +11,6 @@ const allowedDocumentTypes = new Set([
   "history",
 ]);
 const maxRequestBytes = 3 * 1024 * 1024;
-const localOrigins = new Set(["http://127.0.0.1:5173", "http://localhost:5173"]);
 
 const jsonResponse = (status: number, body: unknown, origin: string | null) =>
   new Response(JSON.stringify(body), {
@@ -58,20 +61,14 @@ const hasExactKeys = (value: Record<string, unknown>, keys: string[]) => {
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 };
 
-const getAllowedOrigins = () => {
-  const configured = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
-  return new Set([...localOrigins, ...configured]);
-};
-
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
-  const allowedOrigins = getAllowedOrigins();
+  const allowedOrigins = resolveAllowedOrigins(
+    Deno.env.get("ALLOWED_ORIGINS") ?? "",
+    Deno.env.get("ALLOW_LOCAL_ORIGINS") === "true",
+  );
 
-  if (!origin || !allowedOrigins.has(origin)) {
+  if (!isAllowedOrigin(origin, allowedOrigins)) {
     return jsonResponse(403, { code: "origin_rejected" }, null);
   }
 
@@ -79,7 +76,7 @@ Deno.serve(async (request) => {
     return new Response(null, {
       status: 204,
       headers: {
-        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Origin": origin ?? "",
         "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Access-Control-Max-Age": "600",
@@ -116,7 +113,7 @@ Deno.serve(async (request) => {
 
   const user: unknown = await userResponse.json();
 
-  if (!isRecord(user) || typeof user.id !== "string" || user.is_anonymous === true) {
+  if (!isRecord(user) || !isUserId(user.id) || user.is_anonymous === true) {
     return jsonResponse(403, { code: "permanent_account_required" }, origin);
   }
 
@@ -164,6 +161,7 @@ Deno.serve(async (request) => {
       !allowedDocumentTypes.has(document.documentType) ||
       document.schemaVersion !== 1 ||
       !isRecord(document.payload) ||
+      !isSafeJsonTree(document.payload) ||
       typeof document.digest !== "string" ||
       !/^[0-9a-f]{64}$/.test(document.digest) ||
       documentTypes.has(document.documentType)

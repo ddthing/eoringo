@@ -8,6 +8,7 @@ import { documentCodecs, type DocumentType } from "./codecs";
 import type { DocumentWrite, RemoteDocument } from "./documentRepository";
 
 export const remotelyPersistedDocumentTypes = [
+  "characters",
   "memo",
   "dday",
   "allowance",
@@ -21,6 +22,13 @@ export const captureStoreDocument = (documentType: RemotelyPersistedDocumentType
   const codec = documentCodecs[documentType];
   const payload = (() => {
     switch (documentType) {
+      case "characters": {
+        const characters = useCharacterStore.getState();
+        return {
+          characters: characters.characters,
+          activeCharacterId: characters.activeCharacterId,
+        };
+      }
       case "memo":
         return { memosByCharacter: useWeeklyMemoStore.getState().memosByCharacter };
       case "dday":

@@ -38,7 +38,7 @@ describe("store sync bridge", () => {
   it("captures only the document mapped to changed stores and keeps the latest same-tick value", async () => {
     const queue = { upsertLatest: vi.fn() };
     const requestSync = vi.fn();
-    const captureDocument = vi.fn((documentType: "memo" | "dday" | "allowance" | "tasks" | "history") => {
+    const captureDocument = vi.fn((documentType: "characters" | "memo" | "dday" | "allowance" | "tasks" | "history") => {
       if (documentType !== "memo") {
         throw new Error(`Unexpected capture: ${documentType}`);
       }

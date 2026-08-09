@@ -32,4 +32,14 @@ describe("Supabase security migrations", () => {
     expect(storage).toContain("(storage.foldername(name))[1] = (select auth.uid()::text)");
     expect(storage).not.toMatch(/for\s+(insert|update)/i);
   });
+
+  it("bounds remote payloads and image references at the database boundary", () => {
+    const hardening = readMigration("20260810000100_security_and_image_sync_hardening.sql");
+
+    expect(hardening).toContain("user_documents_payload_safety_check");
+    expect(hardening).toContain("item.key in ('__proto__', 'constructor', 'prototype')");
+    expect(hardening).toContain("characters_profile_image_path_check");
+    expect(hardening).toContain("grant execute on function private.is_safe_json_tree(jsonb, integer)");
+    expect(hardening).not.toMatch(/grant execute[^;]+\b(?:public|anon)\b/i);
+  });
 });

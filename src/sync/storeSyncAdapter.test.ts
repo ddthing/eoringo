@@ -71,6 +71,35 @@ describe("store sync adapters", () => {
     expect(useAllowanceStore.getState().setValue).toBe(beforeAction);
   });
 
+  it("captures character metadata and image references as a remote document", () => {
+    useCharacterStore.setState({
+      characters: [{
+        id: "character-a",
+        name: "A",
+        server: "Chocobo",
+        isMain: true,
+        profileImageId: "character-image-a",
+      }],
+      activeCharacterId: "character-a",
+    });
+
+    expect(captureStoreDocument("characters")).toEqual({
+      documentType: "characters",
+      characterId: null,
+      payload: {
+        characters: [{
+          id: "character-a",
+          name: "A",
+          server: "Chocobo",
+          isMain: true,
+          profileImageId: "character-image-a",
+        }],
+        activeCharacterId: "character-a",
+      },
+      schemaVersion: 1,
+    });
+  });
+
   it("hydrates the character document during account bootstrap", () => {
     const document = {
       id: "00000000-0000-4000-8000-000000000003",

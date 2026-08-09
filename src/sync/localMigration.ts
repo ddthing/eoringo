@@ -1,6 +1,5 @@
 import { exportBackup, type BackupPayload } from "../lib/exportBackup";
 import { getAllCharacterImages } from "../lib/imageStorage";
-import { useCharacterStore } from "../stores/character/useCharacterStore";
 import { documentCodecs, type DocumentType } from "./codecs";
 import { canonicalStringify, getJsonByteLength } from "./codecs/common";
 import { createLocalSnapshotPreview } from "./localSnapshot";
@@ -70,20 +69,7 @@ export const digestMigrationPayload = async (payload: unknown) => {
 };
 
 export const prepareLocalMigration = async (): Promise<PreparedLocalMigration> => {
-  const characterState = useCharacterStore.getState();
-  const charactersPayload = documentCodecs.characters.parse({
-    characters: characterState.characters,
-    activeCharacterId: characterState.activeCharacterId,
-  });
-  const writes = [
-    {
-      documentType: "characters" as const,
-      characterId: null,
-      payload: charactersPayload,
-      schemaVersion: documentCodecs.characters.schemaVersion,
-    },
-    ...captureStoreDocuments(),
-  ];
+  const writes = captureStoreDocuments();
   const images = await getAllCharacterImages();
   const preview = createLocalSnapshotPreview({
     documents: Object.fromEntries(

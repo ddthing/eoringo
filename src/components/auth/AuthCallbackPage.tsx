@@ -2,6 +2,7 @@ import { LoaderCircle, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
+import { stripOAuthCallbackQuery } from "../../auth/oauthCallbackUrl";
 import { Button } from "../ui";
 
 type CallbackPhase = "working" | "failed";
@@ -20,6 +21,14 @@ export const AuthCallbackPage = () => {
   const [isRecoveryBusy, setIsRecoveryBusy] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.history.replaceState(
+        null,
+        document.title,
+        stripOAuthCallbackQuery(window.location.href),
+      );
+    }
+
     if (providerError || !code) {
       setPhase("failed");
       return;

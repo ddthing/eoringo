@@ -1,4 +1,5 @@
 import { useAllowanceStore } from "../stores/allowance/useAllowanceStore";
+import { useCharacterStore } from "../stores/character/useCharacterStore";
 import { useDdayStore } from "../stores/dday/useDdayStore";
 import { useHistoryStore } from "../stores/history/useHistoryStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
@@ -115,6 +116,7 @@ export const createStoreSyncBridge = ({
 
     started = true;
     unsubscribers = [
+      useCharacterStore.subscribe(() => scheduleCapture("characters")),
       useWeeklyMemoStore.subscribe(() => scheduleCapture("memo")),
       useDdayStore.subscribe(() => scheduleCapture("dday")),
       useAllowanceStore.subscribe(() => scheduleCapture("allowance")),
