@@ -53,10 +53,11 @@ describe("CaptchaGate security boundary", () => {
 
     const secondLoad = loadTurnstile();
     expect(scripts).toHaveLength(2);
-    const api = { ready: vi.fn(), render: vi.fn(), remove: vi.fn() };
+    const api = { render: vi.fn(), remove: vi.fn() };
     windowMock.turnstile = api;
     (windowMock[turnstileOnloadCallbackName] as () => void)();
     await expect(secondLoad).resolves.toBe(api);
+    expect(api).not.toHaveProperty("ready");
     vi.unstubAllGlobals();
   });
 

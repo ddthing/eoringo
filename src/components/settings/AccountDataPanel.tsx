@@ -1,5 +1,6 @@
 import { AccountPanel } from "../auth/AccountPanel";
 import { DataSettingsPanel } from "./BackupRestorePanel";
+import { Card } from "../ui";
 
 /**
  * Groups account connection and local-data controls without moving their state
@@ -7,13 +8,13 @@ import { DataSettingsPanel } from "./BackupRestorePanel";
  * makes auth/storage behavior easier to test and safer to change.
  */
 export const AccountDataPanel = () => (
-  <section className="card overflow-hidden p-0">
-    <div className="p-3">
+  <Card variant="outlined" className="overflow-hidden p-0">
+    <div className="p-4">
       <AccountPanel embedded />
     </div>
     <div className="border-t border-[rgb(var(--color-line-muted))]" aria-hidden="true" />
-    <div className="p-3">
+    <div className="p-4">
       <DataSettingsPanel embedded />
     </div>
-  </section>
+  </Card>
 );

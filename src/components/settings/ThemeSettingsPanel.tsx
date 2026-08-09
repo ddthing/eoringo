@@ -31,7 +31,7 @@ export const ThemeSettingsPanel = () => {
   }, [customAccentColor]);
 
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 p-4">
       <SectionHeader
         eyebrow="디자인"
         title="테마"

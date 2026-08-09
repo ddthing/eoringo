@@ -75,6 +75,7 @@ export const authStateReducer = (state: AuthState, action: AuthAction): AuthStat
 
 type AuthContextValue = AuthState & {
   createGuest: (captchaToken: string) => Promise<void>;
+  signInGoogle: () => Promise<void>;
   connectGoogle: () => Promise<void>;
   completeOAuthCallback: (code: string) => Promise<void>;
   retry: () => void;
@@ -214,6 +215,39 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     }
   }, [client]);
 
+  const signInGoogle = useCallback(async () => {
+    if (!client) {
+      throw normalizeAuthFailure({ code: "manual_linking_disabled" });
+    }
+
+    dispatch({ type: "oauth-redirect" });
+
+    try {
+      await client.signInGoogle(buildAuthCallbackUrl(window.location.origin));
+      const restoredSession = await client.getCurrentSession();
+
+      if (restoredSession) {
+        dispatch({ type: "ready", session: restoredSession });
+      }
+    } catch (error) {
+      const failure = normalizeAuthFailure(error);
+
+      try {
+        const restoredSession = await client.getCurrentSession();
+
+        if (restoredSession) {
+          dispatch({ type: "ready", session: restoredSession });
+        } else {
+          dispatch({ type: "error", code: failure.code });
+        }
+      } catch {
+        dispatch({ type: "error", code: failure.code });
+      }
+
+      throw failure;
+    }
+  }, [client]);
+
   const completeOAuthCallback = useCallback(
     async (code: string) => {
       if (!client) {
@@ -248,8 +282,8 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
 
   const retry = useCallback(() => setRetryVersion((version) => version + 1), []);
   const value = useMemo(
-    () => ({ ...state, createGuest, connectGoogle, completeOAuthCallback, retry }),
-    [completeOAuthCallback, connectGoogle, createGuest, retry, state],
+    () => ({ ...state, createGuest, signInGoogle, connectGoogle, completeOAuthCallback, retry }),
+    [completeOAuthCallback, connectGoogle, createGuest, retry, signInGoogle, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

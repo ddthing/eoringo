@@ -5,7 +5,6 @@ export const turnstileScriptUrl =
 export const turnstileOnloadCallbackName = "__eoringoTurnstileOnload" as const;
 
 type TurnstileApi = {
-  ready: (callback: () => void) => void;
   render: (
     container: HTMLElement,
     options: {
@@ -77,13 +76,31 @@ export const loadTurnstile = () => {
       resolve(window.turnstile);
     };
 
+    const rejectLoad = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      scriptPromise = undefined;
+      cleanup();
+      script.remove();
+      reject(new Error("Turnstile script did not expose its API."));
+    };
+
     const handleOnload = () => {
       previousOnload?.();
-      resolveIfReady();
+      if (window.turnstile) {
+        resolveIfReady();
+      } else {
+        rejectLoad();
+      }
     };
 
     const handleLoad = () => {
-      resolveIfReady();
+      if (!window.turnstile) {
+        rejectLoad();
+      }
     };
 
     const handleError = () => {
@@ -134,28 +151,26 @@ export const CaptchaGate = ({ siteKey, onVerified, onFailure }: CaptchaGateProps
     void loadTurnstile()
       .then((loadedApi) => {
         api = loadedApi;
-        loadedApi.ready(() => {
-          if (!active || !containerRef.current) {
-            return;
-          }
+        if (!active || !containerRef.current) {
+          return;
+        }
 
-          widgetId = loadedApi.render(containerRef.current, {
-            sitekey: siteKey,
-            action: "guest_signup",
-            appearance: "interaction-only",
-            size: "flexible",
-            theme: "auto",
-            callback: (token) => {
-              if (active && isSafeCaptchaToken(token)) {
-                onVerified(token);
-              } else if (active) {
-                onFailure();
-              }
-            },
-            "error-callback": onFailure,
-            "expired-callback": onFailure,
-            "timeout-callback": onFailure,
-          });
+        widgetId = loadedApi.render(containerRef.current, {
+          sitekey: siteKey,
+          action: "guest_signup",
+          appearance: "interaction-only",
+          size: "flexible",
+          theme: "auto",
+          callback: (token) => {
+            if (active && isSafeCaptchaToken(token)) {
+              onVerified(token);
+            } else if (active) {
+              onFailure();
+            }
+          },
+          "error-callback": onFailure,
+          "expired-callback": onFailure,
+          "timeout-callback": onFailure,
         });
       })
       .catch(() => {

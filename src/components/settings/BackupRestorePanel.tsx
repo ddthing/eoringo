@@ -5,6 +5,7 @@ import { exportBackup } from "../../lib/exportBackup";
 import { clearCharacterImages } from "../../lib/imageStorage";
 import { importBackup } from "../../lib/importBackup";
 import { storageKeys } from "../../lib/storage";
+import { Button, Card, SectionHeader, StatusMessage } from "../ui";
 
 const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -60,32 +61,32 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
   return (
     <div className="space-y-4">
       {showHeading ? (
-        <div>
-          <h3 className="text-sm font-black text-ink">백업 및 복원</h3>
-          <p className="mt-1 text-sm text-ink-muted">
-            브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
-          </p>
-        </div>
+        <SectionHeader
+          headingLevel="h3"
+          title="백업 및 복원"
+          description="브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다."
+        />
       ) : null}
       <div className="grid gap-2 sm:grid-cols-2">
-        <button
-          type="button"
-          className="primary-button flex items-center justify-center gap-2"
+        <Button
+          className="w-full"
           onClick={handleExport}
-          disabled={isBusy}
+          loading={isBusy}
+          loadingLabel="처리 중…"
         >
           <Download aria-hidden size={17} />
-          {isBusy ? "처리 중…" : "백업"}
-        </button>
-        <button
-          type="button"
-          className="secondary-button flex items-center justify-center gap-2"
+          백업
+        </Button>
+        <Button
+          variant="secondary"
+          className="w-full"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isBusy}
+          loading={isBusy}
+          loadingLabel="처리 중…"
         >
           <Upload aria-hidden size={17} />
           복원
-        </button>
+        </Button>
       </div>
       <input
         ref={fileInputRef}
@@ -96,9 +97,9 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
         aria-label="백업 파일 선택"
       />
       {message ? (
-        <p className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted" aria-live="polite">
+        <StatusMessage aria-live="polite">
           {message}
-        </p>
+        </StatusMessage>
       ) : null}
     </div>
   );
@@ -136,25 +137,25 @@ const DataManagementActions = () => {
 
   return (
     <div id="data" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4 border-t border-[rgb(var(--color-line-muted))] pt-4">
-      <div>
-        <h3 className="text-sm font-black text-ink">데이터 초기화</h3>
-        <p className="mt-1 text-sm text-ink-muted">
-          이 브라우저에 저장된 모든 앱 데이터를 삭제합니다. 먼저 백업을 권장합니다.
-        </p>
-      </div>
-      <button
-        type="button"
-        className="secondary-button flex w-full items-center justify-center gap-2 text-[rgb(var(--color-danger))] sm:w-auto"
+      <SectionHeader
+        headingLevel="h3"
+        title="데이터 초기화"
+        description="이 브라우저에 저장된 모든 앱 데이터를 삭제합니다. 먼저 백업을 권장합니다."
+      />
+      <Button
+        variant="destructive"
+        className="w-full sm:w-auto"
         onClick={handleReset}
-        disabled={isBusy}
+        loading={isBusy}
+        loadingLabel="처리 중…"
       >
         <RotateCcw aria-hidden size={17} />
-        {isBusy ? "처리 중…" : "모든 데이터 초기화"}
-      </button>
+        모든 데이터 초기화
+      </Button>
       {message ? (
-        <p className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted" aria-live="polite">
+        <StatusMessage variant="danger" aria-live="polite">
           {message}
-        </p>
+        </StatusMessage>
       ) : null}
     </div>
   );
@@ -164,29 +165,30 @@ export type DataSettingsPanelProps = {
   embedded?: boolean;
 };
 
-export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps = {}) => (
-  <section className={embedded ? "space-y-4" : "card space-y-4"}>
-    {embedded ? null : (
-      <div>
-        <p className="muted-label">storage</p>
-        <h2 className="text-lg font-bold">데이터</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다.
-        </p>
+export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps = {}) => {
+  const content = (
+    <div className="space-y-4">
+      {embedded ? null : (
+        <SectionHeader
+          eyebrow="storage"
+          title="데이터"
+          description="이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다."
+        />
+      )}
+      <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4">
+        {embedded ? (
+          <SectionHeader
+            eyebrow="data"
+            title="백업 및 복원"
+            description="브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다."
+            headingLevel="h3"
+          />
+        ) : null}
+        <BackupRestoreActions showHeading={!embedded} />
       </div>
-    )}
-    <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4">
-      {embedded ? (
-        <div>
-          <p className="muted-label">data</p>
-          <h2 className="text-lg font-bold">백업 및 복원</h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
-          </p>
-        </div>
-      ) : null}
-      <BackupRestoreActions showHeading={!embedded} />
+      <DataManagementActions />
     </div>
-    <DataManagementActions />
-  </section>
-);
+  );
+
+  return embedded ? content : <Card>{content}</Card>;
+};

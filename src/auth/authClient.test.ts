@@ -24,6 +24,7 @@ const makeAuthApi = () => ({
   getSession: vi.fn(),
   getUser: vi.fn(),
   signInAnonymously: vi.fn(),
+  signInWithOAuth: vi.fn(),
   linkIdentity: vi.fn(),
   exchangeCodeForSession: vi.fn(),
   onAuthStateChange: vi.fn(() => ({
@@ -66,6 +67,7 @@ describe("auth client", () => {
     const client: AuthClient = {
       getCurrentSession: vi.fn().mockResolvedValue(summary),
       createGuestSession: vi.fn().mockResolvedValue(summary),
+      signInGoogle: vi.fn(),
       connectGoogle: vi.fn(),
       exchangeOAuthCode: vi.fn(),
       subscribe: vi.fn(() => vi.fn()),
@@ -118,6 +120,23 @@ describe("auth client", () => {
     );
 
     expect(auth.linkIdentity).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: "https://app.example.com/auth/callback",
+        scopes: "openid email profile",
+      },
+    });
+  });
+
+  it("starts Google sign-in without requiring an existing guest session", async () => {
+    const auth = makeAuthApi();
+    auth.signInWithOAuth.mockResolvedValue({ data: { provider: "google", url: null }, error: null });
+
+    await createAuthClient(auth as unknown as SupabaseClient["auth"]).signInGoogle(
+      "https://app.example.com/auth/callback",
+    );
+
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
       options: {
         redirectTo: "https://app.example.com/auth/callback",

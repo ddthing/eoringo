@@ -15,6 +15,7 @@ type AuthSessionListener = (
 export type AuthClient = {
   getCurrentSession: () => Promise<AuthSessionSummary | null>;
   createGuestSession: (captchaToken: string) => Promise<AuthSessionSummary>;
+  signInGoogle: (redirectTo: string) => Promise<void>;
   connectGoogle: (redirectTo: string) => Promise<void>;
   exchangeOAuthCode: (code: string) => Promise<AuthSessionSummary>;
   subscribe: (listener: AuthSessionListener) => () => void;
@@ -120,6 +121,20 @@ export const createAuthClient = (auth: SupabaseAuth): AuthClient => ({
     }
 
     return summary;
+  },
+
+  async signInGoogle(redirectTo) {
+    const { error } = await auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        scopes: "openid email profile",
+      },
+    });
+
+    if (error) {
+      throw normalizeAuthFailure(error);
+    }
   },
 
   async connectGoogle(redirectTo) {

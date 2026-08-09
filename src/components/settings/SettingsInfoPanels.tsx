@@ -2,7 +2,7 @@ import { Bell, ExternalLink } from "lucide-react";
 import { Badge, Card, StatusMessage } from "../ui";
 
 export const NotificationSettingsPanel = () => (
-  <Card className="space-y-3">
+  <Card className="space-y-3 p-4">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="muted-label">notifications</p>
@@ -21,7 +21,7 @@ export const NotificationSettingsPanel = () => (
 );
 
 export const AppInfoPanel = () => (
-  <Card className="space-y-3">
+  <Card className="space-y-3 p-4">
     <div>
       <p className="muted-label">about</p>
       <h2 className="text-lg font-bold">앱 정보</h2>
@@ -30,8 +30,7 @@ export const AppInfoPanel = () => (
       </p>
     </div>
     <StatusMessage variant="success" title="Credits">
-      <p className="text-xs font-black uppercase tracking-[0.08em] text-primary">Credits</p>
-      <p className="mt-2 text-sm font-bold text-ink">Thanks to ADD, 꼭짓점, 미여워, KILL</p>
+      <p className="text-sm font-bold text-ink">Thanks to ADD, 꼭짓점, 미여워, KILL</p>
       <p className="mt-1 text-xs font-semibold text-ink-muted">Special thanks to 루피</p>
     </StatusMessage>
     <a

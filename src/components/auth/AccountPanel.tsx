@@ -1,10 +1,11 @@
-import { CloudOff, Link2, LoaderCircle, ShieldCheck, UserRound } from "lucide-react";
+import { CloudOff, Link2, LogIn, ShieldCheck, UserRound } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
 import type { AuthErrorCode } from "../../auth/authTypes";
 import { useAuth } from "../../auth/useAuth";
 import { remoteSyncEnvironment } from "../../lib/supabase/env";
 import { CaptchaGate } from "./CaptchaGate";
 import { SyncStatus } from "../sync/SyncStatus";
+import { Badge, Button, Card, SectionHeader, StatusMessage } from "../ui";
 
 const LocalMigrationLauncher = lazy(() =>
   import("../sync/LocalMigrationLauncher").then((module) => ({
@@ -32,7 +33,24 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
   const auth = useAuth();
   const [message, setMessage] = useState("");
   const [captchaAttempt, setCaptchaAttempt] = useState(0);
+  const [captchaFailed, setCaptchaFailed] = useState(false);
   const isBusy = ["initializing", "creating-guest", "oauth-redirect"].includes(auth.status);
+  const isPendingSignIn = auth.status === "oauth-redirect" && auth.mode === "local-only";
+  const isNoSession = auth.status === "no-session" || isPendingSignIn;
+
+  const handleGoogleSignIn = async () => {
+    setMessage("");
+
+    try {
+      await auth.signInGoogle();
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error.code as AuthErrorCode)
+          : "unknown";
+      setMessage(errorMessages[code] ?? errorMessages.unknown);
+    }
+  };
 
   const handleGoogleLink = async () => {
     setMessage("");
@@ -50,6 +68,7 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
 
   const handleCaptchaVerified = useCallback(async (token: string) => {
     setMessage("");
+    setCaptchaFailed(false);
 
     try {
       await auth.createGuest(token);
@@ -65,24 +84,30 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
 
   const handleCaptchaFailure = useCallback(() => {
     setMessage(errorMessages["captcha-required"]);
+    setCaptchaFailed(true);
   }, []);
+
+  const handleCaptchaRetry = () => {
+    setMessage("");
+    setCaptchaFailed(false);
+    setCaptchaAttempt((attempt) => attempt + 1);
+  };
 
   if (auth.status === "disabled") {
     return (
-      <section className={embedded ? "space-y-3" : "card space-y-3"}>
+      <Card className={embedded ? "space-y-3 border-0 p-0 shadow-none" : "space-y-3"}>
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-soft text-ink-muted">
             <CloudOff aria-hidden size={18} />
           </span>
-          <div>
-            <p className="muted-label">account</p>
-            <h2 className="text-lg font-bold text-ink">이 기기에서만 저장 중</h2>
-            <p className="mt-1 text-sm text-ink-muted">
-              온라인 동기화가 꺼져 있습니다. 지금까지 입력한 데이터는 브라우저에 그대로 보관됩니다.
-            </p>
-          </div>
+          <SectionHeader
+            className="min-w-0 flex-1"
+            eyebrow="account"
+            title="이 기기에서만 저장 중"
+            description="온라인 동기화가 꺼져 있습니다. 지금까지 입력한 데이터는 브라우저에 그대로 보관됩니다."
+          />
         </div>
-      </section>
+      </Card>
     );
   }
 
@@ -90,54 +115,76 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
   const isGuest = auth.mode === "guest";
   const visibleError = message || (auth.errorCode ? errorMessages[auth.errorCode] : "");
 
-  return (
-    <section className={embedded ? "space-y-4" : "card space-y-4"}>
+  const content = (
+    <div className="space-y-4">
       <div className="flex items-start gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
           {isPermanent ? <ShieldCheck aria-hidden size={18} /> : <UserRound aria-hidden size={18} />}
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="muted-label">account</p>
-          <h2 className="text-lg font-bold text-ink">
-            {isPermanent
-              ? "Google 계정 연결됨"
-              : isGuest
-                ? "게스트로 사용 중"
-                : "게스트 보안 확인"}
-          </h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            {isPermanent
+        <SectionHeader
+          className="min-w-0 flex-1"
+          eyebrow="account"
+          title={
+            isPermanent ? "Google 계정 연결됨" : isGuest ? "게스트로 사용 중" : "게스트로 시작하기"
+          }
+          description={
+            isPermanent
               ? "이 계정으로 로그인하면 다른 기기에서도 동기화할 수 있습니다."
               : isGuest
                 ? "Google 계정을 연결해도 현재 게스트 데이터와 사용자 ID는 그대로 유지됩니다."
-                : "확인이 끝날 때까지 현재 데이터는 이 기기에 안전하게 보관됩니다."}
-          </p>
-        </div>
+                : "로그인하지 않아도 이 기기에서 바로 시작할 수 있습니다. 게스트 데이터는 이 브라우저에 안전하게 보관됩니다."
+          }
+        />
       </div>
 
-      {auth.status === "no-session" && remoteSyncEnvironment.enabled ? (
-        <CaptchaGate
-          key={captchaAttempt}
-          siteKey={remoteSyncEnvironment.turnstileSiteKey}
-          onVerified={handleCaptchaVerified}
-          onFailure={handleCaptchaFailure}
-        />
+      {isNoSession ? (
+        <div className="space-y-3">
+          <Button
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={handleGoogleSignIn}
+            loading={isPendingSignIn}
+            loadingLabel="Google 로그인 준비 중"
+            disabled={isBusy}
+          >
+            <LogIn aria-hidden size={17} />
+            Google로 로그인
+          </Button>
+
+          {auth.status === "no-session" && remoteSyncEnvironment.enabled ? (
+            <div className="space-y-3 border-t border-[rgb(var(--color-line-muted))] pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-black text-ink">게스트로 계속하기</p>
+                <Badge variant="accent">기본</Badge>
+              </div>
+              <CaptchaGate
+                key={captchaAttempt}
+                siteKey={remoteSyncEnvironment.turnstileSiteKey}
+                onVerified={handleCaptchaVerified}
+                onFailure={handleCaptchaFailure}
+              />
+              {captchaFailed ? (
+                <Button variant="ghost" size="sm" onClick={handleCaptchaRetry}>
+                  보안 확인 다시 시도
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {isGuest ? (
-        <button
-          type="button"
-          className="primary-button flex w-full items-center justify-center gap-2 sm:w-auto"
+        <Button
+          variant="primary"
+          className="w-full sm:w-auto"
           onClick={handleGoogleLink}
           disabled={isBusy || auth.status === "error"}
+          loading={isBusy}
+          loadingLabel="계정 확인 중"
         >
-          {isBusy ? (
-            <LoaderCircle className="animate-spin" aria-hidden size={17} />
-          ) : (
-            <Link2 aria-hidden size={17} />
-          )}
-          {isBusy ? "계정 확인 중" : "Google 계정 연결"}
-        </button>
+          <Link2 aria-hidden size={17} />
+          Google 계정 연결
+        </Button>
       ) : null}
 
       {isPermanent && auth.userId ? (
@@ -149,16 +196,18 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
       <SyncStatus />
 
       {auth.status === "error" ? (
-        <button type="button" className="secondary-button" onClick={auth.retry}>
+        <Button variant="secondary" onClick={auth.retry}>
           다시 시도
-        </button>
+        </Button>
       ) : null}
 
       {visibleError ? (
-        <p className="rounded-[14px] bg-card-soft p-3 text-sm text-ink-muted" aria-live="polite">
+        <StatusMessage variant="danger" aria-live="polite">
           {visibleError}
-        </p>
+        </StatusMessage>
       ) : null}
-    </section>
+    </div>
   );
+
+  return embedded ? content : <Card className="space-y-4">{content}</Card>;
 };
