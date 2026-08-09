@@ -5,6 +5,7 @@ import {
   legacyCharactersPath,
 } from "./navigation";
 import { HomeDashboard } from "../components/home/HomeDashboard";
+import { PrivacyNoticePage, TermsNoticePage } from "../components/legal/LegalNoticePages";
 import { App } from "./App";
 
 const CharactersCompatibilityRedirect = () => (
@@ -12,6 +13,8 @@ const CharactersCompatibilityRedirect = () => (
 );
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
+  { path: "/privacy", element: <PrivacyNoticePage /> },
+  { path: "/terms", element: <TermsNoticePage /> },
   {
     path: "/",
     element: <App />,

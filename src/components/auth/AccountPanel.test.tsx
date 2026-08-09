@@ -48,6 +48,8 @@ describe("AccountPanel", () => {
 
     expect(markup).toContain("Google");
     expect(markup).toContain('type="button"');
+    expect(markup).toContain('href="/privacy"');
+    expect(markup).toContain("Google 비밀번호");
   });
 
   it("shows Google sign-in before guest creation", () => {
@@ -60,5 +62,6 @@ describe("AccountPanel", () => {
 
     expect(markup).toContain("Google로 로그인");
     expect(markup).toContain("게스트로 계속하기");
+    expect(markup).toContain("안전한 Google 로그인");
   });
 });

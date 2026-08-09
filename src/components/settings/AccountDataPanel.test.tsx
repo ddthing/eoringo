@@ -61,6 +61,8 @@ describe("AccountDataPanel", () => {
 
     expect(markup).toContain("Thanks to");
     expect(markup.match(/Credits/g)).toHaveLength(1);
+    expect(markup).toContain('href="/privacy"');
+    expect(markup).toContain('href="/terms"');
     expect(markup).not.toContain('data-variant="success"');
     expect(markup).toContain("문의하기");
     expect(markup).not.toContain("데이터는 직접 백업하거나 초기화하기 전까지");

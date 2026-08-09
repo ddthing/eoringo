@@ -27,6 +27,10 @@ export const AppInfoPanel = () => (
       <p className="mt-2 text-sm font-bold text-ink">Thanks to ADD, 꼭짓점, 미여워, KILL</p>
       <p className="mt-1 text-xs font-semibold text-ink-muted">Special thanks to 루피</p>
     </div>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-black text-primary">
+      <a className="underline underline-offset-4" href="/privacy">개인정보 안내</a>
+      <a className="underline underline-offset-4" href="/terms">서비스 이용 안내</a>
+    </div>
     <a
       href="https://coner.luv3r.me/"
       target="_blank"

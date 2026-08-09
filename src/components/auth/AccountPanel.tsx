@@ -13,6 +13,12 @@ const LocalMigrationLauncher = lazy(() =>
   })),
 );
 
+const LoginSafetyNotice = () => (
+  <StatusMessage variant="info" title="안전한 Google 로그인">
+    Google의 공식 동의 화면에서 기본 프로필과 이메일만 요청합니다. Google 비밀번호, Gmail, Drive에는 접근하지 않습니다. <a className="font-black underline underline-offset-4" href="/privacy">개인정보 안내 보기</a>
+  </StatusMessage>
+);
+
 const errorMessages: Record<AuthErrorCode, string> = {
   "account-merge-required":
     "이미 사용 중인 Google 계정입니다. 계정 병합 기능을 적용하기 전까지 현재 기기의 백업을 보관해 주세요.",
@@ -139,6 +145,7 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
 
       {isNoSession ? (
         <div className="space-y-3">
+          <LoginSafetyNotice />
           <Button
             variant="secondary"
             className="w-full sm:w-auto"
@@ -174,17 +181,20 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
       ) : null}
 
       {isGuest ? (
-        <Button
-          variant="primary"
-          className="w-full sm:w-auto"
-          onClick={handleGoogleLink}
-          disabled={isBusy || auth.status === "error"}
-          loading={isBusy}
-          loadingLabel="계정 확인 중"
-        >
-          <Link2 aria-hidden size={17} />
-          Google 계정 연결
-        </Button>
+        <div className="space-y-3">
+          <LoginSafetyNotice />
+          <Button
+            variant="primary"
+            className="w-full sm:w-auto"
+            onClick={handleGoogleLink}
+            disabled={isBusy || auth.status === "error"}
+            loading={isBusy}
+            loadingLabel="계정 확인 중"
+          >
+            <Link2 aria-hidden size={17} />
+            Google 계정 연결
+          </Button>
+        </div>
       ) : null}
 
       {isPermanent && auth.userId ? (
