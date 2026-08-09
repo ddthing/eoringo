@@ -1,4 +1,4 @@
-import { Bell, ExternalLink, Info } from "lucide-react";
+import { Bell, ExternalLink } from "lucide-react";
 
 export const NotificationSettingsPanel = () => (
   <section className="card space-y-3">
@@ -27,10 +27,6 @@ export const AppInfoPanel = () => (
       <p className="mt-1 text-sm text-ink-muted">
         에오링고는 파이널판타지14 루틴을 브라우저에 안전하게 기록하는 로컬 우선 앱입니다.
       </p>
-    </div>
-    <div className="flex items-center gap-2 rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-3 text-xs font-semibold text-ink-muted">
-      <Info aria-hidden size={16} />
-      데이터는 직접 백업하거나 초기화하기 전까지 현재 브라우저에 보관됩니다.
     </div>
     <div className="rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card-soft/55 p-3">
       <p className="text-xs font-black uppercase tracking-[0.08em] text-primary">Credits</p>

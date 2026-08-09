@@ -158,16 +158,33 @@ const DataManagementActions = () => {
   );
 };
 
-export const DataSettingsPanel = () => (
-  <section className="card space-y-4">
-    <div>
-      <p className="muted-label">storage</p>
-      <h2 className="text-lg font-bold">데이터</h2>
-      <p className="mt-1 text-sm text-ink-muted">
-        이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다.
-      </p>
+export type DataSettingsPanelProps = {
+  embedded?: boolean;
+};
+
+export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps = {}) => (
+  <section className={embedded ? "space-y-4" : "card space-y-4"}>
+    {embedded ? null : (
+      <div>
+        <p className="muted-label">storage</p>
+        <h2 className="text-lg font-bold">데이터</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다.
+        </p>
+      </div>
+    )}
+    <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4">
+      {embedded ? (
+        <div>
+          <p className="muted-label">data</p>
+          <h2 className="text-lg font-bold">백업 및 복원</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
+          </p>
+        </div>
+      ) : null}
+      <BackupRestoreActions />
     </div>
-    <BackupRestoreActions />
     <DataManagementActions />
   </section>
 );

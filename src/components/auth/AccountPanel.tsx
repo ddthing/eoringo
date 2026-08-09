@@ -24,7 +24,11 @@ const errorMessages: Record<AuthErrorCode, string> = {
   unknown: "계정을 연결하지 못했습니다. 로컬 데이터는 그대로 유지됩니다.",
 };
 
-export const AccountPanel = () => {
+export type AccountPanelProps = {
+  embedded?: boolean;
+};
+
+export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
   const auth = useAuth();
   const [message, setMessage] = useState("");
   const [captchaAttempt, setCaptchaAttempt] = useState(0);
@@ -65,7 +69,7 @@ export const AccountPanel = () => {
 
   if (auth.status === "disabled") {
     return (
-      <section className="card space-y-3">
+      <section className={embedded ? "space-y-3" : "card space-y-3"}>
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-soft text-ink-muted">
             <CloudOff aria-hidden size={18} />
@@ -87,7 +91,7 @@ export const AccountPanel = () => {
   const visibleError = message || (auth.errorCode ? errorMessages[auth.errorCode] : "");
 
   return (
-    <section className="card space-y-4">
+    <section className={embedded ? "space-y-4" : "card space-y-4"}>
       <div className="flex items-start gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
           {isPermanent ? <ShieldCheck aria-hidden size={18} /> : <UserRound aria-hidden size={18} />}

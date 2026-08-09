@@ -18,6 +18,8 @@ describe("Settings sections", () => {
     expect(getSettingsSectionId("#characters")).toBe("characters");
     expect(getSettingsSectionId("#about")).toBe("about");
     expect(getSettingsSectionId("#account")).toBe("account");
+    expect(getSettingsSectionId("#backup")).toBe("backup");
+    expect(getSettingsSectionId("#data")).toBe("data");
     expect(getSettingsSectionId("#unknown")).toBeNull();
     expect(getSettingsSectionId("")).toBeNull();
   });

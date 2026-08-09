@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { AccountPanel } from "../auth/AccountPanel";
 import { CharacterManager } from "../characters/CharacterManager";
-import { DataSettingsPanel } from "./BackupRestorePanel";
+import { AccountDataPanel } from "./AccountDataPanel";
 import { AppInfoPanel, NotificationSettingsPanel } from "./SettingsInfoPanels";
 import { ThemeSettingsPanel } from "./ThemeSettingsPanel";
 import { getSettingsSectionId } from "./sections";
@@ -69,10 +68,7 @@ export const SettingsPage = () => {
         <NotificationSettingsPanel />
       </div>
       <div id="account" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)]">
-        <AccountPanel />
-      </div>
-      <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)]">
-        <DataSettingsPanel />
+        <AccountDataPanel />
       </div>
       <div id="about" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)]">
         <AppInfoPanel />
