@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { getCurrentFixedResetKeys } from "../../domain/tasks/resetRules";
+import { describe, expect, it, vi } from "vitest";
+import { getCurrentFixedResetKeys, getResetKeys } from "../../domain/tasks/resetRules";
 import { normalizePersistedTaskState, useTaskStore } from "../useTaskStore";
 
 describe("task store phase 1 migration", () => {
@@ -116,5 +116,31 @@ describe("task store v6 migration", () => {
 
     expect(useTaskStore.getState().completedByCharacter.a?.["daily-retainer"]).toBeUndefined();
     expect(useTaskStore.getState().completedByCharacter.b?.["daily-retainer"]).toBe(1);
+  });
+
+  it("does not publish or persist a reset check when nothing changed", () => {
+    const now = new Date("2026-07-12T12:00:00.000Z");
+    const resetKeys = getResetKeys(now);
+    useTaskStore.setState({
+      completedByCharacter: {},
+      completedAtByCharacter: {},
+      customTaskTemplatesByCharacter: {},
+      dailyResetKey: resetKeys.dailyResetKey,
+      weeklyResetKey: resetKeys.weeklyResetKey,
+      resetKeysByRule: getCurrentFixedResetKeys(now),
+    });
+    const before = useTaskStore.getState();
+    const listener = vi.fn();
+    const setItem = vi.fn();
+    vi.stubGlobal("localStorage", { getItem: vi.fn(), removeItem: vi.fn(), setItem });
+    const unsubscribe = useTaskStore.subscribe(listener);
+
+    useTaskStore.getState().ensureCurrentResets(now);
+
+    expect(useTaskStore.getState()).toBe(before);
+    expect(listener).not.toHaveBeenCalled();
+    expect(setItem).not.toHaveBeenCalled();
+    unsubscribe();
+    vi.unstubAllGlobals();
   });
 });

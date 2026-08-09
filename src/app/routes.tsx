@@ -4,12 +4,7 @@ import {
   charactersSettingsTarget,
   legacyCharactersPath,
 } from "./navigation";
-import { AuthCallbackPage } from "../components/auth/AuthCallbackPage";
-import { CalendarPage } from "../components/calendar/CalendarPage";
 import { HomeDashboard } from "../components/home/HomeDashboard";
-import { SettingsPage } from "../components/settings/SettingsPage";
-import { TaskManagerPage } from "../components/tasks/TaskManagerPage";
-import { TaskManagementPage } from "../components/tasks/TaskManagementPage";
 import { App } from "./App";
 
 const CharactersCompatibilityRedirect = () => (
@@ -22,12 +17,42 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
     element: <App />,
     children: [
       { index: true, element: <HomeDashboard /> },
-      { path: "tasks", element: <TaskManagerPage /> },
-      { path: "tasks/manage", element: <TaskManagementPage /> },
-      { path: "calendar", element: <CalendarPage /> },
-      { path: authCallbackPath.slice(1), element: <AuthCallbackPage /> },
+      {
+        path: "tasks",
+        lazy: async () => {
+          const { TaskManagerPage } = await import("../components/tasks/TaskManagerPage");
+          return { Component: TaskManagerPage };
+        },
+      },
+      {
+        path: "tasks/manage",
+        lazy: async () => {
+          const { TaskManagementPage } = await import("../components/tasks/TaskManagementPage");
+          return { Component: TaskManagementPage };
+        },
+      },
+      {
+        path: "calendar",
+        lazy: async () => {
+          const { CalendarPage } = await import("../components/calendar/CalendarPage");
+          return { Component: CalendarPage };
+        },
+      },
+      {
+        path: authCallbackPath.slice(1),
+        lazy: async () => {
+          const { AuthCallbackPage } = await import("../components/auth/AuthCallbackPage");
+          return { Component: AuthCallbackPage };
+        },
+      },
       { path: legacyCharactersPath.slice(1), element: <CharactersCompatibilityRedirect /> },
-      { path: "settings", element: <SettingsPage /> },
+      {
+        path: "settings",
+        lazy: async () => {
+          const { SettingsPage } = await import("../components/settings/SettingsPage");
+          return { Component: SettingsPage };
+        },
+      },
     ],
   },
 ]);

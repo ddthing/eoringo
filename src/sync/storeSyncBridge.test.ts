@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
 import { createStoreSyncBridge } from "./storeSyncBridge";
+import type { DocumentWrite } from "./documentRepository";
 
 const originalMemo = useWeeklyMemoStore.getState().memosByCharacter;
 
@@ -30,6 +31,41 @@ describe("store sync bridge", () => {
       }),
     );
     expect(queue.upsertLatest.mock.calls[0][0]).not.toHaveProperty("accessToken");
+    expect(requestSync).toHaveBeenCalledOnce();
+    bridge.stop();
+  });
+
+  it("captures only the document mapped to changed stores and keeps the latest same-tick value", async () => {
+    const queue = { upsertLatest: vi.fn() };
+    const requestSync = vi.fn();
+    const captureDocument = vi.fn((documentType: "memo" | "dday" | "allowance" | "tasks" | "history") => {
+      if (documentType !== "memo") {
+        throw new Error(`Unexpected capture: ${documentType}`);
+      }
+
+      return {
+        documentType: "memo",
+        characterId: null,
+        payload: { memosByCharacter: useWeeklyMemoStore.getState().memosByCharacter },
+        schemaVersion: 1,
+      } satisfies DocumentWrite;
+    });
+    const bridge = createStoreSyncBridge({
+      queue,
+      requestSync,
+      captureDocument,
+    });
+
+    useWeeklyMemoStore.getState().setMemo("character", "first");
+    useWeeklyMemoStore.getState().setMemo("character", "latest");
+    await Promise.resolve();
+
+    expect(captureDocument).toHaveBeenCalledTimes(1);
+    expect(captureDocument).toHaveBeenCalledWith("memo");
+    expect(queue.upsertLatest).toHaveBeenCalledTimes(1);
+    expect(queue.upsertLatest).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { memosByCharacter: { character: "latest" } } }),
+    );
     expect(requestSync).toHaveBeenCalledOnce();
     bridge.stop();
   });

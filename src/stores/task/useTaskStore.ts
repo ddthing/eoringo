@@ -95,6 +95,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const resetTypes: ResetType[] = ["daily", "weekly", "eighteenHours", "manual"];
 
+const hasSameResetKeys = (
+  current: Partial<Record<ResetRuleId, string>>,
+  next: Partial<Record<ResetRuleId, string>>,
+) => {
+  const currentEntries = Object.entries(current);
+  const nextEntries = Object.entries(next);
+
+  return currentEntries.length === nextEntries.length
+    && nextEntries.every(([ruleId, key]) => current[ruleId as ResetRuleId] === key);
+};
+
 const normalizeResetType = (resetType: unknown): ResetType =>
   resetTypes.includes(resetType as ResetType) ? (resetType as ResetType) : "manual";
 
@@ -471,7 +482,7 @@ export const normalizePersistedTaskState = (
 
 export const useTaskStore = create<TaskState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       completedByCharacter: {},
       completedAtByCharacter: {},
       customTaskTemplatesByCharacter: {},
@@ -479,42 +490,52 @@ export const useTaskStore = create<TaskState>()(
       dailyResetKey: resetKeys.dailyResetKey,
       weeklyResetKey: resetKeys.weeklyResetKey,
       resetKeysByRule: initialFixedResetKeys,
-      ensureCurrentResets: (date = new Date()) =>
-        set((state) => {
-          const nextKeys = getResetKeys(date);
-          const nextFixedResetKeys = getCurrentFixedResetKeys(date);
-          const templates = getResettableTasks(state.customTaskTemplatesByCharacter);
-          let completedByCharacter = state.completedByCharacter;
-          let completedAtByCharacter = state.completedAtByCharacter;
+      ensureCurrentResets: (date = new Date()) => {
+        const state = get();
+        const nextKeys = getResetKeys(date);
+        const nextFixedResetKeys = getCurrentFixedResetKeys(date);
+        const templates = getResettableTasks(state.customTaskTemplatesByCharacter);
+        let completedByCharacter = state.completedByCharacter;
+        let completedAtByCharacter = state.completedAtByCharacter;
 
-          Object.entries(nextFixedResetKeys).forEach(([ruleId, nextKey]) => {
-            const previousKey = state.resetKeysByRule[ruleId as ResetRuleId];
-            if (previousKey !== undefined && previousKey !== nextKey) {
-              completedByCharacter = clearTasksByResetRuleId(
-                completedByCharacter,
-                templates,
-                ruleId as ResetRuleId,
-              );
-            }
-          });
+        Object.entries(nextFixedResetKeys).forEach(([ruleId, nextKey]) => {
+          const previousKey = state.resetKeysByRule[ruleId as ResetRuleId];
+          if (previousKey !== undefined && previousKey !== nextKey) {
+            completedByCharacter = clearTasksByResetRuleId(
+              completedByCharacter,
+              templates,
+              ruleId as ResetRuleId,
+            );
+          }
+        });
 
-          const clearedIntervalTasks = clearExpiredEighteenHourTasks(
-            completedByCharacter,
-            completedAtByCharacter,
-            templates,
-            date,
-          );
-          completedByCharacter = clearedIntervalTasks.completedByCharacter;
-          completedAtByCharacter = clearedIntervalTasks.completedAtByCharacter;
+        const clearedIntervalTasks = clearExpiredEighteenHourTasks(
+          completedByCharacter,
+          completedAtByCharacter,
+          templates,
+          date,
+        );
+        completedByCharacter = clearedIntervalTasks.completedByCharacter;
+        completedAtByCharacter = clearedIntervalTasks.completedAtByCharacter;
 
-          return {
-            completedByCharacter,
-            completedAtByCharacter,
-            dailyResetKey: nextKeys.dailyResetKey,
-            weeklyResetKey: nextKeys.weeklyResetKey,
-            resetKeysByRule: nextFixedResetKeys,
-          };
-        }),
+        const unchanged = completedByCharacter === state.completedByCharacter
+          && completedAtByCharacter === state.completedAtByCharacter
+          && nextKeys.dailyResetKey === state.dailyResetKey
+          && nextKeys.weeklyResetKey === state.weeklyResetKey
+          && hasSameResetKeys(state.resetKeysByRule, nextFixedResetKeys);
+
+        if (unchanged) {
+          return;
+        }
+
+        set({
+          completedByCharacter,
+          completedAtByCharacter,
+          dailyResetKey: nextKeys.dailyResetKey,
+          weeklyResetKey: nextKeys.weeklyResetKey,
+          resetKeysByRule: nextFixedResetKeys,
+        });
+      },
       toggleTask: (scopeId, taskId, maxCount = 1, resetType = "manual") =>
         set((state) => {
           const currentScopeState = state.completedByCharacter[scopeId] ?? {};

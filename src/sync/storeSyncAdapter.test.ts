@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { useAllowanceStore } from "../stores/allowance/useAllowanceStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
-import { captureStoreDocuments, hydrateStoreDocuments } from "./storeSyncAdapter";
+import {
+  captureStoreDocument,
+  captureStoreDocuments,
+  hydrateStoreDocuments,
+} from "./storeSyncAdapter";
 import type { RemoteDocument } from "./documentRepository";
 
 const originalMemo = useWeeklyMemoStore.getState().memosByCharacter;
@@ -30,6 +34,17 @@ describe("store sync adapters", () => {
       schemaVersion: 1,
     });
     expect(memo).not.toHaveProperty("setMemo");
+  });
+
+  it("captures one requested document without traversing every persisted document", () => {
+    useWeeklyMemoStore.setState({ memosByCharacter: { character: "single document" } });
+
+    expect(captureStoreDocument("memo")).toEqual({
+      documentType: "memo",
+      characterId: null,
+      payload: { memosByCharacter: { character: "single document" } },
+      schemaVersion: 1,
+    });
   });
 
   it("hydrates validated documents without replacing store actions", () => {

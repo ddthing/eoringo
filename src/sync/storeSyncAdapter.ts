@@ -6,7 +6,7 @@ import { useTaskStore } from "../stores/task/useTaskStore";
 import { documentCodecs, type DocumentType } from "./codecs";
 import type { DocumentWrite, RemoteDocument } from "./documentRepository";
 
-const remotelyPersistedDocumentTypes = [
+export const remotelyPersistedDocumentTypes = [
   "memo",
   "dday",
   "allowance",
@@ -14,48 +14,51 @@ const remotelyPersistedDocumentTypes = [
   "history",
 ] as const satisfies readonly DocumentType[];
 
-export const captureStoreDocuments = (): DocumentWrite[] => {
-  const memo = useWeeklyMemoStore.getState();
-  const dday = useDdayStore.getState();
-  const allowance = useAllowanceStore.getState();
-  const tasks = useTaskStore.getState();
-  const history = useHistoryStore.getState();
-  const sources = {
-    memo: { memosByCharacter: memo.memosByCharacter },
-    dday: { eventsByCharacter: dday.eventsByCharacter },
-    allowance: {
-      value: allowance.value,
-      lastAccrualKey: allowance.lastAccrualKey,
-    },
-    tasks: {
-      completedByCharacter: tasks.completedByCharacter,
-      completedAtByCharacter: tasks.completedAtByCharacter,
-      customTaskTemplatesByCharacter: tasks.customTaskTemplatesByCharacter,
-      disabledDefaultTaskIdsByCharacter: tasks.disabledDefaultTaskIdsByCharacter,
-      dailyResetKey: tasks.dailyResetKey,
-      weeklyResetKey: tasks.weeklyResetKey,
-      resetKeysByRule: tasks.resetKeysByRule,
-    },
-    history: { entriesByDate: history.entriesByDate },
+export type RemotelyPersistedDocumentType = (typeof remotelyPersistedDocumentTypes)[number];
+
+export const captureStoreDocument = (documentType: RemotelyPersistedDocumentType): DocumentWrite => {
+  const codec = documentCodecs[documentType];
+  const payload = (() => {
+    switch (documentType) {
+      case "memo":
+        return { memosByCharacter: useWeeklyMemoStore.getState().memosByCharacter };
+      case "dday":
+        return { eventsByCharacter: useDdayStore.getState().eventsByCharacter };
+      case "allowance": {
+        const { value, lastAccrualKey } = useAllowanceStore.getState();
+        return { value, lastAccrualKey };
+      }
+      case "tasks": {
+        const tasks = useTaskStore.getState();
+        return {
+          completedByCharacter: tasks.completedByCharacter,
+          completedAtByCharacter: tasks.completedAtByCharacter,
+          customTaskTemplatesByCharacter: tasks.customTaskTemplatesByCharacter,
+          disabledDefaultTaskIdsByCharacter: tasks.disabledDefaultTaskIdsByCharacter,
+          dailyResetKey: tasks.dailyResetKey,
+          weeklyResetKey: tasks.weeklyResetKey,
+          resetKeysByRule: tasks.resetKeysByRule,
+        };
+      }
+      case "history":
+        return { entriesByDate: useHistoryStore.getState().entriesByDate };
+    }
+  })();
+
+  return {
+    documentType,
+    characterId: null,
+    payload: codec.parse(payload),
+    schemaVersion: codec.schemaVersion,
   };
-
-  return remotelyPersistedDocumentTypes.map((documentType) => {
-    const codec = documentCodecs[documentType];
-
-    return {
-      documentType,
-      characterId: null,
-      payload: codec.parse(sources[documentType]),
-      schemaVersion: codec.schemaVersion,
-    };
-  });
 };
+
+export const captureStoreDocuments = (): DocumentWrite[] =>
+  remotelyPersistedDocumentTypes.map(captureStoreDocument);
 
 export const hydrateStoreDocuments = (documents: RemoteDocument[]) => {
   const supported = documents.filter((document) =>
-    remotelyPersistedDocumentTypes.includes(
-      document.documentType as (typeof remotelyPersistedDocumentTypes)[number],
-    ),
+    remotelyPersistedDocumentTypes.includes(document.documentType as RemotelyPersistedDocumentType),
   );
 
   if (supported.some((document) => document.characterId !== null)) {

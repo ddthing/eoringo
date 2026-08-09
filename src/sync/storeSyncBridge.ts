@@ -4,9 +4,14 @@ import { useHistoryStore } from "../stores/history/useHistoryStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
 import { useTaskStore } from "../stores/task/useTaskStore";
 import { canonicalStringify } from "./codecs/common";
-import type { RemoteDocument } from "./documentRepository";
+import type { DocumentWrite, RemoteDocument } from "./documentRepository";
 import type { SyncMutation } from "./mutationQueue";
-import { captureStoreDocuments, hydrateStoreDocuments } from "./storeSyncAdapter";
+import {
+  captureStoreDocument,
+  captureStoreDocuments,
+  hydrateStoreDocuments,
+  type RemotelyPersistedDocumentType,
+} from "./storeSyncAdapter";
 
 type MutationQueueWriter = {
   upsertLatest: (mutation: SyncMutation) => SyncMutation[];
@@ -17,6 +22,9 @@ type StoreSyncBridgeOptions = {
   requestSync: () => void;
   now?: () => Date;
   createMutationId?: () => string;
+  captureDocument?: (documentType: RemotelyPersistedDocumentType) => DocumentWrite;
+  captureDocuments?: () => DocumentWrite[];
+  hydrateDocuments?: (documents: RemoteDocument[]) => void;
 };
 
 const identityKey = (document: { documentType: string; characterId: string | null }) =>
@@ -27,12 +35,16 @@ export const createStoreSyncBridge = ({
   requestSync,
   now = () => new Date(),
   createMutationId = () => crypto.randomUUID(),
+  captureDocument = captureStoreDocument,
+  captureDocuments = captureStoreDocuments,
+  hydrateDocuments = hydrateStoreDocuments,
 }: StoreSyncBridgeOptions) => {
   let suppressWrites = false;
   let scheduled = false;
+  const dirtyDocumentTypes = new Set<RemotelyPersistedDocumentType>();
   let remoteIndex = new Map<string, RemoteDocument>();
   let baseline = new Map(
-    captureStoreDocuments().map((document) => [
+    captureDocuments().map((document) => [
       identityKey(document),
       canonicalStringify(document.payload),
     ]),
@@ -45,9 +57,12 @@ export const createStoreSyncBridge = ({
       return;
     }
 
+    const documentTypes = [...dirtyDocumentTypes];
+    dirtyDocumentTypes.clear();
     let queued = false;
 
-    captureStoreDocuments().forEach((write) => {
+    documentTypes.forEach((documentType) => {
+      const write = captureDocument(documentType);
       const key = identityKey(write);
       const serialized = canonicalStringify(write.payload);
 
@@ -79,19 +94,23 @@ export const createStoreSyncBridge = ({
     }
   };
 
-  const scheduleCapture = () => {
-    if (!scheduled && !suppressWrites) {
-      scheduled = true;
-      queueMicrotask(captureChanges);
-    }
+  const scheduleCapture = (documentType: RemotelyPersistedDocumentType) => {
+    if (suppressWrites) return;
+
+    dirtyDocumentTypes.add(documentType);
+
+    if (scheduled) return;
+
+    scheduled = true;
+    queueMicrotask(captureChanges);
   };
 
   const unsubscribers = [
-    useWeeklyMemoStore.subscribe(scheduleCapture),
-    useDdayStore.subscribe(scheduleCapture),
-    useAllowanceStore.subscribe(scheduleCapture),
-    useTaskStore.subscribe(scheduleCapture),
-    useHistoryStore.subscribe(scheduleCapture),
+    useWeeklyMemoStore.subscribe(() => scheduleCapture("memo")),
+    useDdayStore.subscribe(() => scheduleCapture("dday")),
+    useAllowanceStore.subscribe(() => scheduleCapture("allowance")),
+    useTaskStore.subscribe(() => scheduleCapture("tasks")),
+    useHistoryStore.subscribe(() => scheduleCapture("history")),
   ];
 
   return {
@@ -100,9 +119,10 @@ export const createStoreSyncBridge = ({
       remoteIndex = new Map(documents.map((document) => [identityKey(document), document]));
 
       try {
-        hydrateStoreDocuments(documents);
+        hydrateDocuments(documents);
+        dirtyDocumentTypes.clear();
         baseline = new Map(
-          captureStoreDocuments().map((document) => [
+          captureDocuments().map((document) => [
             identityKey(document),
             canonicalStringify(document.payload),
           ]),
@@ -114,6 +134,7 @@ export const createStoreSyncBridge = ({
 
     stop() {
       suppressWrites = true;
+      dirtyDocumentTypes.clear();
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     },
   };
