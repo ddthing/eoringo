@@ -65,6 +65,9 @@ const isTransient = (error: unknown) =>
   (error instanceof RemoteDataFailure &&
     (error.code === "network" || error.code === "unknown"));
 
+const requiresFollowUpSync = (trigger: SyncTrigger) =>
+  trigger === "write" || trigger === "manual" || trigger === "token-refresh";
+
 export const createSyncCoordinator = ({
   repository,
   queue,
@@ -184,9 +187,9 @@ export const createSyncCoordinator = ({
     }
   };
 
-  const sync = (_trigger: SyncTrigger = "manual"): Promise<void> => {
+  const sync = (trigger: SyncTrigger = "manual"): Promise<void> => {
     if (inFlight) {
-      rerunRequested = true;
+      rerunRequested ||= requiresFollowUpSync(trigger);
       return inFlight;
     }
 

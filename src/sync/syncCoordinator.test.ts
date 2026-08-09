@@ -169,4 +169,59 @@ describe("sync coordinator", () => {
     expect(queue.remove).toHaveBeenCalledWith(insertMutation.mutationId);
     expect(repository.list).toHaveBeenCalled();
   });
+
+  it.each(["startup", "focus", "online"] as const)(
+    "coalesces %s triggers while a startup sync is in flight",
+    async (trigger) => {
+      const queue = makeQueue([]);
+      const repository = makeRepository();
+      let resolveFirstList: ((documents: RemoteDocument[]) => void) | undefined;
+      repository.list.mockImplementationOnce(
+        () => new Promise<RemoteDocument[]>((resolve) => {
+          resolveFirstList = resolve;
+        }),
+      );
+      const coordinator = createSyncCoordinator({
+        repository,
+        queue,
+        hydrate: vi.fn(),
+        setState: vi.fn(),
+        isOnline: () => true,
+      });
+
+      const startup = coordinator.sync("startup");
+      const duplicate = coordinator.sync(trigger);
+      resolveFirstList?.([document]);
+
+      await Promise.all([startup, duplicate]);
+
+      expect(repository.list).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("reruns after a local write arrives during a startup sync", async () => {
+    const queue = makeQueue([]);
+    const repository = makeRepository();
+    let resolveFirstList: ((documents: RemoteDocument[]) => void) | undefined;
+    repository.list.mockImplementationOnce(
+      () => new Promise<RemoteDocument[]>((resolve) => {
+        resolveFirstList = resolve;
+      }),
+    );
+    const coordinator = createSyncCoordinator({
+      repository,
+      queue,
+      hydrate: vi.fn(),
+      setState: vi.fn(),
+      isOnline: () => true,
+    });
+
+    const startup = coordinator.sync("startup");
+    const write = coordinator.sync("write");
+    resolveFirstList?.([document]);
+
+    await Promise.all([startup, write]);
+
+    expect(repository.list).toHaveBeenCalledTimes(2);
+  });
 });
