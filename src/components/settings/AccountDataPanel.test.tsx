@@ -45,7 +45,7 @@ describe("AccountDataPanel", () => {
     const markup = renderToStaticMarkup(<AccountDataPanel />);
 
     expect(markup).toContain('class="ui-card overflow-hidden p-0"');
-    expect(markup).toContain('data-variant="outlined"');
+    expect(markup).toContain('data-variant="elevated"');
     expect(markup).toContain('id="backup"');
     expect(markup).toContain('id="data"');
     expect(markup).toContain("이 기기에서만 저장 중");
@@ -61,17 +61,33 @@ describe("AccountDataPanel", () => {
 
     expect(markup).toContain("Thanks to");
     expect(markup.match(/Credits/g)).toHaveLength(1);
+    expect(markup).not.toContain('data-variant="success"');
     expect(markup).toContain("문의하기");
     expect(markup).not.toContain("데이터는 직접 백업하거나 초기화하기 전까지");
   });
 
+  it("uses one status icon for notification guidance", () => {
+    const markup = renderToStaticMarkup(<NotificationSettingsPanel />);
+
+    expect(markup.match(/lucide-info/g)).toHaveLength(1);
+    expect(markup).not.toContain("lucide-bell");
+  });
+
   it("gives design, notification, and app info cards the same inner spacing", () => {
     expect(renderToStaticMarkup(<ThemeSettingsPanel />)).toContain(
-      'class="ui-card space-y-4 p-4"',
+      'class="ui-card space-y-4 p-5"',
     );
     expect(renderToStaticMarkup(<NotificationSettingsPanel />)).toContain(
-      'class="ui-card space-y-3 p-4"',
+      'class="ui-card space-y-4 p-5"',
     );
-    expect(renderToStaticMarkup(<AppInfoPanel />)).toContain('class="ui-card space-y-3 p-4"');
+    expect(renderToStaticMarkup(<AppInfoPanel />)).toContain('class="ui-card space-y-4 p-5"');
+  });
+
+  it("keeps theme choices away from their borders", () => {
+    const markup = renderToStaticMarkup(<ThemeSettingsPanel />);
+
+    expect(markup).toContain(
+      "min-h-14 min-w-0 w-full items-center gap-3 rounded-[16px] border bg-card/88 px-4 py-3",
+    );
   });
 });

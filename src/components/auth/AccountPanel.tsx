@@ -95,7 +95,7 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
 
   if (auth.status === "disabled") {
     return (
-      <Card className={embedded ? "space-y-3 border-0 p-0 shadow-none" : "space-y-3"}>
+      <Card className={embedded ? "space-y-3 border-0 p-0 shadow-none" : "space-y-3 p-5"}>
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-soft text-ink-muted">
             <CloudOff aria-hidden size={18} />
@@ -209,5 +209,5 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
     </div>
   );
 
-  return embedded ? content : <Card className="space-y-4">{content}</Card>;
+  return embedded ? content : <Card className="space-y-4 p-5">{content}</Card>;
 };

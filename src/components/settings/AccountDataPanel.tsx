@@ -8,12 +8,12 @@ import { Card } from "../ui";
  * makes auth/storage behavior easier to test and safer to change.
  */
 export const AccountDataPanel = () => (
-  <Card variant="outlined" className="overflow-hidden p-0">
-    <div className="p-4">
+  <Card className="overflow-hidden p-0">
+    <div className="p-5">
       <AccountPanel embedded />
     </div>
     <div className="border-t border-[rgb(var(--color-line-muted))]" aria-hidden="true" />
-    <div className="p-4">
+    <div className="p-5">
       <DataSettingsPanel embedded />
     </div>
   </Card>

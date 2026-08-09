@@ -9,12 +9,15 @@ import { Button, Card, SectionHeader, StatusMessage } from "../ui";
 
 const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [message, setMessage] = useState("");
-  const [isBusy, setIsBusy] = useState(false);
+  const [message, setMessage] = useState<{
+    text: string;
+    variant: "success" | "danger";
+  } | null>(null);
+  const [busyAction, setBusyAction] = useState<"export" | "import" | null>(null);
 
   const handleExport = async () => {
-    setIsBusy(true);
-    setMessage("");
+    setBusyAction("export");
+    setMessage(null);
 
     try {
       const payload = await exportBackup();
@@ -27,11 +30,17 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
       anchor.download = `eoringo-${payload.exportedAt.slice(0, 10)}.json`;
       anchor.click();
       URL.revokeObjectURL(url);
-      setMessage("백업 파일을 만들었습니다. 캐릭터 사진도 함께 포함됩니다.");
+      setMessage({
+        text: "백업 파일을 만들었습니다. 캐릭터 사진도 함께 포함됩니다.",
+        variant: "success",
+      });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "백업 파일을 만들 수 없습니다.");
+      setMessage({
+        text: error instanceof Error ? error.message : "백업 파일을 만들 수 없습니다.",
+        variant: "danger",
+      });
     } finally {
-      setIsBusy(false);
+      setBusyAction(null);
     }
   };
 
@@ -42,18 +51,24 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
       return;
     }
 
-    setIsBusy(true);
-    setMessage("");
+    setBusyAction("import");
+    setMessage(null);
 
     try {
       const text = await file.text();
       await importBackup(JSON.parse(text));
-      setMessage("복원이 끝났습니다. 화면을 새로고침합니다.");
+      setMessage({
+        text: "복원이 끝났습니다. 화면을 새로고침합니다.",
+        variant: "success",
+      });
       window.setTimeout(() => window.location.reload(), 600);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "복원에 실패했습니다.");
+      setMessage({
+        text: error instanceof Error ? error.message : "복원에 실패했습니다.",
+        variant: "danger",
+      });
     } finally {
-      setIsBusy(false);
+      setBusyAction(null);
       event.target.value = "";
     }
   };
@@ -71,7 +86,8 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
         <Button
           className="w-full"
           onClick={handleExport}
-          loading={isBusy}
+          loading={busyAction === "export"}
+          disabled={busyAction !== null}
           loadingLabel="처리 중…"
         >
           <Download aria-hidden size={17} />
@@ -81,7 +97,8 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
           variant="secondary"
           className="w-full"
           onClick={() => fileInputRef.current?.click()}
-          loading={isBusy}
+          loading={busyAction === "import"}
+          disabled={busyAction !== null}
           loadingLabel="처리 중…"
         >
           <Upload aria-hidden size={17} />
@@ -94,11 +111,12 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
         type="file"
         accept="application/json"
         onChange={handleImport}
+        disabled={busyAction !== null}
         aria-label="백업 파일 선택"
       />
       {message ? (
-        <StatusMessage aria-live="polite">
-          {message}
+        <StatusMessage variant={message.variant} aria-live="polite">
+          {message.text}
         </StatusMessage>
       ) : null}
     </div>
@@ -190,5 +208,5 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
     </div>
   );
 
-  return embedded ? content : <Card>{content}</Card>;
+  return embedded ? content : <Card className="p-5">{content}</Card>;
 };

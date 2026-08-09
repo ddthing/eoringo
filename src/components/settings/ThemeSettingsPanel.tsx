@@ -4,7 +4,7 @@ import type { AppearanceMode } from "../../domain/theme/appearance";
 import { themeColors } from "../../data/themes";
 import { isValidHexColor, normalizeHexColor } from "../../lib/color";
 import { useThemeStore } from "../../stores/useThemeStore";
-import { Badge, Card, SegmentedControl, SectionHeader } from "../ui";
+import { Badge, Card, Input, SegmentedControl, SectionHeader } from "../ui";
 
 const appearanceOptions: Array<{
   id: AppearanceMode;
@@ -31,7 +31,7 @@ export const ThemeSettingsPanel = () => {
   }, [customAccentColor]);
 
   return (
-    <Card className="space-y-4 p-4">
+    <Card className="space-y-4 p-5">
       <SectionHeader
         eyebrow="디자인"
         title="테마"
@@ -61,7 +61,7 @@ export const ThemeSettingsPanel = () => {
                 key={themeColor.id}
                 type="button"
                 className={[
-                  "flex min-h-12 min-w-0 w-full items-center gap-2 rounded-[14px] border bg-card/88 px-2.5 py-2 text-left outline-none transition active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
+                  "flex min-h-14 min-w-0 w-full items-center gap-3 rounded-[16px] border bg-card/88 px-4 py-3 text-left outline-none transition active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
                   selected
                     ? "border-primary bg-primary-soft/60 text-primary"
                     : "border-[rgb(var(--color-line-muted))] text-ink-muted",
@@ -128,10 +128,10 @@ export const ThemeSettingsPanel = () => {
               }}
               aria-label="Custom 포인트 컬러 선택"
             />
-            <input
+            <Input
               type="text"
               value={customDraft}
-              className="field font-mono uppercase"
+              className="font-mono uppercase"
               spellCheck={false}
               inputMode="text"
               placeholder="#EE9AB5"
