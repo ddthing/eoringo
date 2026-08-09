@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { useAllowanceStore } from "../stores/allowance/useAllowanceStore";
+import { useCharacterStore } from "../stores/character/useCharacterStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
 import {
   captureStoreDocument,
@@ -13,10 +14,15 @@ const originalAllowance = {
   value: useAllowanceStore.getState().value,
   lastAccrualKey: useAllowanceStore.getState().lastAccrualKey,
 };
+const originalCharacters = {
+  characters: useCharacterStore.getState().characters,
+  activeCharacterId: useCharacterStore.getState().activeCharacterId,
+};
 
 afterEach(() => {
   useWeeklyMemoStore.setState({ memosByCharacter: originalMemo });
   useAllowanceStore.setState(originalAllowance);
+  useCharacterStore.setState(originalCharacters);
 });
 
 describe("store sync adapters", () => {
@@ -63,6 +69,28 @@ describe("store sync adapters", () => {
 
     expect(useAllowanceStore.getState()).toMatchObject(document.payload);
     expect(useAllowanceStore.getState().setValue).toBe(beforeAction);
+  });
+
+  it("hydrates the character document during account bootstrap", () => {
+    const document = {
+      id: "00000000-0000-4000-8000-000000000003",
+      documentType: "characters",
+      characterId: null,
+      payload: {
+        characters: [{ id: "character-remote", name: "원격 모험가", server: "초코보", isMain: true }],
+        activeCharacterId: "character-remote",
+      },
+      schemaVersion: 1,
+      revision: 1,
+      updatedAt: "2026-08-02T08:00:00.000Z",
+    } satisfies RemoteDocument;
+
+    hydrateStoreDocuments([document]);
+
+    expect(useCharacterStore.getState()).toMatchObject({
+      activeCharacterId: "character-remote",
+      characters: [{ id: "character-remote", name: "원격 모험가" }],
+    });
   });
 
   it("rejects duplicate or character-scoped documents before mutating stores", () => {

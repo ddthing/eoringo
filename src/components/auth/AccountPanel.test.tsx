@@ -3,14 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountPanel } from "./AccountPanel";
 
 const authState = {
-  status: "guest" as "guest" | "no-session",
-  mode: "guest" as "guest" | "local-only",
+  status: "guest" as "guest" | "no-session" | "permanent" | "signing-out" | "oauth-redirect",
+  mode: "guest" as "guest" | "local-only" | "permanent",
   userId: "guest-id" as string | null,
-  provider: "anonymous" as "anonymous" | null,
+  provider: "anonymous" as "anonymous" | "google" | null,
   errorCode: null,
   createGuest: vi.fn(),
   signInGoogle: vi.fn(),
   connectGoogle: vi.fn(),
+  signInExistingGoogle: vi.fn(),
+  signOut: vi.fn(),
   completeOAuthCallback: vi.fn(),
   retry: vi.fn(),
 };
@@ -63,5 +65,17 @@ describe("AccountPanel", () => {
     expect(markup).toContain("Google로 로그인");
     expect(markup).toContain("게스트로 계속하기");
     expect(markup).toContain("안전한 Google 로그인");
+  });
+
+  it("shows account switch and device logout for a Google account", () => {
+    authState.status = "permanent";
+    authState.mode = "permanent";
+    authState.userId = "permanent-id";
+    authState.provider = "google";
+
+    const markup = renderToStaticMarkup(<AccountPanel embedded />);
+
+    expect(markup).toContain("다른 Google 계정으로 전환");
+    expect(markup).toContain("이 기기에서 로그아웃");
   });
 });

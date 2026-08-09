@@ -1,4 +1,5 @@
 import { useAllowanceStore } from "../stores/allowance/useAllowanceStore";
+import { useCharacterStore } from "../stores/character/useCharacterStore";
 import { useDdayStore } from "../stores/dday/useDdayStore";
 import { useHistoryStore } from "../stores/history/useHistoryStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
@@ -58,6 +59,7 @@ export const captureStoreDocuments = (): DocumentWrite[] =>
 
 export const hydrateStoreDocuments = (documents: RemoteDocument[]) => {
   const supported = documents.filter((document) =>
+    document.documentType === "characters" ||
     remotelyPersistedDocumentTypes.includes(document.documentType as RemotelyPersistedDocumentType),
   );
 
@@ -71,6 +73,9 @@ export const hydrateStoreDocuments = (documents: RemoteDocument[]) => {
 
   supported.forEach((document) => {
     switch (document.documentType) {
+      case "characters":
+        useCharacterStore.setState(documentCodecs.characters.parse(document.payload));
+        break;
       case "memo":
         useWeeklyMemoStore.setState(documentCodecs.memo.parse(document.payload));
         break;

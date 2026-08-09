@@ -5,6 +5,7 @@ export type AuthStatus =
   | "creating-guest"
   | "guest"
   | "oauth-redirect"
+  | "signing-out"
   | "permanent"
   | "error";
 

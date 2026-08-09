@@ -1,12 +1,23 @@
 import { DatabaseZap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "../../lib/supabase/client";
 import {
   downloadMigrationBackup,
-  localMigrationReceiptKey,
   prepareLocalMigration,
+  readLocalMigrationReceipt,
+  runLocalMigration,
   type LocalMigrationTransport,
 } from "../../sync/localMigration";
+import { hasMeaningfulLocalSnapshot } from "../../sync/localSnapshot";
+import { decideAutomaticSync } from "../../sync/automaticSyncDecision";
+import {
+  clearAutomaticSyncAttempt,
+  clearPendingAuthTransition,
+  hasAutomaticSyncAttempt,
+  isPendingAccountSwitch,
+  isPendingGuestLink,
+  markAutomaticSyncAttempt,
+} from "../../auth/authTransitionStorage";
 import { createDocumentRepository } from "../../sync/documentRepository";
 import { createSupabaseDocumentDataSource } from "../../sync/supabaseDocumentDataSource";
 import { createSupabaseLocalMigrationTransport } from "../../sync/supabaseLocalMigrationTransport";
@@ -21,13 +32,19 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [completed, setCompleted] = useState(() => hasSyncConsent(userId));
+  const [completionMessage, setCompletionMessage] = useState(
+    "이 기기의 데이터 이전을 검증했습니다. 원본은 보존 기간 동안 그대로 유지됩니다.",
+  );
+  const [accountSwitchNotice, setAccountSwitchNotice] = useState(false);
+  const autoStarted = useRef(false);
   const [remoteDocuments, setRemoteDocuments] = useState<Awaited<
     ReturnType<ReturnType<typeof createDocumentRepository>["list"]>
   > | null>(null);
 
-  const openMigration = async () => {
+  const openMigration = async ({ automatic = false } = {}) => {
     setLoading(true);
     setError(false);
+    setAccountSwitchNotice(false);
 
     try {
       const supabase = await getSupabaseClient();
@@ -40,20 +57,74 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
         createSupabaseDocumentDataSource(supabase),
       );
 
-      if (localStorage.getItem(localMigrationReceiptKey)) {
+      if (readLocalMigrationReceipt(userId)) {
         grantSyncConsent(userId);
+        clearAutomaticSyncAttempt(userId);
         setCompleted(true);
         return;
       }
 
+      if (automatic) {
+        if (hasAutomaticSyncAttempt(userId)) {
+          setError(true);
+          return;
+        }
+
+        markAutomaticSyncAttempt(userId);
+      }
+
       const existingDocuments = await repository.list();
+      const prepared = await prepareLocalMigration();
+      const hasMeaningfulLocalData = hasMeaningfulLocalSnapshot(prepared.preview);
+      const accountSwitch = isPendingAccountSwitch();
+      const automaticDecision = decideAutomaticSync({
+        remoteDocumentCount: existingDocuments.length,
+        hasMeaningfulLocalData,
+        isGuestLink: isPendingGuestLink(userId),
+      });
 
       if (existingDocuments.length > 0) {
-        setRemoteDocuments(existingDocuments);
+        if (automaticDecision === "hydrate-remote") {
+          hydrateStoreDocuments(existingDocuments);
+          grantSyncConsent(userId);
+          clearAutomaticSyncAttempt(userId);
+          clearPendingAuthTransition();
+          setCompletionMessage("계정 데이터를 이 기기에 자동으로 불러왔습니다.");
+          setCompleted(true);
+        } else {
+          clearAutomaticSyncAttempt(userId);
+          setAccountSwitchNotice(accountSwitch);
+          setRemoteDocuments(existingDocuments);
+        }
+        return;
+      }
+
+      if (automatic && automaticDecision === "migrate-local") {
+        await runLocalMigration(prepared, createSupabaseLocalMigrationTransport(supabase, repository), {
+          userId,
+        });
+        grantSyncConsent(userId);
+        clearAutomaticSyncAttempt(userId);
+        clearPendingAuthTransition();
+        setCompletionMessage("이 기기의 데이터가 계정과 자동으로 동기화되었습니다.");
+        setCompleted(true);
+        return;
+      }
+
+      if (automatic && automaticDecision === "enable-empty") {
+        grantSyncConsent(userId);
+        clearAutomaticSyncAttempt(userId);
+        clearPendingAuthTransition();
+        setCompletionMessage("새 계정의 동기화를 자동으로 준비했습니다.");
+        setCompleted(true);
         return;
       }
 
       setTransport(createSupabaseLocalMigrationTransport(supabase, repository));
+      setAccountSwitchNotice(accountSwitch);
+      if (automatic) {
+        clearAutomaticSyncAttempt(userId);
+      }
     } catch {
       setError(true);
     } finally {
@@ -74,6 +145,10 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       downloadMigrationBackup(prepared.backup);
       hydrateStoreDocuments(remoteDocuments);
       grantSyncConsent(userId);
+      clearAutomaticSyncAttempt(userId);
+      clearPendingAuthTransition();
+      setAccountSwitchNotice(false);
+      setCompletionMessage("계정 데이터를 백업 후 이 기기에 불러왔습니다.");
       setCompleted(true);
       setRemoteDocuments(null);
     } catch {
@@ -83,10 +158,19 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
     }
   };
 
+  useEffect(() => {
+    if (completed || autoStarted.current) {
+      return;
+    }
+
+    autoStarted.current = true;
+    void openMigration({ automatic: true });
+  }, [completed, userId]);
+
   if (completed) {
     return (
       <p className="rounded-ui-md bg-card-soft p-3 text-sm text-ink-muted">
-        이 기기의 데이터 이전을 검증했습니다. 원본은 보존 기간 동안 그대로 유지됩니다.
+        {completionMessage}
       </p>
     );
   }
@@ -94,9 +178,14 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
   if (transport) {
     return (
       <LocalMigrationDialog
+        userId={userId}
         transport={transport}
         onComplete={() => {
           grantSyncConsent(userId);
+          clearAutomaticSyncAttempt(userId);
+          clearPendingAuthTransition();
+          setAccountSwitchNotice(false);
+          setCompletionMessage("이 기기의 데이터 이전을 검증했습니다. 원본은 보존 기간 동안 그대로 유지됩니다.");
           setCompleted(true);
           setTransport(null);
         }}
@@ -109,7 +198,9 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
     return (
       <div className="space-y-3 rounded-ui-md bg-card-soft p-3">
         <p className="text-sm text-ink-muted">
-          이 계정에 저장된 데이터가 있습니다. 현재 기기를 먼저 백업한 뒤 계정 데이터를 불러올 수 있습니다.
+          {accountSwitchNotice
+            ? "계정을 전환했습니다. 이전 기기의 데이터는 자동으로 합치지 않았습니다. 현재 계정 데이터를 확인한 뒤 선택해 주세요."
+            : "이 계정에 저장된 데이터가 있습니다. 현재 기기를 먼저 백업한 뒤 계정 데이터를 불러올 수 있습니다."}
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className="primary-button" onClick={acceptRemoteDocuments} disabled={loading}>
@@ -128,7 +219,7 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       <button
         type="button"
         className="secondary-button inline-flex items-center gap-2"
-        onClick={openMigration}
+        onClick={() => void openMigration()}
         disabled={loading}
       >
         <DatabaseZap aria-hidden size={17} />

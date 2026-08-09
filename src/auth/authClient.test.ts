@@ -119,6 +119,7 @@ describe("auth client", () => {
 
     await createAuthClient(auth as unknown as SupabaseClient["auth"]).connectGoogle(
       "https://app.example.com/auth/callback",
+      { forceAccountSelection: true },
     );
 
     expect(auth.linkIdentity).toHaveBeenCalledWith({
@@ -126,6 +127,7 @@ describe("auth client", () => {
       options: {
         redirectTo: "https://app.example.com/auth/callback",
         scopes: "openid email profile",
+        queryParams: { prompt: "select_account" },
       },
     });
   });
@@ -147,13 +149,41 @@ describe("auth client", () => {
     });
   });
 
-  it("ends only the current Supabase session for account recovery", async () => {
+  it("asks Google to show the account picker for account switching", async () => {
+    const auth = makeAuthApi();
+    auth.signInWithOAuth.mockResolvedValue({ data: { provider: "google", url: null }, error: null });
+
+    await createAuthClient(auth as unknown as SupabaseClient["auth"]).signInGoogle(
+      "https://app.example.com/auth/callback",
+      { forceAccountSelection: true },
+    );
+
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: "https://app.example.com/auth/callback",
+        scopes: "openid email profile",
+        queryParams: { prompt: "select_account" },
+      },
+    });
+  });
+
+  it("ends only the current Supabase session by default", async () => {
     const auth = makeAuthApi();
     auth.signOut.mockResolvedValue({ error: null });
 
     await createAuthClient(auth as unknown as SupabaseClient["auth"]).signOut();
 
-    expect(auth.signOut).toHaveBeenCalledOnce();
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+  });
+
+  it("can explicitly sign out every Supabase session", async () => {
+    const auth = makeAuthApi();
+    auth.signOut.mockResolvedValue({ error: null });
+
+    await createAuthClient(auth as unknown as SupabaseClient["auth"]).signOut("global");
+
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: "global" });
   });
 
   it("exchanges each PKCE callback code once", async () => {

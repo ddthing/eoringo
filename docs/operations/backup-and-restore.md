@@ -4,7 +4,7 @@
 
 The v7 JSON backup includes every supported local-storage key, all IndexedDB character images, an export timestamp, and a count manifest. Versions 1 through 6 remain import-compatible.
 
-Before first remote migration, the UI downloads a complete v7 backup. Remote migration is accepted only after SHA-256 digests returned by the server and a client read-back both match the prepared local documents. The original local data remains for at least seven days; images remain pending until image migration is separately verified.
+For a guest-to-Google connection whose destination account is empty, the app may run the verified migration automatically. It accepts the migration only after SHA-256 digests returned by the server and a client read-back both match the prepared local documents, and it keeps the original local data for at least seven days. When both local and remote data exist, the app requires the manual flow and downloads a complete v7 backup before replacing local state. Character images remain pending until image migration is separately verified.
 
 Never import backup images from network URLs. The importer accepts only bounded `data:image/...;base64` values for JPEG, PNG, WebP, and GIF.
 

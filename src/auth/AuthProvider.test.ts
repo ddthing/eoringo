@@ -61,6 +61,22 @@ describe("auth state reducer", () => {
     });
   });
 
+  it("keeps the current identity visible while signing out", () => {
+    const permanent = {
+      status: "permanent",
+      mode: "permanent",
+      userId: "permanent-id",
+      provider: "google",
+      errorCode: null,
+    } as const;
+
+    expect(authStateReducer(permanent, { type: "signing-out" })).toMatchObject({
+      status: "signing-out",
+      mode: "permanent",
+      userId: "permanent-id",
+    });
+  });
+
   it("waits for an explicit CAPTCHA result before entering guest creation", () => {
     expect(
       authStateReducer(initializingAuthState, { type: "no-session" }),

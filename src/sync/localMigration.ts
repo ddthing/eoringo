@@ -34,10 +34,21 @@ export type LocalMigrationResponse = {
   documentDigests: Partial<Record<DocumentType, string>>;
 };
 
+export type LocalMigrationReceipt = {
+  userId: string;
+  migrationId: string;
+  verifiedAt: string;
+  retainLocalUntil: string;
+  imageCountPending: number;
+};
+
 export type LocalMigrationTransport = {
   migrate: (request: LocalMigrationRequest) => Promise<LocalMigrationResponse>;
   readBack: () => Promise<MigrationDocument[]>;
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 type StorageLike = Pick<Storage, "setItem">;
 
@@ -121,6 +132,30 @@ export const downloadMigrationBackup = (backup: BackupPayload) => {
   URL.revokeObjectURL(url);
 };
 
+export const readLocalMigrationReceipt = (
+  userId: string,
+  storage: Pick<Storage, "getItem"> = localStorage,
+): LocalMigrationReceipt | null => {
+  try {
+    const value: unknown = JSON.parse(storage.getItem(localMigrationReceiptKey) ?? "null");
+
+    if (
+      !isRecord(value) ||
+      value.userId !== userId ||
+      typeof value.migrationId !== "string" ||
+      typeof value.verifiedAt !== "string" ||
+      typeof value.retainLocalUntil !== "string" ||
+      typeof value.imageCountPending !== "number"
+    ) {
+      return null;
+    }
+
+    return value as LocalMigrationReceipt;
+  } catch {
+    return null;
+  }
+};
+
 const toDigestMap = (documents: MigrationDocument[]) =>
   Object.fromEntries(documents.map((document) => [document.documentType, document.digest])) as Partial<
     Record<DocumentType, string>
@@ -154,9 +189,14 @@ export const verifyMigrationResult = (
 export const runLocalMigration = async (
   prepared: PreparedLocalMigration,
   transport: LocalMigrationTransport,
-  storage: StorageLike = localStorage,
-  now = new Date(),
+  options: {
+    userId: string;
+    storage?: StorageLike;
+    now?: Date;
+  },
 ) => {
+  const storage = options.storage ?? localStorage;
+  const now = options.now ?? new Date();
   const response = await transport.migrate(prepared.request);
   const readBack = await transport.readBack();
   verifyMigrationResult(prepared, response, readBack);
@@ -164,6 +204,7 @@ export const runLocalMigration = async (
   const retainLocalUntil = new Date(now);
   retainLocalUntil.setUTCDate(retainLocalUntil.getUTCDate() + localRetentionDays);
   const receipt = {
+    userId: options.userId,
     migrationId: prepared.request.migrationId,
     verifiedAt: now.toISOString(),
     retainLocalUntil: retainLocalUntil.toISOString(),

@@ -16,6 +16,11 @@ import {
   normalizeAuthFailure,
   type AuthClient,
 } from "./authClient";
+import {
+  clearPendingAuthTransition,
+  markPendingAccountSwitch,
+  markPendingGuestLink,
+} from "./authTransitionStorage";
 import type {
   AuthErrorCode,
   AuthSessionSummary,
@@ -28,6 +33,7 @@ type AuthAction =
   | { type: "no-session" }
   | { type: "creating-guest" }
   | { type: "oauth-redirect" }
+  | { type: "signing-out" }
   | { type: "ready"; session: AuthSessionSummary }
   | { type: "error"; code: AuthErrorCode };
 
@@ -56,6 +62,8 @@ export const authStateReducer = (state: AuthState, action: AuthAction): AuthStat
       return { ...initializingAuthState, status: "creating-guest" };
     case "oauth-redirect":
       return { ...state, status: "oauth-redirect", errorCode: null };
+    case "signing-out":
+      return { ...state, status: "signing-out", errorCode: null };
     case "ready":
       return {
         status: action.session.mode === "guest" ? "guest" : "permanent",
@@ -77,6 +85,7 @@ type AuthContextValue = AuthState & {
   createGuest: (captchaToken: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
   signInExistingGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
   connectGoogle: () => Promise<void>;
   completeOAuthCallback: (code: string) => Promise<void>;
   retry: () => void;
@@ -191,7 +200,15 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     dispatch({ type: "oauth-redirect" });
 
     try {
-      await client.connectGoogle(buildAuthCallbackUrl(window.location.origin));
+      const currentSession = await client.getCurrentSession();
+
+      if (currentSession?.mode === "guest") {
+        markPendingGuestLink(currentSession.userId);
+      }
+
+      await client.connectGoogle(buildAuthCallbackUrl(window.location.origin), {
+        forceAccountSelection: true,
+      });
       const restoredSession = await client.getCurrentSession();
 
       if (restoredSession) {
@@ -224,7 +241,9 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     dispatch({ type: "oauth-redirect" });
 
     try {
-      await client.signInGoogle(buildAuthCallbackUrl(window.location.origin));
+      await client.signInGoogle(buildAuthCallbackUrl(window.location.origin), {
+        forceAccountSelection: true,
+      });
       const restoredSession = await client.getCurrentSession();
 
       if (restoredSession) {
@@ -257,8 +276,29 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     dispatch({ type: "oauth-redirect" });
 
     try {
-      await client.signOut();
-      await client.signInGoogle(buildAuthCallbackUrl(window.location.origin));
+      markPendingAccountSwitch();
+      await client.signOut("local");
+      await client.signInGoogle(buildAuthCallbackUrl(window.location.origin), {
+        forceAccountSelection: true,
+      });
+    } catch (error) {
+      const failure = normalizeAuthFailure(error);
+      dispatch({ type: "error", code: failure.code });
+      throw failure;
+    }
+  }, [client]);
+
+  const signOut = useCallback(async () => {
+    if (!client) {
+      throw normalizeAuthFailure({ code: "manual_linking_disabled" });
+    }
+
+    dispatch({ type: "signing-out" });
+
+    try {
+      await client.signOut("local");
+      clearPendingAuthTransition();
+      dispatch({ type: "no-session" });
     } catch (error) {
       const failure = normalizeAuthFailure(error);
       dispatch({ type: "error", code: failure.code });
@@ -305,11 +345,12 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
       createGuest,
       signInGoogle,
       signInExistingGoogle,
+      signOut,
       connectGoogle,
       completeOAuthCallback,
       retry,
     }),
-    [completeOAuthCallback, connectGoogle, createGuest, retry, signInExistingGoogle, signInGoogle, state],
+    [completeOAuthCallback, connectGoogle, createGuest, retry, signInExistingGoogle, signInGoogle, signOut, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

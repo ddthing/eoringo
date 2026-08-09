@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   LocalMigrationFailure,
+  readLocalMigrationReceipt,
   runLocalMigration,
   verifyMigrationResult,
   type PreparedLocalMigration,
@@ -57,8 +58,11 @@ describe("explicit local migration", () => {
       runLocalMigration(
         prepared,
         transport,
-        storage,
-        new Date("2026-08-02T08:00:00.000Z"),
+        {
+          userId: "00000000-0000-4000-8000-000000000009",
+          storage,
+          now: new Date("2026-08-02T08:00:00.000Z"),
+        },
       ),
     ).resolves.toMatchObject({
       migrationId,
@@ -66,8 +70,25 @@ describe("explicit local migration", () => {
     });
     expect(storage.setItem).toHaveBeenCalledWith(
       "eoringo/local-migration-receipt-v1",
-      expect.stringContaining(migrationId),
+      expect.stringContaining('"userId":"00000000-0000-4000-8000-000000000009"'),
     );
+  });
+
+  it("does not reuse a migration receipt for another account", () => {
+    const storage = {
+      getItem: vi.fn().mockReturnValue(
+        JSON.stringify({
+          userId: "account-a",
+          migrationId,
+          verifiedAt: "2026-08-02T08:00:00.000Z",
+          retainLocalUntil: "2026-08-09T08:00:00.000Z",
+          imageCountPending: 0,
+        }),
+      ),
+    };
+
+    expect(readLocalMigrationReceipt("account-a", storage)).toMatchObject({ userId: "account-a" });
+    expect(readLocalMigrationReceipt("account-b", storage)).toBeNull();
   });
 
   it("does not write a receipt when migration verification fails", async () => {
@@ -80,7 +101,12 @@ describe("explicit local migration", () => {
       readBack: vi.fn().mockResolvedValue([document]),
     };
 
-    await expect(runLocalMigration(prepared, transport, storage)).rejects.toThrow(
+    await expect(
+      runLocalMigration(prepared, transport, {
+        userId: "00000000-0000-4000-8000-000000000009",
+        storage,
+      }),
+    ).rejects.toThrow(
       LocalMigrationFailure,
     );
     expect(storage.setItem).not.toHaveBeenCalled();

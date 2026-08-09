@@ -7,6 +7,10 @@ import {
 } from "./authTypes";
 
 type SupabaseAuth = SupabaseClient["auth"];
+export type GoogleOAuthOptions = {
+  forceAccountSelection?: boolean;
+};
+
 type AuthSessionListener = (
   session: AuthSessionSummary | null,
   error?: AuthFailure,
@@ -15,9 +19,9 @@ type AuthSessionListener = (
 export type AuthClient = {
   getCurrentSession: () => Promise<AuthSessionSummary | null>;
   createGuestSession: (captchaToken: string) => Promise<AuthSessionSummary>;
-  signInGoogle: (redirectTo: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  connectGoogle: (redirectTo: string) => Promise<void>;
+  signInGoogle: (redirectTo: string, options?: GoogleOAuthOptions) => Promise<void>;
+  signOut: (scope?: "local" | "global") => Promise<void>;
+  connectGoogle: (redirectTo: string, options?: GoogleOAuthOptions) => Promise<void>;
   exchangeOAuthCode: (code: string) => Promise<AuthSessionSummary>;
   subscribe: (listener: AuthSessionListener) => () => void;
 };
@@ -124,12 +128,15 @@ export const createAuthClient = (auth: SupabaseAuth): AuthClient => ({
     return summary;
   },
 
-  async signInGoogle(redirectTo) {
+  async signInGoogle(redirectTo, options) {
     const { error } = await auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo,
         scopes: "openid email profile",
+        ...(options?.forceAccountSelection
+          ? { queryParams: { prompt: "select_account" } }
+          : {}),
       },
     });
 
@@ -138,15 +145,15 @@ export const createAuthClient = (auth: SupabaseAuth): AuthClient => ({
     }
   },
 
-  async signOut() {
-    const { error } = await auth.signOut();
+  async signOut(scope = "local") {
+    const { error } = await auth.signOut({ scope });
 
     if (error) {
       throw normalizeAuthFailure(error);
     }
   },
 
-  async connectGoogle(redirectTo) {
+  async connectGoogle(redirectTo, options) {
     const session = await getVerifiedCurrentSession(auth);
 
     if (!session) {
@@ -162,6 +169,9 @@ export const createAuthClient = (auth: SupabaseAuth): AuthClient => ({
       options: {
         redirectTo,
         scopes: "openid email profile",
+        ...(options?.forceAccountSelection
+          ? { queryParams: { prompt: "select_account" } }
+          : {}),
       },
     });
 

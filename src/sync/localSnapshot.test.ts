@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createLocalSnapshotPreview } from "./localSnapshot";
+import { DEFAULT_KOREAN_SERVER } from "../data/servers";
+import { createLocalSnapshotPreview, hasMeaningfulLocalSnapshot } from "./localSnapshot";
 
 describe("createLocalSnapshotPreview", () => {
   it("creates a deterministic, validated preview without mutating input", () => {
@@ -41,5 +42,37 @@ describe("createLocalSnapshotPreview", () => {
     expect(preview.issues).toEqual([
       expect.objectContaining({ documentType: "memo", message: expect.stringContaining("byte limit") }),
     ]);
+  });
+
+  it("distinguishes default local state from user-created data", () => {
+    const empty = createLocalSnapshotPreview({
+      documents: {
+        characters: {
+          characters: [{ id: "default-character", name: "나의 모험가", server: DEFAULT_KOREAN_SERVER, isMain: true }],
+          activeCharacterId: "default-character",
+        },
+        tasks: {
+          completedByCharacter: {},
+          completedAtByCharacter: {},
+          customTaskTemplatesByCharacter: {},
+          disabledDefaultTaskIdsByCharacter: {},
+          dailyResetKey: "today",
+          weeklyResetKey: "week",
+          resetKeysByRule: {},
+        },
+        dday: { eventsByCharacter: {} },
+        memo: { memosByCharacter: {} },
+        allowance: { value: 0, lastAccrualKey: "today" },
+        history: { entriesByDate: {} },
+      },
+      images: {},
+    });
+    const meaningful = createLocalSnapshotPreview({
+      documents: { memo: { memosByCharacter: { "default-character": "메모" } } },
+      images: {},
+    });
+
+    expect(hasMeaningfulLocalSnapshot(empty)).toBe(false);
+    expect(hasMeaningfulLocalSnapshot(meaningful)).toBe(true);
   });
 });

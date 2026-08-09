@@ -10,6 +10,7 @@ describe("LegalNoticePages", () => {
     expect(markup).toContain("Google 비밀번호");
     expect(markup).toContain("Gmail");
     expect(markup).toContain("Supabase");
+    expect(markup).toContain("안전한 경우");
     expect(markup).toContain('href="/terms"');
   });
 
@@ -18,6 +19,7 @@ describe("LegalNoticePages", () => {
 
     expect(markup).toContain('data-legal-notice="terms"');
     expect(markup).toContain("안전한 로그인");
+    expect(markup).toContain("안전한 자동 검증");
     expect(markup).toContain('href="/privacy"');
     expect(markup).toContain('href="https://coner.luv3r.me/"');
   });

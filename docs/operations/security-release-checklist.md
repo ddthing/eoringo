@@ -11,7 +11,7 @@ Release is blocked unless every applicable item is confirmed.
 - [ ] Only exact HTTPS production redirect URLs are allowlisted. Local HTTP is restricted to localhost/127.0.0.1.
 - [ ] Browser configuration contains only Supabase URL, publishable key, Turnstile site key, and feature flags.
 - [ ] No service-role key, OAuth secret, CAPTCHA secret, DB password, access token, refresh token, OAuth code, QR payload, or user document appears in source, bundle, logs, or analytics.
-- [ ] Existing local data is never uploaded without explicit confirmation and a completed backup download.
+- [ ] Existing local data is uploaded automatically only after an explicit guest-to-Google link, an empty destination-account check, digest verification, and client read-back; all other local/remote conflicts require explicit confirmation and a completed backup download.
 - [ ] Migration is idempotent, transactional, payload-bounded, and verified by read-back digest.
 - [ ] Image upload rejects unsupported input, inputs over 20 MB, outputs over 768×768, and outputs over 512 KiB.
 - [ ] Rollback was tested with `VITE_REMOTE_SYNC_ENABLED=false` without deleting local or remote data.

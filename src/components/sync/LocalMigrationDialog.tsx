@@ -9,6 +9,7 @@ import {
 } from "../../sync/localMigration";
 
 type LocalMigrationDialogProps = {
+  userId: string;
   transport: LocalMigrationTransport;
   onComplete: () => void;
   onCancel: () => void;
@@ -24,6 +25,7 @@ const formatBytes = (bytes: number) =>
   }).format(bytes >= 1024 * 1024 ? bytes / (1024 * 1024) : bytes / 1024);
 
 export const LocalMigrationDialog = ({
+  userId,
   transport,
   onComplete,
   onCancel,
@@ -62,7 +64,7 @@ export const LocalMigrationDialog = ({
     downloadMigrationBackup(prepared.backup);
 
     try {
-      await runLocalMigration(prepared, transport);
+      await runLocalMigration(prepared, transport, { userId });
       setPhase("success");
       onComplete();
     } catch {

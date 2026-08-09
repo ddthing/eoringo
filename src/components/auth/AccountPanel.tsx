@@ -1,4 +1,4 @@
-import { CloudOff, Link2, LogIn, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowRightLeft, CloudOff, Link2, LogIn, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
 import type { AuthErrorCode } from "../../auth/authTypes";
 import { useAuth } from "../../auth/useAuth";
@@ -40,7 +40,7 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
   const [message, setMessage] = useState("");
   const [captchaAttempt, setCaptchaAttempt] = useState(0);
   const [captchaFailed, setCaptchaFailed] = useState(false);
-  const isBusy = ["initializing", "creating-guest", "oauth-redirect"].includes(auth.status);
+  const isBusy = ["initializing", "creating-guest", "oauth-redirect", "signing-out"].includes(auth.status);
   const isPendingSignIn = auth.status === "oauth-redirect" && auth.mode === "local-only";
   const isNoSession = auth.status === "no-session" || isPendingSignIn;
 
@@ -97,6 +97,34 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
     setMessage("");
     setCaptchaFailed(false);
     setCaptchaAttempt((attempt) => attempt + 1);
+  };
+
+  const handleSwitchAccount = async () => {
+    setMessage("");
+
+    try {
+      await auth.signInExistingGoogle();
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error.code as AuthErrorCode)
+          : "unknown";
+      setMessage(errorMessages[code] ?? errorMessages.unknown);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setMessage("");
+
+    try {
+      await auth.signOut();
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error.code as AuthErrorCode)
+          : "unknown";
+      setMessage(errorMessages[code] ?? errorMessages.unknown);
+    }
   };
 
   if (auth.status === "disabled") {
@@ -204,6 +232,34 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
       ) : null}
 
       <SyncStatus />
+
+      {isPermanent ? (
+        <div className="flex flex-wrap gap-2 border-t border-[rgb(var(--color-line-muted))] pt-3">
+          <Button
+            variant="secondary"
+            onClick={handleSwitchAccount}
+            loading={auth.status === "oauth-redirect"}
+            loadingLabel="계정 전환 준비 중"
+            disabled={isBusy}
+          >
+            <ArrowRightLeft aria-hidden size={16} />
+            다른 Google 계정으로 전환
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            loading={auth.status === "signing-out"}
+            loadingLabel="로그아웃 중"
+            disabled={isBusy}
+          >
+            <LogOut aria-hidden size={16} />
+            이 기기에서 로그아웃
+          </Button>
+          <p className="basis-full text-xs text-ink-muted">
+            로그아웃해도 Google 계정의 원격 데이터는 삭제되지 않습니다.
+          </p>
+        </div>
+      ) : null}
 
       {auth.status === "error" ? (
         <Button variant="secondary" onClick={auth.retry}>
