@@ -45,6 +45,7 @@ export const ThemeSettingsPanel = () => {
           options={appearanceOptions.map(({ id, ...option }) => ({ value: id, ...option }))}
           onChange={setAppearanceMode}
           aria-label="화면 모드"
+          className="ui-settings-mode-control"
         />
       </div>
 
