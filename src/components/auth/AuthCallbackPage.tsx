@@ -2,6 +2,7 @@ import { LoaderCircle, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
+import { Button } from "../ui";
 
 type CallbackPhase = "working" | "failed";
 
@@ -16,6 +17,7 @@ export const AuthCallbackPage = () => {
   const [phase, setPhase] = useState<CallbackPhase>(() =>
     providerError || !code ? "failed" : "working",
   );
+  const [isRecoveryBusy, setIsRecoveryBusy] = useState(false);
 
   useEffect(() => {
     if (providerError || !code) {
@@ -42,6 +44,17 @@ export const AuthCallbackPage = () => {
       active = false;
     };
   }, [auth.completeOAuthCallback, code, navigate, providerError]);
+
+  const handleExistingGoogleSignIn = async () => {
+    setIsRecoveryBusy(true);
+
+    try {
+      await auth.signInExistingGoogle();
+    } catch {
+      setIsRecoveryBusy(false);
+      setPhase("failed");
+    }
+  };
 
   return (
     <section className="card mx-auto max-w-md space-y-4 text-center">
@@ -70,10 +83,22 @@ export const AuthCallbackPage = () => {
         </p>
       </div>
       {phase === "failed" ? (
-        <Link className="secondary-button inline-flex items-center justify-center gap-2" to="/settings#account" replace>
-          <ShieldCheck aria-hidden size={17} />
-          계정 설정으로 돌아가기
-        </Link>
+        <div className="flex flex-wrap justify-center gap-2">
+          {isIdentityAlreadyLinked ? (
+            <Button
+              onClick={handleExistingGoogleSignIn}
+              loading={isRecoveryBusy}
+              loadingLabel="Google 로그인 준비 중"
+            >
+              <ShieldCheck aria-hidden size={17} />
+              기존 Google 계정으로 로그인
+            </Button>
+          ) : null}
+          <Link className="secondary-button inline-flex items-center justify-center gap-2" to="/settings#account" replace>
+            <ShieldCheck aria-hidden size={17} />
+            계정 설정으로 돌아가기
+          </Link>
+        </div>
       ) : null}
     </section>
   );

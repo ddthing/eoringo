@@ -16,6 +16,7 @@ export type AuthClient = {
   getCurrentSession: () => Promise<AuthSessionSummary | null>;
   createGuestSession: (captchaToken: string) => Promise<AuthSessionSummary>;
   signInGoogle: (redirectTo: string) => Promise<void>;
+  signOut: () => Promise<void>;
   connectGoogle: (redirectTo: string) => Promise<void>;
   exchangeOAuthCode: (code: string) => Promise<AuthSessionSummary>;
   subscribe: (listener: AuthSessionListener) => () => void;
@@ -131,6 +132,14 @@ export const createAuthClient = (auth: SupabaseAuth): AuthClient => ({
         scopes: "openid email profile",
       },
     });
+
+    if (error) {
+      throw normalizeAuthFailure(error);
+    }
+  },
+
+  async signOut() {
+    const { error } = await auth.signOut();
 
     if (error) {
       throw normalizeAuthFailure(error);

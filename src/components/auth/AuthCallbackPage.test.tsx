@@ -6,6 +6,7 @@ import { AuthCallbackPage } from "./AuthCallbackPage";
 vi.mock("../../auth/useAuth", () => ({
   useAuth: () => ({
     completeOAuthCallback: vi.fn(),
+    signInExistingGoogle: vi.fn(),
   }),
 }));
 
@@ -25,6 +26,7 @@ describe("AuthCallbackPage", () => {
     expect(markup).toContain("자동 병합하지 않으며");
     expect(markup).toContain("기존 계정으로 로그인하거나 다른 Google 계정");
     expect(markup).toContain("게스트 데이터는 삭제되지 않습니다");
+    expect(markup).toContain("기존 Google 계정으로 로그인");
     expect(markup).not.toContain("identity_already_exists");
     expect(markup).not.toContain("internal-details");
   });

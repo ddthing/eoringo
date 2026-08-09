@@ -76,6 +76,7 @@ export const authStateReducer = (state: AuthState, action: AuthAction): AuthStat
 type AuthContextValue = AuthState & {
   createGuest: (captchaToken: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
+  signInExistingGoogle: () => Promise<void>;
   connectGoogle: () => Promise<void>;
   completeOAuthCallback: (code: string) => Promise<void>;
   retry: () => void;
@@ -248,6 +249,23 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     }
   }, [client]);
 
+  const signInExistingGoogle = useCallback(async () => {
+    if (!client) {
+      throw normalizeAuthFailure({ code: "manual_linking_disabled" });
+    }
+
+    dispatch({ type: "oauth-redirect" });
+
+    try {
+      await client.signOut();
+      await client.signInGoogle(buildAuthCallbackUrl(window.location.origin));
+    } catch (error) {
+      const failure = normalizeAuthFailure(error);
+      dispatch({ type: "error", code: failure.code });
+      throw failure;
+    }
+  }, [client]);
+
   const completeOAuthCallback = useCallback(
     async (code: string) => {
       if (!client) {
@@ -282,8 +300,16 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
 
   const retry = useCallback(() => setRetryVersion((version) => version + 1), []);
   const value = useMemo(
-    () => ({ ...state, createGuest, signInGoogle, connectGoogle, completeOAuthCallback, retry }),
-    [completeOAuthCallback, connectGoogle, createGuest, retry, signInGoogle, state],
+    () => ({
+      ...state,
+      createGuest,
+      signInGoogle,
+      signInExistingGoogle,
+      connectGoogle,
+      completeOAuthCallback,
+      retry,
+    }),
+    [completeOAuthCallback, connectGoogle, createGuest, retry, signInExistingGoogle, signInGoogle, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

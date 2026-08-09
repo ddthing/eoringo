@@ -25,6 +25,7 @@ const makeAuthApi = () => ({
   getUser: vi.fn(),
   signInAnonymously: vi.fn(),
   signInWithOAuth: vi.fn(),
+  signOut: vi.fn(),
   linkIdentity: vi.fn(),
   exchangeCodeForSession: vi.fn(),
   onAuthStateChange: vi.fn(() => ({
@@ -68,6 +69,7 @@ describe("auth client", () => {
       getCurrentSession: vi.fn().mockResolvedValue(summary),
       createGuestSession: vi.fn().mockResolvedValue(summary),
       signInGoogle: vi.fn(),
+      signOut: vi.fn(),
       connectGoogle: vi.fn(),
       exchangeOAuthCode: vi.fn(),
       subscribe: vi.fn(() => vi.fn()),
@@ -143,6 +145,15 @@ describe("auth client", () => {
         scopes: "openid email profile",
       },
     });
+  });
+
+  it("ends only the current Supabase session for account recovery", async () => {
+    const auth = makeAuthApi();
+    auth.signOut.mockResolvedValue({ error: null });
+
+    await createAuthClient(auth as unknown as SupabaseClient["auth"]).signOut();
+
+    expect(auth.signOut).toHaveBeenCalledOnce();
   });
 
   it("exchanges each PKCE callback code once", async () => {
