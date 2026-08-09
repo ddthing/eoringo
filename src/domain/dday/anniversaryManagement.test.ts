@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   isAnniversaryDateInputAllowed,
   isValidAnniversaryDate,
+  getAnniversaryEventsByDate,
+  getUpcomingAnniversaries,
   sortAnniversaries,
   validateAnniversaryDraft,
 } from "./anniversaryManagement";
@@ -33,5 +35,34 @@ describe("anniversary management", () => {
       { id: "a", title: "가나", date: "2026-08-01" },
       { id: "c", title: "먼저", date: "2026-07-01" },
     ]).map((event) => event.id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("prioritizes anniversaries closest to today for previews", () => {
+    expect(getUpcomingAnniversaries([
+      { id: "past", title: "지난 기록", date: "2026-08-01" },
+      { id: "soon", title: "다가오는 기록", date: "2026-08-12" },
+      { id: "later", title: "나중 기록", date: "2026-08-20" },
+    ], 2, new Date("2026-08-10T00:00:00+09:00")).map((event) => event.id)).toEqual([
+      "soon",
+      "past",
+    ]);
+  });
+
+  it("groups calendar markers by date without mutating the source", () => {
+    const events = [
+      { id: "a", title: "첫 기록", date: "2026-08-10" },
+      { id: "b", title: "두 번째 기록", date: "2026-08-10" },
+      { id: "c", title: "다른 날", date: "2026-08-12" },
+    ];
+
+    expect(getAnniversaryEventsByDate(events)).toEqual({
+      "2026-08-10": [events[0], events[1]],
+      "2026-08-12": [events[2]],
+    });
+    expect(events).toEqual([
+      { id: "a", title: "첫 기록", date: "2026-08-10" },
+      { id: "b", title: "두 번째 기록", date: "2026-08-10" },
+      { id: "c", title: "다른 날", date: "2026-08-12" },
+    ]);
   });
 });

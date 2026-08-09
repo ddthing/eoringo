@@ -1,114 +1,41 @@
-import { FormEvent, useEffect, useState } from "react";
-import { getDaysFromTodayKst } from "../../lib/date";
+import { useMemo } from "react";
 import { getDdayLabel } from "../../domain/dday/getDdayLabel";
+import { getUpcomingAnniversaries } from "../../domain/dday/anniversaryManagement";
 import { useDdayStore } from "../../stores/useDdayStore";
 import { useCharacterStore } from "../../stores/useCharacterStore";
-import { CalendarDays, Pencil, Plus, X } from "lucide-react";
-import { isValidAnniversaryDate } from "../../domain/dday/anniversaryManagement";
-import { AnniversaryDateField } from "../common/AnniversaryDateField";
+import { ArrowRight, CalendarDays } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const formatDisplayDate = (dateKey: string) => dateKey.split("-").join(".");
 const emptyEvents = [] as const;
 
 export const UpcomingAnniversaryWidget = () => {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const events = useDdayStore((state) => state.eventsByCharacter[activeCharacterId] ?? emptyEvents);
-  const addEvent = useDdayStore((state) => state.addEvent);
-  const updateEvent = useDdayStore((state) => state.updateEvent);
-  const upcomingEvents = [...events]
-    .sort((a, b) => {
-      const daysA = Math.abs(getDaysFromTodayKst(a.date));
-      const daysB = Math.abs(getDaysFromTodayKst(b.date));
-
-      return daysA === daysB ? a.date.localeCompare(b.date) : daysA - daysB;
-    })
-    .slice(0, 3);
-
-  const closeForm = () => {
-    setTitle("");
-    setDate("");
-    setEditingEventId(null);
-    setIsFormOpen(false);
-  };
-
-  useEffect(() => {
-    closeForm();
-  }, [activeCharacterId]);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!title.trim() || !isValidAnniversaryDate(date)) return;
-
-    if (editingEventId) {
-      updateEvent(activeCharacterId, editingEventId, { title: title.trim(), date });
-    } else {
-      addEvent(activeCharacterId, { title: title.trim(), date });
-    }
-    closeForm();
-  };
-
-  const startEdit = (eventId: string, eventTitle: string, eventDate: string) => {
-    setTitle(eventTitle);
-    setDate(eventDate);
-    setEditingEventId(eventId);
-    setIsFormOpen(true);
-  };
+  const upcomingEvents = useMemo(() => getUpcomingAnniversaries([...events]), [events]);
 
   return (
     <section className="home-panel p-4 min-[420px]:p-[18px] md:p-5">
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
-          <p className="muted-label">기념일</p>
-          <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">기념일 관리</h2>
+          <p className="muted-label">내 일정</p>
+          <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">다가오는 기념일</h2>
         </div>
-        <button
-          type="button"
-          className="secondary-button home-touch-target gap-1.5"
-          onClick={() => (isFormOpen ? closeForm() : setIsFormOpen(true))}
-          aria-expanded={isFormOpen}
-        >
-          {isFormOpen ? <X aria-hidden size={14} /> : <Plus aria-hidden size={14} />}
-          {isFormOpen ? "닫기" : "추가"}
-        </button>
+        <Link to="/calendar" className="secondary-button home-touch-target gap-1.5">
+          일정에서 관리 <ArrowRight aria-hidden size={14} />
+        </Link>
       </div>
-      {isFormOpen ? (
-        <form onSubmit={handleSubmit} className="mb-3 grid gap-2 rounded-ui-md bg-card-soft/55 p-3">
-          <input
-            className="field"
-            name="home-anniversary-title"
-            aria-label="기념일 이름"
-            autoComplete="off"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="기념일 이름"
-          />
-          <AnniversaryDateField
-            name="home-anniversary-date"
-            ariaLabel="기념일 날짜"
-            value={date}
-            onChange={setDate}
-          />
-          <button type="submit" className="primary-button w-fit" disabled={!title.trim() || !isValidAnniversaryDate(date)}>
-            {editingEventId ? "수정 저장" : "추가"}
-          </button>
-        </form>
-      ) : null}
       {upcomingEvents.length === 0 ? (
         <div className="home-empty-state min-h-20">
           <CalendarDays aria-hidden size={17} />
-          <p>등록된 기념일이 없습니다.</p>
+          <p>등록된 기념일이 없습니다. 일정에서 추가할 수 있어요.</p>
         </div>
       ) : (
         <div className="grid gap-1.5">
           {upcomingEvents.map((event) => (
             <div
               key={event.id}
-              className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2 rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
+              className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2 rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
             >
               <span className="rounded-full bg-card px-2.5 py-1 text-center text-xs font-bold tabular-nums text-primary">
                 {getDdayLabel(event.date)}
@@ -119,14 +46,6 @@ export const UpcomingAnniversaryWidget = () => {
                   {formatDisplayDate(event.date)}
                 </p>
               </div>
-              <button
-                type="button"
-                className="grid h-11 w-11 place-items-center rounded-full text-primary transition hover:bg-primary-soft active:scale-95"
-                aria-label={`${event.title} 기념일 수정`}
-                onClick={() => startEdit(event.id, event.title, event.date)}
-              >
-                <Pencil aria-hidden size={15} />
-              </button>
             </div>
           ))}
         </div>

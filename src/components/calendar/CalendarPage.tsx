@@ -9,9 +9,16 @@ import {
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { frontlineMaps } from "../../data/frontline";
+import { getDdayLabel } from "../../domain/dday/getDdayLabel";
+import {
+  getAnniversaryEventsByDate,
+  getUpcomingAnniversaries,
+} from "../../domain/dday/anniversaryManagement";
 import { getFrontlineByDateKey } from "../../domain/frontline/getTodayFrontline";
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
 import { addDaysToDateKey, getKstDateKey } from "../../lib/date";
+import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useDdayStore } from "../../stores/useDdayStore";
 import type { FrontlineMap, HousingPhaseResult } from "../../types";
 import { HousingListingsMemo } from "./HousingListingsMemo";
 import { CalendarAnniversaryManager } from "./CalendarAnniversaryManager";
@@ -59,6 +66,8 @@ const housingLegendItems = [
 const toKstDate = (dateKey: string) => new Date(`${dateKey}T00:00:00+09:00`);
 
 const formatMonthDay = (dateKey: string) => format(parseISO(dateKey), "MM.dd");
+const formatDisplayDate = (dateKey: string) => dateKey.split("-").join(".");
+const emptyEvents = [] as const;
 
 const getNextPhaseCopy = (phase: HousingPhaseResult) => {
   const nextLabel = phase.phase === "entry" ? "발표" : "신청";
@@ -69,10 +78,14 @@ const getNextPhaseCopy = (phase: HousingPhaseResult) => {
 export const CalendarPage = () => {
   const [monthlyMode, setMonthlyMode] = useState<"frontline" | "housing">("frontline");
   const [legendOpen, setLegendOpen] = useState(false);
+  const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
+  const events = useDdayStore((state) => state.eventsByCharacter[activeCharacterId] ?? emptyEvents);
   const todayKey = getKstDateKey();
   const todayHousing = getHousingPhase();
   const todayFrontline = getFrontlineByDateKey(todayKey);
   const tomorrowFrontline = getFrontlineByDateKey(addDaysToDateKey(todayKey, 1));
+  const anniversaryEventsByDate = useMemo(() => getAnniversaryEventsByDate([...events]), [events]);
+  const upcomingAnniversaries = useMemo(() => getUpcomingAnniversaries([...events]), [events]);
   const legendItems =
     monthlyMode === "frontline"
       ? frontlineMaps.map((map) => ({
@@ -160,11 +173,41 @@ export const CalendarPage = () => {
         </div>
       </section>
 
+      {upcomingAnniversaries.length ? (
+        <section className="calendar-panel p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="muted-label block">내 일정</span>
+              <h2 className="mt-1 text-base font-bold text-ink">다가오는 기념일</h2>
+            </div>
+            <span className="sticker bg-card-soft">최대 3개</span>
+          </div>
+          <div className="mt-3 grid gap-1.5">
+            {upcomingAnniversaries.map((event) => (
+              <div
+                key={event.id}
+                className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2 rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
+              >
+                <span className="rounded-full bg-card px-2.5 py-1 text-center text-xs font-bold tabular-nums text-primary">
+                  {getDdayLabel(event.date)}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-ink">{event.title}</p>
+                  <p className="text-[11px] font-medium tabular-nums text-ink-muted">
+                    {formatDisplayDate(event.date)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="calendar-panel p-4">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <span className="muted-label block">월간 달력</span>
-          <h2 className="mt-1 text-base font-bold text-ink">{monthLabel} 달력</h2>
+            <span className="muted-label block">게임 일정</span>
+            <h2 className="mt-1 text-base font-bold text-ink">{monthLabel} 달력</h2>
           </div>
           <span className="text-[11px] font-bold text-ink-muted">KST 기준</span>
         </div>
@@ -209,6 +252,7 @@ export const CalendarPage = () => {
               const isToday = dateKey === todayKey;
               const frontline = getFrontlineByDateKey(dateKey);
               const housing = getHousingPhase(toKstDate(dateKey));
+              const dateAnniversaries = anniversaryEventsByDate[dateKey] ?? [];
               const label =
                 monthlyMode === "frontline" ? frontline.shortName : phaseLabel[housing.phase];
               const toneClassName = isToday
@@ -228,12 +272,18 @@ export const CalendarPage = () => {
                   data-calendar-mode={monthlyMode}
                   data-calendar-tone={monthlyMode === "frontline" ? frontline.id : housing.phase}
                   data-today={isToday ? "true" : undefined}
-                  title={`${format(parseISO(dateKey), "M월 d일")} ${monthlyMode === "frontline" ? frontline.displayName : phaseLabel[housing.phase]}`}
+                  title={`${format(parseISO(dateKey), "M월 d일")} ${monthlyMode === "frontline" ? frontline.displayName : phaseLabel[housing.phase]}${dateAnniversaries.length ? ` · ${dateAnniversaries.map((event) => event.title).join(", ")}` : ""}`}
                 >
                   <p className="text-[11px] font-bold text-ink">
                     {format(parseISO(dateKey), "d")}
                   </p>
                   <p className="mt-1 truncate text-xs font-bold">{label}</p>
+                  {dateAnniversaries.length ? (
+                    <span className="mt-1 inline-flex max-w-full items-center justify-center gap-1 truncate text-[10px] font-extrabold text-primary">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                      {dateAnniversaries.length > 1 ? `${dateAnniversaries.length}개` : "기념"}
+                    </span>
+                  ) : null}
                 </div>
               );
             })}

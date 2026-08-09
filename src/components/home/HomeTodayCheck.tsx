@@ -9,7 +9,7 @@ import {
 import { HomeTodayCheckItem } from "./HomeTodayCheckItem";
 import { useHomeDashboardTasks } from "./useHomeDashboardTasks";
 
-const displayedTaskLimit = 2;
+const displayedTaskLimit = 1;
 
 type CompletingTask = {
   category: TaskCategory;
@@ -78,7 +78,7 @@ export const HomeTodayCheck = () => {
           <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">
             오늘 체크
           </h2>
-          <p className="mt-1 text-xs font-medium text-ink-muted">지금 할 일을 바로 체크하세요.</p>
+          <p className="mt-1 text-xs font-medium text-ink-muted">우선순위 항목부터 하나씩 체크하세요.</p>
         </div>
         <span className="sticker tabular-nums">{completed}/{total}</span>
       </div>

@@ -1,4 +1,5 @@
 import type { DdayEvent } from "../../types";
+import { getDaysFromTodayKst } from "../../lib/date";
 
 const anniversaryDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -35,3 +36,22 @@ export const validateAnniversaryDraft = (title: string, date: string) => ({
 
 export const sortAnniversaries = (events: DdayEvent[]) =>
   [...events].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title, "ko"));
+
+export const getUpcomingAnniversaries = (events: DdayEvent[], limit = 3, today = new Date()) =>
+  [...events]
+    .sort((a, b) => {
+      const daysA = Math.abs(getDaysFromTodayKst(a.date, today));
+      const daysB = Math.abs(getDaysFromTodayKst(b.date, today));
+
+      return daysA === daysB
+        ? a.date.localeCompare(b.date) || a.title.localeCompare(b.title, "ko")
+        : daysA - daysB;
+    })
+    .slice(0, limit);
+
+export const getAnniversaryEventsByDate = (events: DdayEvent[]) =>
+  events.reduce<Record<string, DdayEvent[]>>((eventsByDate, event) => {
+    const eventsForDate = eventsByDate[event.date] ?? [];
+    eventsByDate[event.date] = [...eventsForDate, event];
+    return eventsByDate;
+  }, {});

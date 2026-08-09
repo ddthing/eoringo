@@ -80,8 +80,9 @@ export const CalendarAnniversaryManager = () => {
     <section className="calendar-panel p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="muted-label">기념일</p>
+          <p className="muted-label">내 일정</p>
           <h2 className="mt-1 text-base font-bold">기념일 관리</h2>
+          <p className="mt-1 text-xs font-medium text-ink-muted">등록한 날짜 기준으로 D-day를 계산합니다.</p>
         </div>
         <Button
           variant="secondary"
