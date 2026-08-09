@@ -72,7 +72,7 @@ describe("AccountDataPanel", () => {
     const markup = renderToStaticMarkup(<NotificationSettingsPanel />);
 
     expect(markup.match(/lucide-info/g)).toHaveLength(1);
-    expect(markup).not.toContain("lucide-bell");
+    expect(markup.match(/lucide-bell/g)).toHaveLength(1);
   });
 
   it("gives design, notification, and app info cards the same inner spacing", () => {
