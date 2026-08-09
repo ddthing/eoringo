@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Search, Settings2, X } from "lucide-react";
+import { CheckSquare2, ChevronDown, Search, Settings2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { taskGroupLabels } from "../../data/tasks";
 import { getTaskCount, getTaskProgress } from "../../domain/tasks/getTaskProgress";
@@ -95,9 +95,14 @@ export const TaskManagerPage = () => {
     <div className="space-y-3.5">
       <header className="sticky top-[var(--app-header-height)] z-10 -mx-3 border-b border-[rgb(var(--color-line-soft))] bg-bg/95 px-3 pb-3 pt-1 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="muted-label">루틴</p>
-            <h1 className="text-xl font-black text-ink">숙제 관리</h1>
+          <div className="ui-page-heading">
+            <span className="ui-page-icon" aria-hidden>
+              <CheckSquare2 size={19} strokeWidth={2.2} />
+            </span>
+            <div className="ui-page-heading-copy">
+              <p className="muted-label">루틴</p>
+              <h1 className="text-xl font-black text-ink">숙제 관리</h1>
+            </div>
           </div>
           <div className="grid grid-cols-2 rounded-[12px] bg-card-soft p-1" aria-label="숙제 기간">
             {(["daily", "weekly"] as const).map((item) => (

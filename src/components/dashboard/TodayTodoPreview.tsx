@@ -115,7 +115,7 @@ export const TodayTodoPreview = () => {
             );
           })
         ) : (
-          <p className="rounded-[12px] bg-mint/70 px-3 py-3 text-sm font-bold text-ink">
+          <p className="rounded-[12px] border border-primary/15 bg-primary-soft/55 px-3 py-3 text-sm font-bold text-ink">
             오늘 체크는 모두 끝났어요.
           </p>
         )}

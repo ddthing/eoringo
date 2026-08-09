@@ -7,7 +7,7 @@ import {
   startOfMonth,
 } from "date-fns";
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { frontlineMaps } from "../../data/frontline";
 import { getFrontlineByDateKey } from "../../domain/frontline/getTodayFrontline";
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
@@ -73,9 +73,14 @@ export const CalendarPage = () => {
   const monthLabel = format(parseISO(todayKey), "M월");
   return (
     <div className="space-y-5">
-      <div className="px-1 pt-1">
-        <p className="muted-label">일정</p>
-        <h1 className="mt-1 text-xl font-black text-ink">전장 / 하우징 달력</h1>
+      <div className="ui-page-heading px-1 pt-1">
+        <span className="ui-page-icon" aria-hidden>
+          <CalendarDays size={19} strokeWidth={2.2} />
+        </span>
+        <div className="ui-page-heading-copy">
+          <p className="muted-label">일정</p>
+          <h1 className="mt-1 text-xl font-black text-ink">전장 / 하우징 달력</h1>
+        </div>
       </div>
 
       <section className="space-y-2.5">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit3, Star, Trash2 } from "lucide-react";
+import { Edit3, Star, Trash2, UsersRound } from "lucide-react";
 import { DEFAULT_KOREAN_SERVER } from "../../data/servers";
 import { deleteCharacterImage } from "../../lib/imageStorage";
 import { useCharacterStore } from "../../stores/useCharacterStore";
@@ -78,12 +78,17 @@ export const CharacterManager = () => {
   return (
     <section className="card space-y-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="muted-label">characters</p>
-          <h2 className="text-lg font-bold">내 캐릭터</h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            캐릭터를 전환하거나 프로필과 대표 캐릭터를 관리합니다.
-          </p>
+        <div className="ui-section-heading min-w-0">
+          <span className="ui-section-icon" aria-hidden>
+            <UsersRound size={18} strokeWidth={2.2} />
+          </span>
+          <div className="ui-section-header-copy">
+            <p className="ui-section-eyebrow">characters</p>
+            <h2 className="ui-section-title">내 캐릭터</h2>
+            <p className="ui-section-description">
+              캐릭터를 전환하거나 프로필과 대표 캐릭터를 관리합니다.
+            </p>
+          </div>
         </div>
         <button
           type="button"

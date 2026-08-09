@@ -103,7 +103,9 @@ export const App = () => {
     <ConfirmDialogProvider>
       <AppShell>
         <ErrorBoundary key={getRouteErrorBoundaryKey(location.pathname)}>
-          <Outlet />
+          <div key={location.pathname} className="ui-route-content">
+            <Outlet />
+          </div>
         </ErrorBoundary>
       </AppShell>
     </ConfirmDialogProvider>

@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { Bell, ExternalLink, Info } from "lucide-react";
 import { Badge, Card, SectionHeader, StatusMessage } from "../ui";
 
 export const NotificationSettingsPanel = () => (
@@ -7,6 +7,7 @@ export const NotificationSettingsPanel = () => (
       eyebrow="notifications"
       title="알림"
       description="루틴 초기화와 일정 알림 기능을 준비하고 있습니다."
+      icon={<Bell size={18} strokeWidth={2.2} />}
       action={<Badge variant="warning">준비 중</Badge>}
     />
     <StatusMessage variant="info">
@@ -21,6 +22,7 @@ export const AppInfoPanel = () => (
       eyebrow="about"
       title="앱 정보"
       description="에오링고는 파이널판타지14 루틴을 브라우저에 안전하게 기록하는 로컬 우선 앱입니다."
+      icon={<Info size={18} strokeWidth={2.2} />}
     />
     <div className="rounded-[16px] border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-4">
       <p className="text-xs font-black uppercase tracking-[0.08em] text-primary">Credits</p>

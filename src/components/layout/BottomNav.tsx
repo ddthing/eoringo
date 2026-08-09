@@ -10,7 +10,7 @@ const navIcons = {
 } as const;
 
 export const BottomNav = () => (
-  <nav className="fixed inset-x-0 bottom-0 z-30">
+  <nav className="fixed inset-x-0 bottom-0 z-30" aria-label="주요 메뉴">
     <div className="mx-auto max-w-3xl px-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))]">
       <div className="ui-navigation-shell">
         {bottomNavItems.map((item) => {

@@ -1,8 +1,8 @@
 import { getHousingPhase } from "../../domain/housing/getHousingPhase";
 
 const phaseClassName = {
-  entry: "bg-mint text-emerald-800",
-  result: "bg-peach text-orange-800",
+  entry: "bg-card-soft text-primary",
+  result: "bg-card-soft text-ink-muted",
 };
 
 const shortPhaseLabel = {

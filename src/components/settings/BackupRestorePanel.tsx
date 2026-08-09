@@ -1,5 +1,5 @@
 import { type ChangeEvent, useRef, useState } from "react";
-import { Download, RotateCcw, Upload } from "lucide-react";
+import { Database, Download, RotateCcw, Upload } from "lucide-react";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 import { exportBackup } from "../../lib/exportBackup";
 import { clearCharacterImages } from "../../lib/imageStorage";
@@ -199,6 +199,7 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
             eyebrow="data"
             title="백업 및 복원"
             description="브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다."
+            icon={<Database size={18} strokeWidth={2.2} />}
             headingLevel="h3"
           />
         ) : null}

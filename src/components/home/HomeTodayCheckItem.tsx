@@ -50,7 +50,7 @@ export const HomeTodayCheckItem = ({
         className={[
           "flex min-h-12 w-full items-center gap-2.5 overflow-hidden border-t border-[rgb(var(--color-line-muted))] px-1 text-left first:border-t-0",
           completionFeedback
-            ? "home-task-completion-row bg-mint/55"
+            ? "home-task-completion-row border-primary/20 bg-primary-soft/45"
             : "transition-[background-color,transform] hover:bg-card-soft/60 active:scale-[0.995]",
         ].join(" ")}
         onClick={onToggle}
@@ -66,7 +66,7 @@ export const HomeTodayCheckItem = ({
     <div
       className={[
         "flex min-h-12 items-center gap-2 overflow-hidden border-t border-[rgb(var(--color-line-muted))] px-1 first:border-t-0",
-        completionFeedback ? "home-task-completion-row bg-mint/55" : "",
+        completionFeedback ? "home-task-completion-row border-primary/20 bg-primary-soft/45" : "",
       ].join(" ")}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>

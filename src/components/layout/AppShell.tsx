@@ -23,7 +23,7 @@ export const AppShell = ({ children }: PropsWithChildren) => {
             <CurrentDatePill />
           </div>
         </header>
-        <main className="px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-3">
+        <main className="ui-main px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4">
           {children}
         </main>
         <BottomNav />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { Check, Monitor, Moon, Palette, Sun } from "lucide-react";
 import type { AppearanceMode } from "../../domain/theme/appearance";
 import { themeColors } from "../../data/themes";
 import { isValidHexColor, normalizeHexColor } from "../../lib/color";
@@ -36,6 +36,7 @@ export const ThemeSettingsPanel = () => {
         eyebrow="디자인"
         title="테마"
         description="대표 컬러 하나를 고르면 체크, 버튼, 스티커 색이 같은 계열로 정리됩니다."
+        icon={<Palette size={18} strokeWidth={2.2} />}
       />
 
       <div>

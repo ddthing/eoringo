@@ -64,7 +64,7 @@ export const CharacterAvatar = ({ imageId, name, size = "md" }: CharacterAvatarP
   return (
     <div
       className={[
-        "relative grid shrink-0 place-items-center overflow-hidden border border-[rgb(var(--color-line-soft))] bg-peach text-center",
+        "relative grid shrink-0 place-items-center overflow-hidden border border-[rgb(var(--color-line-soft))] bg-card-soft text-center",
         sizeClasses[size],
       ].join(" ")}
       aria-busy={imageId ? isLoading : undefined}

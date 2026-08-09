@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Settings2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { CharacterManager } from "../characters/CharacterManager";
 import { AccountDataPanel } from "./AccountDataPanel";
@@ -13,6 +14,7 @@ const PageTitle = () => (
     eyebrow="설정"
     title="앱 설정"
     description="캐릭터와 테마, 계정 데이터를 한곳에서 관리하세요."
+    icon={<Settings2 size={18} strokeWidth={2.2} />}
     headingLevel="h1"
   />
 );

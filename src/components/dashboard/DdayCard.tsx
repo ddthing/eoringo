@@ -103,7 +103,7 @@ export const DdayCard = () => {
           events.map((event) => (
             <div
               key={event.id}
-              className="flex items-center justify-between gap-2 rounded-[18px] border border-[rgb(var(--color-line-muted))] bg-lavender/70 p-2"
+              className="flex items-center justify-between gap-2 rounded-[18px] border border-[rgb(var(--color-line-muted))] bg-card-soft/75 p-2"
             >
               <div className="flex min-w-0 items-center gap-2">
                 <span className="shrink-0 rounded-full bg-card px-2.5 py-1 text-xs font-bold text-primary">
