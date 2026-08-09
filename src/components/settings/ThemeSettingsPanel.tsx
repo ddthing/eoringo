@@ -60,7 +60,7 @@ export const ThemeSettingsPanel = () => {
                 key={themeColor.id}
                 type="button"
                 className={[
-                  "flex min-h-12 items-center gap-2 rounded-[14px] border bg-card/88 px-2.5 py-2 text-left outline-none transition active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
+                  "flex min-h-12 min-w-0 w-full items-center gap-2 rounded-[14px] border bg-card/88 px-2.5 py-2 text-left outline-none transition active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
                   selected
                     ? "border-primary bg-primary-soft/60 text-primary"
                     : "border-[rgb(var(--color-line-muted))] text-ink-muted",

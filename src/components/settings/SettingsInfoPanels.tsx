@@ -4,7 +4,7 @@ import { Badge, Card, StatusMessage } from "../ui";
 export const NotificationSettingsPanel = () => (
   <Card className="space-y-3">
     <div className="flex items-start justify-between gap-3">
-      <div>
+      <div className="min-w-0">
         <p className="muted-label">notifications</p>
         <h2 className="text-lg font-bold">알림</h2>
         <p className="mt-1 text-sm text-ink-muted">

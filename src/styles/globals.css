@@ -530,10 +530,12 @@ input[type="number"] {
 
 @layer components {
   .ui-card {
+    min-width: 0;
     border: 1px solid rgb(var(--color-outline-variant));
     border-radius: var(--shape-lg);
     background: rgb(var(--color-card) / 0.96);
     box-shadow: var(--elevation-1);
+    overflow-wrap: anywhere;
   }
 
   .ui-card[data-variant="outlined"] {
@@ -809,6 +811,8 @@ input[type="number"] {
   .ui-segmented-option {
     display: flex;
     min-height: 3.25rem;
+    min-width: 0;
+    width: 100%;
     align-items: center;
     gap: 0.5rem;
     border: 1px solid transparent;
@@ -816,6 +820,7 @@ input[type="number"] {
     padding: 0.5rem 0.65rem;
     background: transparent;
     color: rgb(var(--color-muted));
+    overflow: hidden;
     text-align: left;
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
   }
@@ -842,7 +847,9 @@ input[type="number"] {
   }
 
   .ui-segmented-copy {
+    width: 100%;
     min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .ui-segmented-label,
@@ -855,6 +862,7 @@ input[type="number"] {
     font-size: 0.8125rem;
     font-weight: 800;
     line-height: 1.25;
+    overflow-wrap: anywhere;
   }
 
   .ui-segmented-description {
@@ -863,6 +871,7 @@ input[type="number"] {
     font-size: 0.6875rem;
     font-weight: 600;
     line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .ui-status-message {
@@ -918,6 +927,7 @@ input[type="number"] {
   .ui-status-title {
     font-size: 0.8125rem;
     font-weight: 800;
+    overflow-wrap: anywhere;
   }
 
   .ui-status-description {
@@ -926,6 +936,7 @@ input[type="number"] {
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
   .ui-app-container {
@@ -1033,25 +1044,31 @@ input[type="number"] {
   }
 
   .card {
+    min-width: 0;
     border: 1px solid rgb(var(--color-outline-variant));
     border-radius: var(--shape-lg);
     background: rgb(var(--color-card) / 0.96);
     padding: 0.75rem;
     box-shadow: var(--elevation-1);
+    overflow-wrap: anywhere;
   }
 
   .memo-card {
+    min-width: 0;
     border: 1px solid rgb(var(--color-outline-variant));
     border-radius: var(--shape-lg);
     background: rgb(var(--color-card) / 0.96);
     box-shadow: var(--elevation-1);
+    overflow-wrap: anywhere;
   }
 
   .home-panel {
+    min-width: 0;
     border: 1px solid rgb(var(--color-outline-variant));
     border-radius: var(--shape-xl);
     background: rgb(var(--color-card));
     box-shadow: var(--elevation-2);
+    overflow-wrap: anywhere;
   }
 
   .home-heading {
@@ -1076,10 +1093,12 @@ input[type="number"] {
   }
 
   .calendar-panel {
+    min-width: 0;
     border: 1px solid rgb(var(--color-outline-variant));
     border-radius: var(--shape-md);
     background: rgb(var(--color-card));
     box-shadow: var(--elevation-1);
+    overflow-wrap: anywhere;
   }
 
   .muted-label {
@@ -1237,6 +1256,23 @@ input[type="number"] {
   .ui-segmented-option:hover:not([data-selected="true"]) {
     background: rgb(var(--color-card) / 0.55);
     color: rgb(var(--color-text));
+  }
+}
+
+@media (max-width: 40rem) {
+  .ui-segmented-option {
+    min-height: 6rem;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.35rem;
+    padding-inline: 0.35rem;
+    text-align: center;
+  }
+
+  .ui-segmented-icon {
+    width: 1.75rem;
+    height: 1.75rem;
   }
 }
 
