@@ -6,7 +6,7 @@ import { clearCharacterImages } from "../../lib/imageStorage";
 import { importBackup } from "../../lib/importBackup";
 import { storageKeys } from "../../lib/storage";
 
-const BackupRestoreActions = () => {
+const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [message, setMessage] = useState("");
   const [isBusy, setIsBusy] = useState(false);
@@ -59,12 +59,14 @@ const BackupRestoreActions = () => {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-black text-ink">백업 및 복원</h3>
-        <p className="mt-1 text-sm text-ink-muted">
-          브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
-        </p>
-      </div>
+      {showHeading ? (
+        <div>
+          <h3 className="text-sm font-black text-ink">백업 및 복원</h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다.
+          </p>
+        </div>
+      ) : null}
       <div className="grid gap-2 sm:grid-cols-2">
         <button
           type="button"
@@ -183,7 +185,7 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
           </p>
         </div>
       ) : null}
-      <BackupRestoreActions />
+      <BackupRestoreActions showHeading={!embedded} />
     </div>
     <DataManagementActions />
   </section>

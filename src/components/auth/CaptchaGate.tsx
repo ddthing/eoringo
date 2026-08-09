@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 
 export const turnstileScriptUrl =
-  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__eoringoTurnstileOnload";
+export const turnstileOnloadCallbackName = "__eoringoTurnstileOnload" as const;
 
 type TurnstileApi = {
   ready: (callback: () => void) => void;
@@ -25,12 +26,13 @@ type TurnstileApi = {
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
+    __eoringoTurnstileOnload?: () => void;
   }
 }
 
 let scriptPromise: Promise<TurnstileApi> | undefined;
 
-const loadTurnstile = () => {
+export const loadTurnstile = () => {
   if (window.turnstile) {
     return Promise.resolve(window.turnstile);
   }
@@ -44,21 +46,59 @@ const loadTurnstile = () => {
       `script[src="${turnstileScriptUrl}"]`,
     );
     const script = existing ?? document.createElement("script");
+    const previousOnload = window[turnstileOnloadCallbackName];
+    let settled = false;
 
-    const handleLoad = () => {
-      if (window.turnstile) {
-        resolve(window.turnstile);
+    const restoreOnload = () => {
+      if (window[turnstileOnloadCallbackName] !== handleOnload) {
+        return;
+      }
+
+      if (previousOnload) {
+        window[turnstileOnloadCallbackName] = previousOnload;
       } else {
-        scriptPromise = undefined;
-        reject(new Error("Turnstile API unavailable."));
+        delete window[turnstileOnloadCallbackName];
       }
     };
+
+    const cleanup = () => {
+      script.removeEventListener("load", handleLoad);
+      script.removeEventListener("error", handleError);
+      restoreOnload();
+    };
+
+    const resolveIfReady = () => {
+      if (settled || !window.turnstile) {
+        return;
+      }
+
+      settled = true;
+      cleanup();
+      resolve(window.turnstile);
+    };
+
+    const handleOnload = () => {
+      previousOnload?.();
+      resolveIfReady();
+    };
+
+    const handleLoad = () => {
+      resolveIfReady();
+    };
+
     const handleError = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
       scriptPromise = undefined;
+      cleanup();
       script.remove();
       reject(new Error("Turnstile script failed to load."));
     };
 
+    window[turnstileOnloadCallbackName] = handleOnload;
     script.addEventListener("load", handleLoad, { once: true });
     script.addEventListener("error", handleError, { once: true });
 

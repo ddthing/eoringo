@@ -1,11 +1,63 @@
-import { describe, expect, it } from "vitest";
-import { isSafeCaptchaToken, turnstileScriptUrl } from "./CaptchaGate";
+import { describe, expect, it, vi } from "vitest";
+import { isSafeCaptchaToken, loadTurnstile, turnstileOnloadCallbackName, turnstileScriptUrl } from "./CaptchaGate";
 
 describe("CaptchaGate security boundary", () => {
   it("loads Turnstile only from the vendor's exact HTTPS endpoint", () => {
     expect(turnstileScriptUrl).toBe(
-      "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+      "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__eoringoTurnstileOnload",
     );
+  });
+
+  it("uses the explicit onload callback and retries after a script failure", async () => {
+    type FakeScript = {
+      src: string;
+      async: boolean;
+      defer: boolean;
+      referrerPolicy: string;
+      handlers: Record<string, () => void>;
+      addEventListener: (type: string, handler: () => void) => void;
+      removeEventListener: (type: string, handler: () => void) => void;
+      remove: () => void;
+    };
+
+    const scripts: FakeScript[] = [];
+    const documentMock = {
+      querySelector: () => null,
+      createElement: () => {
+        const script: FakeScript = {
+          src: "",
+          async: false,
+          defer: false,
+          referrerPolicy: "",
+          handlers: {},
+          addEventListener(type, handler) {
+            script.handlers[type] = handler;
+          },
+          removeEventListener: () => undefined,
+          remove: () => undefined,
+        };
+        scripts.push(script);
+        return script;
+      },
+      head: { append: () => undefined },
+    };
+    const windowMock: Record<string, unknown> = {};
+    vi.stubGlobal("document", documentMock);
+    vi.stubGlobal("window", windowMock);
+
+    const firstLoad = loadTurnstile();
+    expect(scripts[0]?.src).toBe(turnstileScriptUrl);
+    expect(windowMock[turnstileOnloadCallbackName]).toEqual(expect.any(Function));
+    scripts[0]?.handlers.error?.();
+    await expect(firstLoad).rejects.toThrow("Turnstile script failed to load.");
+
+    const secondLoad = loadTurnstile();
+    expect(scripts).toHaveLength(2);
+    const api = { ready: vi.fn(), render: vi.fn(), remove: vi.fn() };
+    windowMock.turnstile = api;
+    (windowMock[turnstileOnloadCallbackName] as () => void)();
+    await expect(secondLoad).resolves.toBe(api);
+    vi.unstubAllGlobals();
   });
 
   it("rejects empty, control-character, and oversized tokens", () => {
