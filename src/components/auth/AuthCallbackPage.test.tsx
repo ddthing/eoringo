@@ -11,7 +11,7 @@ vi.mock("../../auth/useAuth", () => ({
 }));
 
 describe("AuthCallbackPage", () => {
-  it("explains when a Google identity already belongs to another account", () => {
+  it("starts a neutral recovery state for an already-linked Google identity", () => {
     const markup = renderToStaticMarkup(
       <MemoryRouter
         initialEntries={[
@@ -22,11 +22,12 @@ describe("AuthCallbackPage", () => {
       </MemoryRouter>,
     );
 
-    expect(markup).toContain("이미 연결된 Google 계정입니다");
-    expect(markup).toContain("자동 병합하지 않으며");
-    expect(markup).toContain("기존 계정으로 로그인하거나 다른 Google 계정");
-    expect(markup).toContain("게스트 데이터는 삭제되지 않습니다");
-    expect(markup).toContain("기존 Google 계정으로 로그인");
+    expect(markup).toContain("기존 Google 계정으로 안전하게 로그인 중");
+    expect(markup).toContain("이미 연결된 계정을 확인하고 동기화를 준비하고 있습니다");
+    expect(markup).toContain('aria-busy="true"');
+    expect(markup).toContain("secure sign-in");
+    expect(markup).not.toContain("이미 연결된 Google 계정입니다");
+    expect(markup).not.toContain("기존 Google 계정으로 로그인");
     expect(markup).not.toContain("identity_already_exists");
     expect(markup).not.toContain("internal-details");
   });

@@ -1,7 +1,9 @@
 export const authTransitionStorageKey = "eoringo/auth-transition-v1";
 export const automaticSyncAttemptStorageKey = "eoringo/automatic-sync-attempt-v1";
+export const identityConflictRecoveryStorageKey = "eoringo/identity-conflict-recovery-v1";
 
 const transitionMaxAgeMs = 15 * 60 * 1000;
+const identityConflictRecoveryMaxAgeMs = 15 * 60 * 1000;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -120,6 +122,61 @@ export const isPendingAccountSwitch = (storage: StorageLike | null = getSessionS
 
 export const clearPendingAuthTransition = () => {
   getSessionStorage()?.removeItem(authTransitionStorageKey);
+};
+
+const readIdentityConflictRecovery = (storage: StorageLike | null) => {
+  if (!storage) {
+    return null;
+  }
+
+  try {
+    const value: unknown = JSON.parse(
+      storage.getItem(identityConflictRecoveryStorageKey) ?? "null",
+    );
+
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      !("createdAt" in value) ||
+      typeof value.createdAt !== "string"
+    ) {
+      if (value !== null) {
+        storage.removeItem(identityConflictRecoveryStorageKey);
+      }
+      return null;
+    }
+
+    const createdAt = Date.parse(value.createdAt);
+
+    if (!Number.isFinite(createdAt) || Date.now() - createdAt > identityConflictRecoveryMaxAgeMs) {
+      storage.removeItem(identityConflictRecoveryStorageKey);
+      return null;
+    }
+
+    return { createdAt: value.createdAt };
+  } catch {
+    storage.removeItem(identityConflictRecoveryStorageKey);
+    return null;
+  }
+};
+
+export const hasIdentityConflictRecovery = (
+  storage: StorageLike | null = getSessionStorage(),
+) => readIdentityConflictRecovery(storage) !== null;
+
+export const markIdentityConflictRecovery = (
+  storage: StorageLike | null = getSessionStorage(),
+) => {
+  storage?.setItem(
+    identityConflictRecoveryStorageKey,
+    JSON.stringify({ createdAt: new Date().toISOString() }),
+  );
+};
+
+export const clearIdentityConflictRecovery = (
+  storage: StorageLike | null = getSessionStorage(),
+) => {
+  storage?.removeItem(identityConflictRecoveryStorageKey);
 };
 
 const readAutomaticAttempts = (storage: StorageLike | null = getLocalStorage()) => {

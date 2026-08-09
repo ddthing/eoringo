@@ -17,6 +17,7 @@ import {
   type AuthClient,
 } from "./authClient";
 import {
+  clearIdentityConflictRecovery,
   clearPendingAuthTransition,
   markPendingAccountSwitch,
   markPendingGuestLink,
@@ -298,6 +299,7 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     try {
       await client.signOut("local");
       clearPendingAuthTransition();
+      clearIdentityConflictRecovery();
       dispatch({ type: "no-session" });
     } catch (error) {
       const failure = normalizeAuthFailure(error);

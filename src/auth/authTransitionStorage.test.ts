@@ -2,10 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   authTransitionStorageKey,
   clearAutomaticSyncAttempt,
+  clearIdentityConflictRecovery,
   getPendingAuthTransition,
   hasAutomaticSyncAttempt,
+  hasIdentityConflictRecovery,
+  identityConflictRecoveryStorageKey,
   isPendingGuestLink,
   markAutomaticSyncAttempt,
+  markIdentityConflictRecovery,
   markPendingAccountSwitch,
   markPendingGuestLink,
 } from "./authTransitionStorage";
@@ -45,5 +49,31 @@ describe("auth transition storage", () => {
     expect(hasAutomaticSyncAttempt("user-id", storage)).toBe(true);
     clearAutomaticSyncAttempt("user-id", storage);
     expect(hasAutomaticSyncAttempt("user-id", storage)).toBe(false);
+  });
+
+  it("bounds automatic identity-conflict recovery to one short-lived attempt", () => {
+    const storage = createStorage();
+
+    expect(hasIdentityConflictRecovery(storage)).toBe(false);
+    markIdentityConflictRecovery(storage);
+    expect(hasIdentityConflictRecovery(storage)).toBe(true);
+
+    clearIdentityConflictRecovery(storage);
+    expect(hasIdentityConflictRecovery(storage)).toBe(false);
+  });
+
+  it("cleans malformed and expired identity-conflict recovery markers", () => {
+    const storage = createStorage();
+
+    storage.setItem(
+      identityConflictRecoveryStorageKey,
+      JSON.stringify({ createdAt: new Date(Date.now() - 16 * 60 * 1000).toISOString() }),
+    );
+    expect(hasIdentityConflictRecovery(storage)).toBe(false);
+    expect(storage.getItem(identityConflictRecoveryStorageKey)).toBeNull();
+
+    storage.setItem(identityConflictRecoveryStorageKey, "{invalid");
+    expect(hasIdentityConflictRecovery(storage)).toBe(false);
+    expect(storage.getItem(identityConflictRecoveryStorageKey)).toBeNull();
   });
 });
