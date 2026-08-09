@@ -28,7 +28,7 @@ export const HomeTodayCheckItem = ({
         </span>
         {completionFeedback ? (
           <span
-            className="inline-flex shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[9px] font-black text-primary"
+            className="inline-flex shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[9px] font-bold text-primary"
             role="status"
             aria-live="polite"
           >

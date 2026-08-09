@@ -28,7 +28,7 @@ export const TaskCountStepper = ({
       >
         <Minus aria-hidden size={14} />
       </button>
-      <span className="min-w-10 px-1 text-center text-[11px] font-black tabular-nums text-ink">
+      <span className="min-w-10 px-1 text-center text-[11px] font-bold tabular-nums text-ink">
         {cappedCount}/{maxCount}
       </span>
       <button

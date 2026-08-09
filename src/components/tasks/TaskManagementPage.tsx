@@ -49,7 +49,7 @@ export const TaskManagementPage = () => {
         </span>
         <div className="ui-page-heading-copy">
           <p className="muted-label">상세 관리</p>
-          <h1 className="text-xl font-black">숙제 관리</h1>
+          <h1 className="text-xl font-extrabold">숙제 관리</h1>
           <p className="text-xs text-ink-muted">표시할 숙제와 초기화 주기를 관리합니다.</p>
         </div>
       </header>

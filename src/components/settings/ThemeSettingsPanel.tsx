@@ -40,7 +40,7 @@ export const ThemeSettingsPanel = () => {
       />
 
       <div>
-        <p className="mb-2 text-xs font-black text-ink">화면 모드</p>
+        <p className="mb-2 text-xs font-bold text-ink">화면 모드</p>
         <SegmentedControl
           value={appearanceMode}
           options={appearanceOptions.map(({ id, ...option }) => ({ value: id, ...option }))}
@@ -51,7 +51,7 @@ export const ThemeSettingsPanel = () => {
       </div>
 
       <div className="border-t border-[rgb(var(--color-line-muted))] pt-4">
-        <p className="mb-2 text-xs font-black text-ink">강조 색상</p>
+        <p className="mb-2 text-xs font-bold text-ink">강조 색상</p>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {themeColors.map((themeColor) => {
@@ -91,7 +91,7 @@ export const ThemeSettingsPanel = () => {
                   ) : null}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-black text-ink">
+                  <span className="block text-sm font-bold text-ink">
                     {themeColor.label}
                   </span>
                   {themeColor.description ? (
@@ -110,7 +110,7 @@ export const ThemeSettingsPanel = () => {
         <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-black text-ink">Custom</p>
+              <p className="text-sm font-bold text-ink">Custom</p>
               <p className="mt-0.5 text-xs font-medium text-ink-muted">
                 나만의 포인트 컬러
               </p>

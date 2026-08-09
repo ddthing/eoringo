@@ -15,7 +15,7 @@ export const HousingWidget = () => {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="muted-label">하우징</p>
-          <h2 className="home-heading mt-2 text-[26px] font-black leading-none tracking-[-0.035em] text-ink min-[420px]:text-[28px]">
+          <h2 className="home-heading mt-2 text-[26px] font-extrabold leading-none tracking-[-0.035em] text-ink min-[420px]:text-[28px]">
             {shortPhaseLabel[phase.phase]}
           </h2>
         </div>

@@ -105,7 +105,7 @@ export const LockHero = () => {
       <div className="relative flex min-h-[224px] flex-col justify-between p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-black leading-none text-ink">
+            <h1 className="truncate text-2xl font-extrabold leading-none text-ink">
               {activeCharacter?.name ?? "나의 모험가"}
             </h1>
             <p className="mt-1 text-sm font-bold text-ink-muted">
@@ -138,7 +138,7 @@ export const LockHero = () => {
               <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary">
                 today
               </p>
-              <p className="text-2xl font-black leading-none">
+              <p className="text-2xl font-extrabold leading-none">
                 {progress.completed}/{progress.total}
               </p>
             </div>

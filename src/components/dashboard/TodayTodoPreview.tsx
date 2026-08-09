@@ -51,7 +51,7 @@ export const TodayTodoPreview = () => {
     <section className="rounded-ui-md border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-ink">숙제 진행도</h2>
+          <h2 className="text-base font-bold text-ink">숙제 진행도</h2>
           <p className="mt-0.5 text-xs font-medium text-ink-muted">남은 주요 항목</p>
         </div>
         <span className="sticker">
@@ -123,7 +123,7 @@ export const TodayTodoPreview = () => {
 
       <Link
         to="/tasks"
-        className="mt-3 inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-card-soft/72 px-3 text-xs font-black text-primary"
+        className="mt-3 inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-card-soft/72 px-3 text-xs font-bold text-primary"
       >
         전체 숙제 보기
         <ArrowRight aria-hidden size={14} />

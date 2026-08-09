@@ -159,7 +159,7 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
               <div className="min-w-0 flex-1">
                 <p
                   id="confirm-dialog-title"
-                  className="text-sm font-black leading-snug text-ink"
+                  className="text-sm font-bold leading-snug text-ink"
                 >
                   {request.title}
                 </p>

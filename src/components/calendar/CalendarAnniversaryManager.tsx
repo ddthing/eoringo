@@ -81,7 +81,7 @@ export const CalendarAnniversaryManager = () => {
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="muted-label">기념일</p>
-          <h2 className="mt-1 text-base font-black">기념일 관리</h2>
+          <h2 className="mt-1 text-base font-bold">기념일 관리</h2>
         </div>
         <Button
           variant="secondary"
@@ -128,7 +128,7 @@ export const CalendarAnniversaryManager = () => {
       <div className="mt-3 space-y-2">
         {sortedEvents.length ? sortedEvents.map((event) => (
           <div key={event.id} className="flex min-h-14 items-center gap-3 rounded-ui-md bg-card-soft px-3 py-2">
-            <span className="rounded-full bg-card px-2.5 py-1 text-xs font-black text-primary">{getDdayLabel(event.date)}</span>
+            <span className="rounded-full bg-card px-2.5 py-1 text-xs font-bold text-primary">{getDdayLabel(event.date)}</span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold">{event.title}</p>
               <p className="text-xs text-ink-muted">{event.date.split("-").join(".")}</p>

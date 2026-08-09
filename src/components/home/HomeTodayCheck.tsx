@@ -75,7 +75,7 @@ export const HomeTodayCheck = () => {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="muted-label">action</p>
-          <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">
+          <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">
             오늘 체크
           </h2>
           <p className="mt-1 text-xs font-medium text-ink-muted">지금 할 일을 바로 체크하세요.</p>
@@ -116,7 +116,7 @@ export const HomeTodayCheck = () => {
             aria-labelledby={`home-today-${group.category}`}
           >
             <div className="flex min-h-8 items-center justify-between gap-3">
-              <h3 id={`home-today-${group.category}`} className="text-[13px] font-black text-ink">
+              <h3 id={`home-today-${group.category}`} className="text-[13px] font-bold text-ink">
                 {group.label}
               </h3>
               <span className="text-[11px] font-bold tabular-nums text-ink-muted">
@@ -175,7 +175,7 @@ export const HomeTodayCheck = () => {
                 {showExpansion ? (
                   <button
                     type="button"
-                    className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-[rgb(var(--color-line-muted))] pt-1 text-[11px] font-black text-primary transition hover:bg-card-soft/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+                    className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-[rgb(var(--color-line-muted))] pt-1 text-[11px] font-bold text-primary transition hover:bg-card-soft/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
                     aria-expanded={isExpanded}
                     onClick={() => setExpansion((current) => ({
                       characterId,

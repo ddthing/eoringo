@@ -38,7 +38,7 @@ export const HomeHero = () => {
               size="lg"
             />
             <div className="min-w-0 flex-1 py-0.5">
-              <h1 className="home-heading truncate text-xl font-black leading-tight tracking-[-0.025em] text-ink min-[420px]:text-[22px]">
+              <h1 className="home-heading truncate text-xl font-extrabold leading-tight tracking-[-0.025em] text-ink min-[420px]:text-[22px]">
                 {character?.name ?? "나의 모험가"}
               </h1>
               <span className="mt-1 inline-flex min-h-6 items-center gap-1 text-[13px] font-semibold text-ink-muted">
@@ -49,7 +49,7 @@ export const HomeHero = () => {
           </button>
           <div className="min-w-[4.25rem] shrink-0 pt-1 text-right">
             <p className="text-[26px] font-black leading-none tracking-[-0.04em] text-primary tabular-nums min-[420px]:text-[28px]">{progress.daily.percent}%</p>
-            <p className="mt-1.5 text-[10px] font-bold tracking-[-0.01em] text-ink-muted">오늘 완료율</p>
+            <p className="mt-1.5 text-[10px] font-semibold tracking-[-0.01em] text-ink-muted">오늘 완료율</p>
           </div>
         </div>
         <div className="mt-3.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 border-t border-[rgb(var(--color-line-muted))] pt-3 text-[11px] font-semibold leading-5 text-ink-muted min-[420px]:text-xs">

@@ -289,10 +289,10 @@ export const CharacterImageEditor = ({
       <div className="w-full max-w-[360px] rounded-ui-xl border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-primary">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
               profile
             </p>
-            <h2 className="text-sm font-black text-ink">사진 위치 조정</h2>
+            <h2 className="text-sm font-bold text-ink">사진 위치 조정</h2>
           </div>
           <button
             type="button"

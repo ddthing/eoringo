@@ -93,15 +93,15 @@ export const TaskManagerPage = () => {
 
   return (
     <div className="space-y-3.5">
-      <header className="sticky top-[var(--app-header-height)] z-10 -mx-3 border-b border-[rgb(var(--color-line-soft))] bg-bg/95 px-3 pb-3 pt-1 backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-3">
+      <header className="sticky top-[var(--app-header-height)] z-10 -mx-3 border-b border-[rgb(var(--color-line-soft))] bg-bg/95 px-3 pb-3 backdrop-blur-xl">
+        <div className="flex items-start justify-between gap-3">
           <div className="ui-page-heading">
             <span className="ui-page-icon" aria-hidden>
               <CheckSquare2 size={19} strokeWidth={2.2} />
             </span>
             <div className="ui-page-heading-copy">
               <p className="muted-label">루틴</p>
-              <h1 className="text-xl font-black text-ink">숙제 관리</h1>
+              <h1 className="text-xl font-extrabold text-ink">숙제 관리</h1>
             </div>
           </div>
           <div className="grid grid-cols-2 rounded-ui-sm bg-card-soft p-1" aria-label="숙제 기간">
@@ -110,7 +110,7 @@ export const TaskManagerPage = () => {
                 key={item}
                 type="button"
                 className={[
-                  "min-h-11 rounded-ui-xs px-3 text-xs font-black transition",
+                  "min-h-11 rounded-ui-xs px-3 text-xs font-bold transition",
                   view === item ? "bg-card text-primary shadow-sm" : "text-ink-muted",
                 ].join(" ")}
                 onClick={() => setView(item)}
@@ -146,7 +146,7 @@ export const TaskManagerPage = () => {
         <CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck disabled={isOrderEditing} />
       </section>
 
-      <div className={`flex min-h-11 items-center justify-between rounded-ui-sm px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-black text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
+      <div className={`flex min-h-11 items-center justify-between rounded-ui-sm px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-bold text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
 
       <div className="space-y-3">
         {groups.map(({ group, scopeKey, tasks, filteredTasks, progress }) => {
@@ -160,7 +160,7 @@ export const TaskManagerPage = () => {
                 onClick={() => toggleGroup(scopeKey)}
                 aria-expanded={!isCollapsed}
               >
-                <span className="font-black text-ink">{taskGroupLabels[group]}</span>
+                <span className="font-bold text-ink">{taskGroupLabels[group]}</span>
                 <span className="flex items-center gap-2 text-xs font-bold text-ink-muted">
                   {progress.completed}/{progress.total}
                   <ChevronDown aria-hidden size={16} className={`transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`} />
@@ -205,7 +205,7 @@ export const TaskManagerPage = () => {
         ) : null}
       </div>
 
-      <Link to="/tasks/manage" className="flex min-h-11 items-center justify-center gap-2 border-t border-[rgb(var(--color-line-soft))] pt-2 text-sm font-black text-ink-muted">
+      <Link to="/tasks/manage" className="flex min-h-11 items-center justify-center gap-2 border-t border-[rgb(var(--color-line-soft))] pt-2 text-sm font-bold text-ink-muted">
         <Settings2 aria-hidden size={16} /> 상세 관리
       </Link>
     </div>

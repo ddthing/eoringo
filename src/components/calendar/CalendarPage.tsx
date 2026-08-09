@@ -97,20 +97,20 @@ export const CalendarPage = () => {
   const monthLabel = format(parseISO(todayKey), "M월");
   return (
     <div className="space-y-5">
-      <div className="ui-page-heading px-1 pt-1">
+      <div className="ui-page-heading">
         <span className="ui-page-icon" aria-hidden>
           <CalendarDays size={19} strokeWidth={2.2} />
         </span>
         <div className="ui-page-heading-copy">
           <p className="muted-label">일정</p>
-          <h1 className="mt-1 text-xl font-black text-ink">전장 / 하우징 달력</h1>
+          <h1 className="mt-1 text-xl font-extrabold text-ink">전장 / 하우징 달력</h1>
         </div>
       </div>
 
       <section className="space-y-2.5">
         <div className="flex items-center gap-2 px-1">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          <h2 className="text-sm font-black text-ink">오늘 요약</h2>
+          <h2 className="text-sm font-bold text-ink">오늘 요약</h2>
         </div>
         <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
           <article className="calendar-panel p-4 transition duration-200 hover:border-primary/30">
@@ -118,7 +118,7 @@ export const CalendarPage = () => {
               <p className="muted-label">전장</p>
               <span className="sticker bg-card/80">{todayFrontline.shortName}</span>
             </div>
-            <h2 className="text-xl font-black leading-tight text-ink">
+            <h2 className="text-xl font-extrabold leading-tight text-ink">
               {todayFrontline.displayName}
             </h2>
             <p className="mt-3 grid gap-1 rounded-ui-sm bg-card/70 px-2.5 py-2 text-xs font-bold text-ink">
@@ -164,7 +164,7 @@ export const CalendarPage = () => {
         <div className="flex items-end justify-between gap-3">
           <div>
             <span className="muted-label block">월간 달력</span>
-            <h2 className="mt-1 text-base font-black text-ink">{monthLabel} 달력</h2>
+          <h2 className="mt-1 text-base font-bold text-ink">{monthLabel} 달력</h2>
           </div>
           <span className="text-[11px] font-bold text-ink-muted">KST 기준</span>
         </div>
@@ -195,7 +195,7 @@ export const CalendarPage = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 rounded-ui-xs bg-card-soft/80 px-1 py-2 text-center text-[10px] font-black text-ink-muted">
+          <div className="grid grid-cols-7 gap-1 rounded-ui-xs bg-card-soft/80 px-1 py-2 text-center text-[10px] font-bold text-ink-muted">
             {weekdays.map((weekday, index) => (
               <span key={weekday} className={index === 0 ? "text-[rgb(var(--color-danger))]" : index === 6 ? "text-primary" : ""}>{weekday}</span>
             ))}
@@ -233,7 +233,7 @@ export const CalendarPage = () => {
                   <p className="text-[11px] font-bold text-ink">
                     {format(parseISO(dateKey), "d")}
                   </p>
-                  <p className="mt-1 truncate text-xs font-black">{label}</p>
+                  <p className="mt-1 truncate text-xs font-bold">{label}</p>
                 </div>
               );
             })}

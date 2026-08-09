@@ -64,7 +64,7 @@ export const UpcomingAnniversaryWidget = () => {
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
           <p className="muted-label">기념일</p>
-          <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">기념일 관리</h2>
+          <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">기념일 관리</h2>
         </div>
         <button
           type="button"
@@ -110,7 +110,7 @@ export const UpcomingAnniversaryWidget = () => {
               key={event.id}
               className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2 rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
             >
-              <span className="rounded-full bg-card px-2.5 py-1 text-center text-xs font-black tabular-nums text-primary">
+              <span className="rounded-full bg-card px-2.5 py-1 text-center text-xs font-bold tabular-nums text-primary">
                 {getDdayLabel(event.date)}
               </span>
               <div className="min-w-0">

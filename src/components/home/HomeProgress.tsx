@@ -44,7 +44,7 @@ export const HomeProgress = () => {
     <section className="home-panel flex h-full flex-col p-4 min-[420px]:p-[18px] md:p-5">
       <div>
         <p className="muted-label">루틴</p>
-        <h2 className="home-heading mt-1 text-base font-black tracking-[-0.02em] text-ink">숙제 진행도</h2>
+            <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">숙제 진행도</h2>
       </div>
       <div className="mt-4 grid flex-1 grid-cols-[92px_1fr] items-center gap-4 max-[360px]:grid-cols-1 min-[420px]:grid-cols-[104px_1fr] min-[420px]:gap-5 md:grid-cols-[116px_1fr]">
         <div className="relative mx-auto h-[92px] w-[92px] min-[420px]:h-[104px] min-[420px]:w-[104px] md:h-[116px] md:w-[116px]" aria-label={`전체 완료율 ${progress.total.percent}%`}>
@@ -57,7 +57,7 @@ export const HomeProgress = () => {
             />
           </svg>
           <div className="absolute inset-0 grid place-content-center text-center">
-            <strong className="text-xl font-black tracking-[-0.04em] text-ink tabular-nums min-[420px]:text-2xl">{progress.total.percent}%</strong>
+            <strong className="text-xl font-extrabold tracking-[-0.04em] text-ink tabular-nums min-[420px]:text-2xl">{progress.total.percent}%</strong>
             <span className="text-[10px] font-bold text-ink-muted">전체</span>
           </div>
         </div>
