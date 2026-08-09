@@ -2,7 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { defaultTaskTemplates } from "../../data/tasks";
-import { matchesManagedTask, type ResetFilter } from "../../domain/tasks/taskResetPresentation";
+import { getManagedTaskResults } from "../../domain/tasks/getManagedTaskResults";
+import type { ResetFilter } from "../../domain/tasks/taskResetPresentation";
 import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
 import { useMinuteNow } from "../../hooks/useMinuteNow";
@@ -19,12 +20,17 @@ export const TaskManagementPage = () => {
   const now = useMinuteNow();
   const disabledIds = useCurrentDisabledDefaultTaskIds();
   const customTasks = useCurrentCustomTaskTemplates();
-  const resultCount = useMemo(() => {
-    const disabledSet = new Set(disabledIds);
-    const matchesStatus = (enabled: boolean) => status === "all" || (status === "enabled" ? enabled : !enabled);
-    return defaultTaskTemplates.filter((task) => matchesManagedTask(task, query, resetFilter) && matchesStatus(!disabledSet.has(task.id))).length
-      + customTasks.filter((task) => matchesManagedTask(task, query, resetFilter) && matchesStatus(task.enabledByDefault)).length;
-  }, [customTasks, disabledIds, query, resetFilter, status]);
+  const taskResults = useMemo(
+    () => getManagedTaskResults({
+      defaultTasks: defaultTaskTemplates,
+      customTasks,
+      disabledDefaultTaskIds: disabledIds,
+      query,
+      status,
+      resetFilter,
+    }),
+    [customTasks, disabledIds, query, resetFilter, status],
+  );
 
   const resetFilters = () => {
     setQuery("");
@@ -41,10 +47,10 @@ export const TaskManagementPage = () => {
       <section><p className="muted-label mb-1.5">관리 대상</p><CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck/></section>
       <div className="grid gap-3 md:grid-cols-2">
         <AllowanceCard />
-        <TaskManagementToolbar query={query} status={status} resetFilter={resetFilter} resultCount={resultCount} onQueryChange={setQuery} onStatusChange={setStatus} onResetFilterChange={setResetFilter} onReset={resetFilters}/>
+        <TaskManagementToolbar query={query} status={status} resetFilter={resetFilter} resultCount={taskResults.resultCount} onQueryChange={setQuery} onStatusChange={setStatus} onResetFilterChange={setResetFilter} onReset={resetFilters}/>
       </div>
-      <DefaultTaskManager query={query} status={status} resetFilter={resetFilter} now={now}/>
-      <CustomTaskList query={query} status={status} resetFilter={resetFilter}/>
+      <DefaultTaskManager tasks={taskResults.defaultTasks} query={query} status={status} resetFilter={resetFilter} now={now}/>
+      <CustomTaskList tasks={taskResults.customTasks} query={query} status={status} resetFilter={resetFilter}/>
     </div>
   );
 };

@@ -48,12 +48,13 @@ const createDraftFromTask = (task: TaskTemplate): Draft => ({
 });
 
 type Props = {
+  tasks?: TaskTemplate[];
   query?: string;
   status?: "enabled" | "hidden" | "all";
   resetFilter?: ResetFilter;
 };
 
-export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "all" }: Props) => {
+export const CustomTaskList = ({ tasks, query = "", status = "enabled", resetFilter = "all" }: Props) => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
   const customTasks = useCurrentCustomTaskTemplates();
   const completedByCharacter = useTaskStore((state) => state.completedByCharacter);
@@ -72,11 +73,11 @@ export const CustomTaskList = ({ query = "", status = "enabled", resetFilter = "
     [customTasks],
   );
   const displayedCustomTasks = useMemo(
-    () => customTasks.filter((task) =>
+    () => tasks ?? customTasks.filter((task) =>
       matchesManagedTask(task, query, resetFilter)
       && (status === "all" || (status === "enabled" ? task.enabledByDefault : !task.enabledByDefault)),
     ),
-    [customTasks, query, resetFilter, status],
+    [customTasks, query, resetFilter, status, tasks],
   );
   const completed = Object.fromEntries(
     enabledCustomTasks.map((task) => [
