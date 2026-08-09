@@ -15,9 +15,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:mock": "vitest run test/orchestrator.e2e.test.ts",
-    "test:integration": "vitest run test/live-account.integration.test.ts",
+    "test": "vitest run --root . --configLoader runner",
+    "test:mock": "vitest run --root . --configLoader runner test/orchestrator.e2e.test.ts",
+    "test:integration": "vitest run --root . --configLoader runner test/live-account.integration.test.ts",
     "cli": "node dist/cli.js"
   },
   "devDependencies": {

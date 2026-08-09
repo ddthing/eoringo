@@ -1,3 +1,4 @@
+-- Applied to the hosted project as migration 20260809191048.
 create function private.is_safe_json_tree(value jsonb, depth integer default 0)
 returns boolean
 language plpgsql
@@ -60,7 +61,10 @@ alter table public.user_documents
   check (private.is_safe_json_tree(payload));
 
 alter table public.characters
-  add constraint characters_profile_image_path_check
+  drop constraint if exists characters_profile_image_path_check;
+
+alter table public.characters
+  add constraint characters_profile_image_path_safe_check
   check (
     profile_image_path is null
     or profile_image_path ~ '^character-image-[a-z0-9-]{1,108}$'
@@ -93,3 +97,11 @@ grant execute on function private.sync_character_image_reference()
 create trigger user_documents_sync_character_image_reference
 after insert or update of payload on public.user_documents
 for each row execute function private.sync_character_image_reference();
+
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    execute 'revoke all on function public.rls_auto_enable() from public, anon, authenticated';
+  end if;
+end;
+$$;

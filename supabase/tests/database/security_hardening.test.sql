@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(9);
 
 select ok(
   exists (
@@ -11,6 +11,16 @@ select ok(
       and conname = 'user_documents_payload_safety_check'
   ),
   'user documents enforce recursive payload safety'
+);
+
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.characters'::regclass
+      and conname = 'characters_profile_image_path_safe_check'
+  ),
+  'character image references are constrained to safe local IDs'
 );
 
 select ok(

@@ -19,4 +19,12 @@ describe("Edge Function origin policy", () => {
     expect(isAllowedOrigin("http://localhost:5173", allowed)).toBe(true);
     expect(isAllowedOrigin("http://127.0.0.1:5173", allowed)).toBe(true);
   });
+
+  it("fails closed to the production origin when optional origin configuration is absent", () => {
+    const allowed = resolveAllowedOrigins("", false);
+
+    expect(isAllowedOrigin("https://eoringo.pages.dev", allowed)).toBe(true);
+    expect(isAllowedOrigin("https://preview.eoringo.pages.dev", allowed)).toBe(false);
+    expect(isAllowedOrigin("http://localhost:5173", allowed)).toBe(false);
+  });
 });

@@ -34,12 +34,13 @@ describe("Supabase security migrations", () => {
   });
 
   it("bounds remote payloads and image references at the database boundary", () => {
-    const hardening = readMigration("20260810000100_security_and_image_sync_hardening.sql");
+    const hardening = readMigration("20260809191048_security_and_image_sync_hardening.sql");
 
     expect(hardening).toContain("user_documents_payload_safety_check");
     expect(hardening).toContain("item.key in ('__proto__', 'constructor', 'prototype')");
-    expect(hardening).toContain("characters_profile_image_path_check");
+    expect(hardening).toContain("characters_profile_image_path_safe_check");
     expect(hardening).toContain("grant execute on function private.is_safe_json_tree(jsonb, integer)");
+    expect(hardening).toContain("revoke all on function public.rls_auto_enable()");
     expect(hardening).not.toMatch(/grant execute[^;]+\b(?:public|anon)\b/i);
   });
 });
