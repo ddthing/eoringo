@@ -26,7 +26,7 @@ export const HomeHero = () => {
         <div className="flex items-start justify-between gap-3">
           <button
             type="button"
-            className="home-identity-trigger -m-1 flex min-h-20 min-w-0 flex-1 touch-manipulation items-start gap-3 rounded-[16px] p-1 text-left focus-visible:ring-2 focus-visible:ring-primary/35"
+            className="home-identity-trigger -m-1 flex min-h-20 min-w-0 flex-1 touch-manipulation items-start gap-3 rounded-ui-md p-1 text-left focus-visible:ring-2 focus-visible:ring-primary/35"
             onClick={() => setIsCharacterSheetOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={isCharacterSheetOpen}

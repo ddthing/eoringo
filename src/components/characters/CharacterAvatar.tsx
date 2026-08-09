@@ -9,9 +9,9 @@ type CharacterAvatarProps = {
 };
 
 const sizeClasses = {
-  sm: "h-9 w-9 rounded-[14px]",
-  md: "h-12 w-12 rounded-[16px]",
-  lg: "h-[72px] w-[72px] rounded-[20px]",
+  sm: "h-9 w-9 rounded-ui-sm",
+  md: "h-12 w-12 rounded-ui-md",
+  lg: "h-[72px] w-[72px] rounded-ui-lg",
 };
 
 export const CharacterAvatar = ({ imageId, name, size = "md" }: CharacterAvatarProps) => {

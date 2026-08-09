@@ -130,6 +130,25 @@
   --shape-xl: 26px;
   --elevation-1: 0 1px 2px rgb(var(--color-shadow) / 0.07), 0 8px 22px rgb(var(--color-shadow) / 0.045);
   --elevation-2: 0 12px 30px rgb(var(--color-shadow) / 0.09), 0 2px 6px rgb(var(--color-shadow) / 0.06);
+  --elevation-drawer: 0 -18px 48px rgb(var(--color-shadow) / 0.16), 0 -2px 8px rgb(var(--color-shadow) / 0.08);
+  --calendar-seal-rock-bg: 239 246 236;
+  --calendar-seal-rock-border: 185 207 184;
+  --calendar-seal-rock-text: 54 94 60;
+  --calendar-borderland-ruins-bg: 239 241 239;
+  --calendar-borderland-ruins-border: 196 202 198;
+  --calendar-borderland-ruins-text: 75 85 80;
+  --calendar-onsal-bg: 234 242 245;
+  --calendar-onsal-border: 185 206 216;
+  --calendar-onsal-text: 59 90 105;
+  --calendar-worqor-bg: 248 241 233;
+  --calendar-worqor-border: 222 201 181;
+  --calendar-worqor-text: 110 81 54;
+  --calendar-fields-bg: 240 237 247;
+  --calendar-fields-border: 204 195 221;
+  --calendar-fields-text: 86 75 112;
+  --calendar-housing-result-bg: 245 243 238;
+  --calendar-housing-result-border: 215 210 199;
+  --calendar-housing-result-text: 101 91 76;
   --state-hover-opacity: 0.08;
   --state-pressed-opacity: 0.12;
   --state-focus-opacity: 0.18;
@@ -172,6 +191,24 @@ html[data-color-mode="dark"] {
   --color-surface-container-high: 45 50 58;
   --color-outline: var(--color-line-soft);
   --color-outline-variant: var(--color-line-muted);
+  --calendar-seal-rock-bg: 39 55 43;
+  --calendar-seal-rock-border: 78 105 82;
+  --calendar-seal-rock-text: 190 218 191;
+  --calendar-borderland-ruins-bg: 45 49 48;
+  --calendar-borderland-ruins-border: 84 91 88;
+  --calendar-borderland-ruins-text: 205 211 207;
+  --calendar-onsal-bg: 37 51 59;
+  --calendar-onsal-border: 78 105 118;
+  --calendar-onsal-text: 190 215 226;
+  --calendar-worqor-bg: 57 49 41;
+  --calendar-worqor-border: 112 91 71;
+  --calendar-worqor-text: 226 204 181;
+  --calendar-fields-bg: 49 45 60;
+  --calendar-fields-border: 103 91 126;
+  --calendar-fields-text: 215 203 234;
+  --calendar-housing-result-bg: 55 51 44;
+  --calendar-housing-result-border: 102 93 76;
+  --calendar-housing-result-text: 225 210 181;
 }
 
 html[data-theme-color="pink"] {
@@ -380,7 +417,13 @@ a {
 }
 
 .calendar-cell {
+  min-width: 0;
+  overflow: hidden;
   animation: calendar-cell-enter 220ms ease-out both;
+}
+
+.calendar-cell > p {
+  min-width: 0;
 }
 
 .calendar-accordion {
@@ -414,6 +457,7 @@ a {
 
 .character-sheet-panel {
   animation: character-sheet-panel-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow: var(--elevation-drawer);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -462,19 +506,45 @@ a {
 }
 
 .calendar-tone-housing-entry {
-  box-shadow: inset 3px 0 rgb(var(--color-primary) / 0.62);
+  border-color: rgb(var(--color-primary) / 0.32);
+  color: rgb(var(--color-accent-ink));
+  background: rgb(var(--color-primary-soft) / 0.78);
 }
 
 .calendar-tone-housing-result {
-  box-shadow: inset 3px 0 rgb(var(--color-outline));
+  border-color: rgb(var(--calendar-housing-result-border));
+  color: rgb(var(--calendar-housing-result-text));
+  background: rgb(var(--calendar-housing-result-bg));
 }
 
-.calendar-tone-frontline-seal-rock,
-.calendar-tone-frontline-borderland-ruins,
-.calendar-tone-frontline-onsal,
-.calendar-tone-frontline-worqor-chitte,
+.calendar-tone-frontline-seal-rock {
+  border-color: rgb(var(--calendar-seal-rock-border));
+  color: rgb(var(--calendar-seal-rock-text));
+  background: rgb(var(--calendar-seal-rock-bg));
+}
+
+.calendar-tone-frontline-borderland-ruins {
+  border-color: rgb(var(--calendar-borderland-ruins-border));
+  color: rgb(var(--calendar-borderland-ruins-text));
+  background: rgb(var(--calendar-borderland-ruins-bg));
+}
+
+.calendar-tone-frontline-onsal {
+  border-color: rgb(var(--calendar-onsal-border));
+  color: rgb(var(--calendar-onsal-text));
+  background: rgb(var(--calendar-onsal-bg));
+}
+
+.calendar-tone-frontline-worqor-chitte {
+  border-color: rgb(var(--calendar-worqor-border));
+  color: rgb(var(--calendar-worqor-text));
+  background: rgb(var(--calendar-worqor-bg));
+}
+
 .calendar-tone-frontline-fields-of-glory {
-  box-shadow: inset 3px 0 rgb(var(--color-outline));
+  border-color: rgb(var(--calendar-fields-border));
+  color: rgb(var(--calendar-fields-text));
+  background: rgb(var(--calendar-fields-bg));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1117,7 +1187,7 @@ input[type="number"] {
   }
 
   .home-empty-state {
-    @apply flex items-center justify-center gap-2 rounded-[14px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/50 px-3 py-3 text-center text-[13px] font-bold leading-5 text-ink-muted;
+    @apply flex items-center justify-center gap-2 rounded-ui-md border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/50 px-3 py-3 text-center text-[13px] font-bold leading-5 text-ink-muted;
   }
 
   .home-identity-trigger {

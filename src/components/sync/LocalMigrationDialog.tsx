@@ -84,7 +84,7 @@ export const LocalMigrationDialog = ({
       </div>
 
       {prepared ? (
-        <dl className="grid grid-cols-3 gap-2 rounded-[14px] bg-card-soft p-3 text-center">
+        <dl className="grid grid-cols-3 gap-2 rounded-ui-md bg-card-soft p-3 text-center">
           <div>
             <dt className="text-xs text-ink-muted">데이터 종류</dt>
             <dd className="mt-1 font-bold text-ink">{prepared.preview.documents.length}</dd>
@@ -113,7 +113,7 @@ export const LocalMigrationDialog = ({
       ) : null}
 
       {phase === "error" ? (
-        <p className="rounded-[14px] bg-card-soft p-3 text-sm text-ink-muted" role="alert">
+        <p className="rounded-ui-md bg-card-soft p-3 text-sm text-ink-muted" role="alert">
           이전을 완료하지 못했습니다. 원본 데이터는 변경되지 않았습니다.
         </p>
       ) : null}

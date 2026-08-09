@@ -8,9 +8,9 @@ type TaskCheckControlProps = {
 export const TaskCheckControl = ({ checked, className = "" }: TaskCheckControlProps) => (
   <span
     className={[
-      "grid h-5 w-5 shrink-0 place-items-center rounded-[7px] border transition-all duration-200",
+      "grid h-5 w-5 shrink-0 place-items-center rounded-ui-xs border transition-all duration-200",
       checked
-        ? "border-primary bg-primary text-primary-foreground shadow-[0_1px_4px_rgb(var(--color-shadow)/0.12)]"
+        ? "border-primary bg-primary text-primary-foreground shadow-sm"
         : "border-[rgb(var(--color-line-soft))] bg-card text-ink-muted",
       className,
     ].join(" ")}

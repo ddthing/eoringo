@@ -73,7 +73,7 @@ export const WeeklyMemoWidget = () => {
           </button>
         </form>
       ) : memoLines.length > 0 ? (
-        <div className="space-y-1.5 rounded-[14px] bg-card-soft/45 px-3 py-2.5">
+        <div className="space-y-1.5 rounded-ui-md bg-card-soft/45 px-3 py-2.5">
           {memoLines.map((line, index) => (
             <p key={`${line}-${index}`} className="text-sm font-bold leading-relaxed text-ink">
               - {line}

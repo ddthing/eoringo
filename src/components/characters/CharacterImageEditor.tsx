@@ -286,7 +286,7 @@ export const CharacterImageEditor = ({
       tabIndex={-1}
       onKeyDown={handleDialogKeyDown}
     >
-      <div className="w-full max-w-[360px] rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
+      <div className="w-full max-w-[360px] rounded-ui-xl border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.12em] text-primary">
@@ -307,7 +307,7 @@ export const CharacterImageEditor = ({
 
         <div
           className={[
-            "relative mx-auto overflow-hidden rounded-[24px] border border-[rgb(var(--color-line-soft))] bg-card-soft touch-none",
+            "relative mx-auto overflow-hidden rounded-ui-xl border border-[rgb(var(--color-line-soft))] bg-card-soft touch-none",
             isDragging ? "cursor-grabbing" : "cursor-grab",
           ].join(" ")}
           style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
@@ -335,12 +335,12 @@ export const CharacterImageEditor = ({
               <ImageIcon aria-hidden size={24} />
             </div>
           )}
-          <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-inset ring-white/70" />
+          <div className="pointer-events-none absolute inset-0 rounded-ui-xl ring-1 ring-inset ring-white/70" />
           <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-white/45" />
           <div className="pointer-events-none absolute inset-y-0 left-1/2 border-l border-white/45" />
         </div>
 
-        <div className="mt-3 rounded-[16px] border border-[rgb(var(--color-line-muted))] bg-card-soft/80 px-3 py-2.5">
+        <div className="mt-3 rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/80 px-3 py-2.5">
           <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-ink-muted">
             <span className="inline-flex items-center gap-1.5">
               <Move aria-hidden size={13} />

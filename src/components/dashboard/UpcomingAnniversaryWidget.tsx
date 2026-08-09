@@ -77,7 +77,7 @@ export const UpcomingAnniversaryWidget = () => {
         </button>
       </div>
       {isFormOpen ? (
-        <form onSubmit={handleSubmit} className="mb-3 grid gap-2 rounded-[14px] bg-card-soft/55 p-3">
+        <form onSubmit={handleSubmit} className="mb-3 grid gap-2 rounded-ui-md bg-card-soft/55 p-3">
           <input
             className="field"
             name="home-anniversary-title"
@@ -108,7 +108,7 @@ export const UpcomingAnniversaryWidget = () => {
           {upcomingEvents.map((event) => (
             <div
               key={event.id}
-              className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2 rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
+              className="grid min-h-12 grid-cols-[4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2 rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/62 p-2"
             >
               <span className="rounded-full bg-card px-2.5 py-1 text-center text-xs font-black tabular-nums text-primary">
                 {getDdayLabel(event.date)}

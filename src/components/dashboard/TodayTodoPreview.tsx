@@ -48,7 +48,7 @@ export const TodayTodoPreview = () => {
   );
 
   return (
-    <section className="rounded-[16px] border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
+    <section className="rounded-ui-md border border-[rgb(var(--color-line-soft))] bg-card/95 p-3 shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black text-ink">숙제 진행도</h2>
@@ -75,7 +75,7 @@ export const TodayTodoPreview = () => {
               <button
                 key={task.id}
                 type="button"
-                className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[10px] border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5 text-left transition hover:border-primary/45 active:scale-[0.99]"
+                className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-ui-xs border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5 text-left transition hover:border-primary/45 active:scale-[0.99]"
                 onClick={() => toggleTask(scopeId, task.id, task.maxCount, task.resetRuleId)}
                 aria-label={`${task.title} 완료 전환`}
               >
@@ -87,7 +87,7 @@ export const TodayTodoPreview = () => {
             ) : (
               <div
                 key={task.id}
-                className="flex min-h-10 items-center gap-2 rounded-[10px] border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5"
+                className="flex min-h-10 items-center gap-2 rounded-ui-xs border border-[rgb(var(--color-line-muted))] bg-card-soft/60 px-2.5 py-1.5"
               >
                 <span className="h-1 w-1 shrink-0 rounded-full bg-primary" />
                 <p className="min-w-0 flex-1 truncate text-sm font-bold text-ink">{task.title}</p>
@@ -115,7 +115,7 @@ export const TodayTodoPreview = () => {
             );
           })
         ) : (
-          <p className="rounded-[12px] border border-primary/15 bg-primary-soft/55 px-3 py-3 text-sm font-bold text-ink">
+          <p className="rounded-ui-sm border border-primary/15 bg-primary-soft/55 px-3 py-3 text-sm font-bold text-ink">
             오늘 체크는 모두 끝났어요.
           </p>
         )}

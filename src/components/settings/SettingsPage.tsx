@@ -61,7 +61,7 @@ export const SettingsPage = () => {
       <div
         id="characters"
         className={[
-          "scroll-mt-[calc(var(--app-header-height)+0.75rem)] rounded-[18px]",
+          "scroll-mt-[calc(var(--app-header-height)+0.75rem)] rounded-ui-lg",
           highlightCharacters ? "settings-anchor-highlight" : "",
         ].join(" ")}
       >

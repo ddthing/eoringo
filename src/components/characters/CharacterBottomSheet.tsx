@@ -104,7 +104,7 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
         }
       }}
     >
-      <div className="character-sheet-panel mx-auto max-h-[min(82vh,680px)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-t-[28px] border border-b-0 border-[rgb(var(--color-line-soft))] bg-card px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_48px_rgb(30_35_40/0.16)] min-[420px]:px-[18px]">
+      <div className="character-sheet-panel mx-auto max-h-[min(82vh,680px)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-t-ui-xl border border-b-0 border-[rgb(var(--color-line-soft))] bg-card px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 min-[420px]:px-[18px]">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[rgb(var(--color-line-soft))]" />
         <div className="flex items-start justify-between gap-3">
           <div>

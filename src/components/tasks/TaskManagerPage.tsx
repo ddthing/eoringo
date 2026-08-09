@@ -104,13 +104,13 @@ export const TaskManagerPage = () => {
               <h1 className="text-xl font-black text-ink">숙제 관리</h1>
             </div>
           </div>
-          <div className="grid grid-cols-2 rounded-[12px] bg-card-soft p-1" aria-label="숙제 기간">
+          <div className="grid grid-cols-2 rounded-ui-sm bg-card-soft p-1" aria-label="숙제 기간">
             {(["daily", "weekly"] as const).map((item) => (
               <button
                 key={item}
                 type="button"
                 className={[
-                  "min-h-11 rounded-[9px] px-3 text-xs font-black transition",
+                  "min-h-11 rounded-ui-xs px-3 text-xs font-black transition",
                   view === item ? "bg-card text-primary shadow-sm" : "text-ink-muted",
                 ].join(" ")}
                 onClick={() => setView(item)}
@@ -121,7 +121,7 @@ export const TaskManagerPage = () => {
             ))}
           </div>
         </div>
-        <label className="mt-3 flex min-h-11 items-center gap-2 rounded-[12px] border border-[rgb(var(--color-line-muted))] bg-card px-3 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+        <label className="mt-3 flex min-h-11 items-center gap-2 rounded-ui-sm border border-[rgb(var(--color-line-muted))] bg-card px-3 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
           <Search aria-hidden size={16} className="text-ink-muted" />
           <input
             type="search"
@@ -146,14 +146,14 @@ export const TaskManagerPage = () => {
         <CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck disabled={isOrderEditing} />
       </section>
 
-      <div className={`flex min-h-11 items-center justify-between rounded-[12px] px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-black text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
+      <div className={`flex min-h-11 items-center justify-between rounded-ui-sm px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-black text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
 
       <div className="space-y-3">
         {groups.map(({ group, scopeKey, tasks, filteredTasks, progress }) => {
           const isCollapsed = collapsedGroups[scopeKey] && !normalizedQuery;
 
           return (
-            <section key={scopeKey} className="overflow-hidden rounded-[14px] border border-[rgb(var(--color-line-soft))] bg-card shadow-[0_4px_16px_rgb(30_35_40/0.045)]">
+            <section key={scopeKey} className="overflow-hidden rounded-ui-md border border-[rgb(var(--color-line-soft))] bg-card shadow-soft">
               <button
                 type="button"
                 className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left transition hover:bg-card-soft/70"
@@ -198,7 +198,7 @@ export const TaskManagerPage = () => {
           );
         })}
         {groups.length === 0 ? (
-          <div className="rounded-[14px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card/70 px-4 py-10 text-center">
+          <div className="rounded-ui-md border border-dashed border-[rgb(var(--color-line-soft))] bg-card/70 px-4 py-10 text-center">
             <Search aria-hidden size={20} className="mx-auto text-ink-muted/55" />
             <p className="mt-2 text-sm font-bold text-ink-muted">검색 결과가 없습니다.</p>
           </div>

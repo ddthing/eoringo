@@ -75,7 +75,7 @@ export const CharacterSwitcher = ({
               className={[
                 "border font-bold transition active:scale-[0.99]",
                 layout === "stacked"
-                  ? "flex min-h-14 w-full items-center gap-2 rounded-[16px] px-3 py-2 text-left text-sm"
+                  ? "flex min-h-14 w-full items-center gap-2 rounded-ui-md px-3 py-2 text-left text-sm"
                   : "flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs",
                 isActive
                   ? "border-primary/35 bg-primary-soft text-primary"

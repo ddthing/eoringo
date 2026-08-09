@@ -41,6 +41,21 @@ const housingCellClassName: Record<HousingPhaseResult["phase"], string> = {
   result: "calendar-tone-housing-result",
 };
 
+const housingLegendItems = [
+  {
+    id: "entry",
+    shortName: phaseLabel.entry,
+    displayName: "신청 기간",
+    className: housingCellClassName.entry,
+  },
+  {
+    id: "result",
+    shortName: phaseLabel.result,
+    displayName: "발표 기간",
+    className: housingCellClassName.result,
+  },
+] as const;
+
 const toKstDate = (dateKey: string) => new Date(`${dateKey}T00:00:00+09:00`);
 
 const formatMonthDay = (dateKey: string) => format(parseISO(dateKey), "MM.dd");
@@ -58,6 +73,15 @@ export const CalendarPage = () => {
   const todayHousing = getHousingPhase();
   const todayFrontline = getFrontlineByDateKey(todayKey);
   const tomorrowFrontline = getFrontlineByDateKey(addDaysToDateKey(todayKey, 1));
+  const legendItems =
+    monthlyMode === "frontline"
+      ? frontlineMaps.map((map) => ({
+          id: map.id,
+          shortName: map.shortName,
+          displayName: map.displayName,
+          className: frontlineCellClassName[map.id],
+        }))
+      : housingLegendItems;
 
   const monthCells = useMemo(() => {
     const monthStart = startOfMonth(parseISO(todayKey));
@@ -97,7 +121,7 @@ export const CalendarPage = () => {
             <h2 className="text-xl font-black leading-tight text-ink">
               {todayFrontline.displayName}
             </h2>
-            <p className="mt-3 grid gap-1 rounded-[14px] bg-card/70 px-2.5 py-2 text-xs font-bold text-ink">
+            <p className="mt-3 grid gap-1 rounded-ui-sm bg-card/70 px-2.5 py-2 text-xs font-bold text-ink">
               <span className="text-ink-muted">내일 전장은</span>
               <span className="break-keep text-ink">{tomorrowFrontline.displayName}</span>
             </p>
@@ -129,7 +153,7 @@ export const CalendarPage = () => {
                 {formatMonthDay(todayHousing.resultEndDate)}
               </p>
             </div>
-            <p className="mt-2 rounded-[14px] bg-primary-soft/60 px-2.5 py-1.5 text-xs font-bold text-primary">
+            <p className="mt-2 rounded-ui-sm bg-primary-soft/60 px-2.5 py-1.5 text-xs font-bold text-primary">
               {getNextPhaseCopy(todayHousing)}
             </p>
           </article>
@@ -146,30 +170,32 @@ export const CalendarPage = () => {
         </div>
 
         <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-2 gap-1.5 rounded-[18px] bg-card-soft/70 p-1">
+          <div className="grid grid-cols-2 gap-1.5 rounded-ui-md bg-card-soft/70 p-1">
             <button
               type="button"
               className={[
-                "min-h-11 rounded-[14px] px-3 py-1.5 text-xs font-bold transition",
+                "min-h-11 rounded-ui-sm px-3 py-1.5 text-xs font-bold transition",
                 monthlyMode === "frontline" ? "bg-card text-primary shadow-soft" : "text-ink-muted",
               ].join(" ")}
               onClick={() => setMonthlyMode("frontline")}
+              aria-pressed={monthlyMode === "frontline"}
             >
               전장 월간
             </button>
             <button
               type="button"
               className={[
-                "min-h-11 rounded-[14px] px-3 py-1.5 text-xs font-bold transition",
+                "min-h-11 rounded-ui-sm px-3 py-1.5 text-xs font-bold transition",
                 monthlyMode === "housing" ? "bg-card text-primary shadow-soft" : "text-ink-muted",
               ].join(" ")}
               onClick={() => setMonthlyMode("housing")}
+              aria-pressed={monthlyMode === "housing"}
             >
               하우징 월간
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 rounded-[10px] bg-card-soft/80 px-1 py-2 text-center text-[10px] font-black text-ink-muted">
+          <div className="grid grid-cols-7 gap-1 rounded-ui-xs bg-card-soft/80 px-1 py-2 text-center text-[10px] font-black text-ink-muted">
             {weekdays.map((weekday, index) => (
               <span key={weekday} className={index === 0 ? "text-[rgb(var(--color-danger))]" : index === 6 ? "text-primary" : ""}>{weekday}</span>
             ))}
@@ -195,9 +221,14 @@ export const CalendarPage = () => {
                 <div
                   key={dateKey}
                   className={[
-                    "calendar-cell min-h-14 rounded-[11px] border px-1 py-1.5 text-center transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
+                    "calendar-cell min-h-14 rounded-ui-xs border px-1 py-1.5 text-center transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
                     toneClassName,
                   ].join(" ")}
+                  aria-current={isToday ? "date" : undefined}
+                  data-calendar-mode={monthlyMode}
+                  data-calendar-tone={monthlyMode === "frontline" ? frontline.id : housing.phase}
+                  data-today={isToday ? "true" : undefined}
+                  title={`${format(parseISO(dateKey), "M월 d일")} ${monthlyMode === "frontline" ? frontline.displayName : phaseLabel[housing.phase]}`}
                 >
                   <p className="text-[11px] font-bold text-ink">
                     {format(parseISO(dateKey), "d")}
@@ -220,23 +251,29 @@ export const CalendarPage = () => {
           className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-bold text-ink"
           onClick={() => setLegendOpen((current) => !current)}
           aria-expanded={legendOpen}
+          aria-controls="calendar-legend-list"
         >
           <span>범례</span>
           <ChevronDown aria-hidden size={17} className={`text-primary transition-transform duration-200 ${legendOpen ? "rotate-180" : ""}`} />
         </button>
         {legendOpen ? (
-          <div className="calendar-accordion mt-1 grid gap-2 border-t border-[rgb(var(--color-line-muted))] py-3 text-xs">
-            {frontlineMaps.map((map) => (
-              <div key={map.id} className="grid grid-cols-[2.4rem_1fr] gap-2">
+          <div
+            id="calendar-legend-list"
+            className="calendar-accordion mt-1 grid gap-2 border-t border-[rgb(var(--color-line-muted))] py-3 text-xs"
+            role="region"
+            aria-label={monthlyMode === "frontline" ? "전장 월간 범례" : "하우징 월간 범례"}
+          >
+            {legendItems.map((item) => (
+              <div key={item.id} className="grid min-w-0 grid-cols-[2.4rem_minmax(0,1fr)] gap-2">
                 <span
                   className={[
                     "w-fit rounded-full border px-2 py-0.5 text-[11px] font-bold",
-                    frontlineCellClassName[map.id],
+                    item.className,
                   ].join(" ")}
                 >
-                  {map.shortName}
+                  {item.shortName}
                 </span>
-                <span className="text-ink-muted">{map.displayName}</span>
+                <span className="min-w-0 text-ink-muted">{item.displayName}</span>
               </div>
             ))}
           </div>

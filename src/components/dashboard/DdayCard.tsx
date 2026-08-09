@@ -96,14 +96,14 @@ export const DdayCard = () => {
       ) : null}
       <div className="space-y-1.5">
         {events.length === 0 ? (
-          <p className="rounded-[18px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/55 p-3 text-xs leading-relaxed text-ink-muted">
+          <p className="rounded-ui-lg border border-dashed border-[rgb(var(--color-line-soft))] bg-card-soft/55 p-3 text-xs leading-relaxed text-ink-muted">
             아직 등록된 기념일이 없어요. 언약일이나 캐릭터 생일을 살짝 기록해둘까요?
           </p>
         ) : (
           events.map((event) => (
             <div
               key={event.id}
-              className="flex items-center justify-between gap-2 rounded-[18px] border border-[rgb(var(--color-line-muted))] bg-card-soft/75 p-2"
+              className="flex items-center justify-between gap-2 rounded-ui-lg border border-[rgb(var(--color-line-muted))] bg-card-soft/75 p-2"
             >
               <div className="flex min-w-0 items-center gap-2">
                 <span className="shrink-0 rounded-full bg-card px-2.5 py-1 text-xs font-bold text-primary">

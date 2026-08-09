@@ -48,8 +48,16 @@ export default {
           soft: "rgb(var(--color-brand-soft) / <alpha-value>)",
         },
       },
+      borderRadius: {
+        "ui-xs": "var(--shape-xs)",
+        "ui-sm": "var(--shape-sm)",
+        "ui-md": "var(--shape-md)",
+        "ui-lg": "var(--shape-lg)",
+        "ui-xl": "var(--shape-xl)",
+      },
       boxShadow: {
-        soft: "0 10px 28px rgb(var(--color-shadow) / 0.12), 0 1px 2px rgb(var(--color-shadow) / 0.08)",
+        soft: "var(--elevation-1)",
+        "ui-2": "var(--elevation-2)",
       },
     },
   },

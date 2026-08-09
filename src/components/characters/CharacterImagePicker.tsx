@@ -77,7 +77,7 @@ export const CharacterImagePicker = ({
 
   return (
     <>
-      <div className="flex items-center gap-2.5 rounded-[18px] border border-dashed border-[rgb(var(--color-line-soft))] bg-card/70 p-2">
+      <div className="flex items-center gap-2.5 rounded-ui-lg border border-dashed border-[rgb(var(--color-line-soft))] bg-card/70 p-2">
         <CharacterAvatar imageId={imageId} name={characterName || "나의 모험가"} size="lg" />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-ink">캐릭터 사진</p>

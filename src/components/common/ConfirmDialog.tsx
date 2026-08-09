@@ -144,7 +144,7 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
           aria-describedby={request.description ? "confirm-dialog-description" : undefined}
           onKeyDown={handleKeyDown}
         >
-          <div className="w-full max-w-[360px] rounded-[22px] border border-[rgb(var(--color-line-soft))] bg-card p-3 shadow-[0_18px_46px_rgb(30_35_40/0.18),0_2px_8px_rgb(30_35_40/0.08)]">
+          <div className="w-full max-w-[360px] rounded-ui-xl border border-[rgb(var(--color-line-soft))] bg-card p-3 shadow-ui-2">
             <div className="flex items-start gap-3">
               <div
                 className={[

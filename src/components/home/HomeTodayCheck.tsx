@@ -112,7 +112,7 @@ export const HomeTodayCheck = () => {
           return (
           <section
             key={group.category}
-            className="rounded-[16px] border border-[rgb(var(--color-line-muted))] bg-card-soft/42 px-3 py-2.5"
+            className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/42 px-3 py-2.5"
             aria-labelledby={`home-today-${group.category}`}
           >
             <div className="flex min-h-8 items-center justify-between gap-3">

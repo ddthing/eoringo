@@ -89,7 +89,7 @@ describe("AccountDataPanel", () => {
     const markup = renderToStaticMarkup(<ThemeSettingsPanel />);
 
     expect(markup).toContain(
-      "min-h-14 min-w-0 w-full items-center gap-3 rounded-[16px] border bg-card/88 px-4 py-3",
+      "min-h-14 min-w-0 w-full items-center gap-3 rounded-ui-md border bg-card/88 px-4 py-3",
     );
   });
 });

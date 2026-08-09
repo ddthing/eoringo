@@ -101,7 +101,7 @@ export const CharacterForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid gap-2 rounded-[20px] border border-[rgb(var(--color-line-soft))] bg-card-soft/70 p-3"
+      className="grid gap-2 rounded-ui-lg border border-[rgb(var(--color-line-soft))] bg-card-soft/70 p-3"
     >
       <CharacterImagePicker
         imageId={draft.profileImageId}

@@ -85,7 +85,7 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
 
   if (completed) {
     return (
-      <p className="rounded-[14px] bg-card-soft p-3 text-sm text-ink-muted">
+      <p className="rounded-ui-md bg-card-soft p-3 text-sm text-ink-muted">
         이 기기의 데이터 이전을 검증했습니다. 원본은 보존 기간 동안 그대로 유지됩니다.
       </p>
     );
@@ -107,7 +107,7 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
 
   if (remoteDocuments) {
     return (
-      <div className="space-y-3 rounded-[14px] bg-card-soft p-3">
+      <div className="space-y-3 rounded-ui-md bg-card-soft p-3">
         <p className="text-sm text-ink-muted">
           이 계정에 저장된 데이터가 있습니다. 현재 기기를 먼저 백업한 뒤 계정 데이터를 불러올 수 있습니다.
         </p>

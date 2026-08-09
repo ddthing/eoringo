@@ -62,7 +62,7 @@ export const ThemeSettingsPanel = () => {
                 key={themeColor.id}
                 type="button"
                 className={[
-                  "flex min-h-14 min-w-0 w-full items-center gap-3 rounded-[16px] border bg-card/88 px-4 py-3 text-left outline-none transition active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
+                  "flex min-h-14 min-w-0 w-full items-center gap-3 rounded-ui-md border bg-card/88 px-4 py-3 text-left outline-none transition active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/35",
                   selected
                     ? "border-primary bg-primary-soft/60 text-primary"
                     : "border-[rgb(var(--color-line-muted))] text-ink-muted",
@@ -77,7 +77,7 @@ export const ThemeSettingsPanel = () => {
                       : undefined
                   }
                   className={[
-                    "grid h-7 w-7 shrink-0 place-items-center rounded-full border border-card/80 shadow-[0_1px_4px_rgb(var(--color-shadow)/0.16)]",
+                    "grid h-7 w-7 shrink-0 place-items-center rounded-full border border-card/80 shadow-sm",
                     themeColor.swatchClassName,
                   ].join(" ")}
                 >
@@ -107,7 +107,7 @@ export const ThemeSettingsPanel = () => {
       </div>
 
       {themeColorId === "custom" ? (
-        <div className="rounded-[16px] border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-3">
+        <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-black text-ink">Custom</p>
@@ -122,7 +122,7 @@ export const ThemeSettingsPanel = () => {
             <input
               type="color"
               value={customAccentColor}
-              className="h-10 w-12 cursor-pointer rounded-[12px] border border-[rgb(var(--color-line-soft))] bg-card p-1"
+              className="h-10 w-12 cursor-pointer rounded-ui-sm border border-[rgb(var(--color-line-soft))] bg-card p-1"
               onChange={(event) => {
                 setCustomDraft(event.target.value);
                 setCustomAccentColor(event.target.value);

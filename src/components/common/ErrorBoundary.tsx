@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-[18px] border border-[rgb(var(--color-line-soft))] bg-card p-4 text-sm text-ink">
+        <div className="rounded-ui-lg border border-[rgb(var(--color-line-soft))] bg-card p-4 text-sm text-ink">
           <p className="font-bold">문제가 발생했어요.</p>
           <p className="mt-1 text-ink-muted">
             새로고침하거나 설정에서 데이터를 백업한 뒤 초기화해보세요.

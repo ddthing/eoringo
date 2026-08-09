@@ -106,7 +106,7 @@ export const CharacterManager = () => {
         </button>
       </div>
 
-      <div className="rounded-[16px] border border-[rgb(var(--color-line-muted))] bg-card-soft/45 p-2.5">
+      <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/45 p-2.5">
         <CharacterSwitcher embedded compact />
       </div>
 
@@ -124,7 +124,7 @@ export const CharacterManager = () => {
         {characters.map((character) => (
           <div
             key={character.id}
-            className="flex items-center justify-between gap-2 rounded-[18px] border border-[rgb(var(--color-line-muted))] bg-card/70 p-2"
+            className="flex items-center justify-between gap-2 rounded-ui-lg border border-[rgb(var(--color-line-muted))] bg-card/70 p-2"
           >
             <div className="flex min-w-0 items-center gap-2">
               <CharacterAvatar imageId={character.profileImageId} name={character.name} />

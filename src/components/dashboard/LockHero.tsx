@@ -89,7 +89,7 @@ export const LockHero = () => {
   }, [activeCharacter?.profileImageId]);
 
   return (
-    <section className="relative isolate min-h-[224px] overflow-hidden rounded-[18px] border border-[rgb(var(--color-line-soft))] bg-card text-ink shadow-soft">
+    <section className="relative isolate min-h-[224px] overflow-hidden rounded-ui-lg border border-[rgb(var(--color-line-soft))] bg-card text-ink shadow-soft">
       {backgroundImageUrl ? (
         <img
           src={backgroundImageUrl}
@@ -119,7 +119,7 @@ export const LockHero = () => {
           />
         </div>
 
-        <div className="rounded-[14px] border border-[rgb(var(--color-line-muted))] bg-card/72 p-3 backdrop-blur-md">
+        <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card/72 p-3 backdrop-blur-md">
           <p className="text-sm font-bold text-ink">{formatKoreanDate(now)}</p>
           <div className="mt-3 grid grid-cols-[1fr_auto] items-end gap-3">
             <div className="min-w-0">
