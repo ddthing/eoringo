@@ -17,6 +17,7 @@ import {
 import { useAllowanceStore } from "../stores/useAllowanceStore";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useRemoteSync } from "../sync/useRemoteSync";
+import { subscribeToMinuteClock } from "../hooks/useMinuteNow";
 import { getRouteErrorBoundaryKey } from "./errorBoundaryReset";
 
 export const App = () => {
@@ -45,9 +46,7 @@ export const App = () => {
     };
 
     sync();
-    const timerId = window.setInterval(sync, 60_000);
-
-    return () => window.clearInterval(timerId);
+    return subscribeToMinuteClock(sync);
   }, [remoteHydrationReady]);
 
   useEffect(() => {

@@ -53,5 +53,8 @@ export const createMinuteClock = ({
 
 const minuteClock = createMinuteClock();
 
+export const subscribeToMinuteClock = (listener: () => void) =>
+  minuteClock.subscribe(listener);
+
 export const useMinuteNow = () =>
-  useSyncExternalStore(minuteClock.subscribe, minuteClock.getSnapshot, minuteClock.getSnapshot);
+  useSyncExternalStore(subscribeToMinuteClock, minuteClock.getSnapshot, minuteClock.getSnapshot);
