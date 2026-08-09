@@ -21,7 +21,7 @@ const LoginSafetyNotice = () => (
 
 const errorMessages: Record<AuthErrorCode, string> = {
   "account-merge-required":
-    "이미 사용 중인 Google 계정입니다. 계정 병합 기능을 적용하기 전까지 현재 기기의 백업을 보관해 주세요.",
+    "이 Google 계정은 다른 에오링고 계정에 이미 연결되어 있습니다. 자동 병합하지 않으므로 기존 계정으로 로그인하거나 다른 Google 계정을 사용해 주세요. 현재 게스트 데이터는 그대로 유지됩니다.",
   "captcha-required": "보안 확인이 필요합니다. 잠시 후 다시 시도해 주세요.",
   configuration: "온라인 동기화 설정이 아직 완료되지 않았습니다.",
   network: "네트워크에 연결할 수 없습니다. 로컬 데이터는 그대로 사용할 수 있습니다.",

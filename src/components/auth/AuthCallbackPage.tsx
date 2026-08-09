@@ -9,9 +9,13 @@ export const AuthCallbackPage = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [phase, setPhase] = useState<CallbackPhase>("working");
   const code = searchParams.get("code");
   const providerError = searchParams.get("error");
+  const providerErrorCode = searchParams.get("error_code");
+  const isIdentityAlreadyLinked = providerErrorCode === "identity_already_exists";
+  const [phase, setPhase] = useState<CallbackPhase>(() =>
+    providerError || !code ? "failed" : "working",
+  );
 
   useEffect(() => {
     if (providerError || !code) {
@@ -51,12 +55,18 @@ export const AuthCallbackPage = () => {
       <div>
         <p className="muted-label">secure sign-in</p>
         <h1 className="mt-1 text-lg font-black text-ink">
-          {phase === "working" ? "Google 계정 확인 중" : "Google 연결을 완료하지 못했습니다"}
+          {phase === "working"
+            ? "Google 계정 확인 중"
+            : isIdentityAlreadyLinked
+              ? "이미 연결된 Google 계정입니다"
+              : "Google 연결을 완료하지 못했습니다"}
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           {phase === "working"
             ? "일회용 PKCE 코드를 안전하게 확인하고 있습니다."
-            : "기존 게스트 세션과 로컬 데이터는 삭제되지 않았습니다."}
+            : isIdentityAlreadyLinked
+              ? "이 Google 계정은 다른 에오링고 계정에 이미 연결되어 있습니다. 자동 병합하지 않으며 현재 게스트 데이터는 삭제되지 않습니다. 기존 계정으로 로그인하거나 다른 Google 계정을 선택해 주세요."
+              : "기존 게스트 세션과 로컬 데이터는 삭제되지 않았습니다."}
         </p>
       </div>
       {phase === "failed" ? (
