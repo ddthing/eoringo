@@ -2,14 +2,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const mocks = vi.hoisted(() => {
+  const bridgeStart = vi.fn();
   const bridgeStop = vi.fn();
 
   return {
+    bridgeStart,
     bridgeStop,
     coordinatorStop: vi.fn(),
     createDocumentRepository: vi.fn(() => ({})),
     createMutationQueue: vi.fn(() => ({})),
-    createStoreSyncBridge: vi.fn(() => ({ hydrate: vi.fn(), stop: bridgeStop })),
+    createStoreSyncBridge: vi.fn(() => ({
+      hydrate: vi.fn(),
+      start: bridgeStart,
+      stop: bridgeStop,
+    })),
     createSupabaseDocumentDataSource: vi.fn(() => ({})),
     createSyncCoordinator: vi.fn(),
     sync: vi.fn(),
@@ -40,7 +46,7 @@ afterEach(() => {
 });
 
 describe("remote sync runtime", () => {
-  it("hydrates before and after attaching the store bridge during startup", async () => {
+  it("hydrates once before starting store subscriptions", async () => {
     const unsubscribe = vi.fn();
     mocks.sync.mockResolvedValue(undefined);
     mocks.createSyncCoordinator.mockReturnValue({
@@ -60,18 +66,46 @@ describe("remote sync runtime", () => {
 
     const stop = await startRemoteSyncRuntime(supabase);
 
-    expect(mocks.sync).toHaveBeenNthCalledWith(1, "startup");
     expect(mocks.createStoreSyncBridge).toHaveBeenCalledOnce();
-    expect(mocks.sync).toHaveBeenNthCalledWith(2, "startup");
-    expect(mocks.sync.mock.invocationCallOrder[0])
-      .toBeLessThan(mocks.createStoreSyncBridge.mock.invocationCallOrder[0]);
+    expect(mocks.createStoreSyncBridge).toHaveBeenCalledWith(
+      expect.objectContaining({ deferStart: true }),
+    );
+    expect(mocks.sync).toHaveBeenCalledTimes(1);
+    expect(mocks.sync).toHaveBeenCalledWith("startup");
     expect(mocks.createStoreSyncBridge.mock.invocationCallOrder[0])
-      .toBeLessThan(mocks.sync.mock.invocationCallOrder[1]);
+      .toBeLessThan(mocks.sync.mock.invocationCallOrder[0]);
+    expect(mocks.sync.mock.invocationCallOrder[0])
+      .toBeLessThan(mocks.bridgeStart.mock.invocationCallOrder[0]);
 
     stop();
 
     expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(mocks.bridgeStart).toHaveBeenCalledOnce();
     expect(mocks.bridgeStop).toHaveBeenCalledOnce();
     expect(mocks.coordinatorStop).toHaveBeenCalledOnce();
+  });
+
+  it("cleans up without starting subscriptions when startup sync fails", async () => {
+    const startupError = new Error("startup failed");
+    mocks.sync.mockRejectedValue(startupError);
+    mocks.createSyncCoordinator.mockReturnValue({
+      sync: mocks.sync,
+      stop: mocks.coordinatorStop,
+    });
+    vi.stubGlobal("localStorage", {});
+    vi.stubGlobal("window", {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    const supabase = {
+      auth: { onAuthStateChange: vi.fn() },
+    } as unknown as SupabaseClient;
+
+    await expect(startRemoteSyncRuntime(supabase)).rejects.toThrow(startupError);
+
+    expect(mocks.bridgeStart).not.toHaveBeenCalled();
+    expect(mocks.bridgeStop).toHaveBeenCalledOnce();
+    expect(mocks.coordinatorStop).toHaveBeenCalledOnce();
+    expect(supabase.auth.onAuthStateChange).not.toHaveBeenCalled();
   });
 });

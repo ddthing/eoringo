@@ -90,4 +90,28 @@ describe("store sync bridge", () => {
     expect(queue.upsertLatest).not.toHaveBeenCalled();
     bridge.stop();
   });
+
+  it("defers local change subscriptions until explicitly started", async () => {
+    const queue = { upsertLatest: vi.fn() };
+    const requestSync = vi.fn();
+    const bridge = createStoreSyncBridge({
+      queue,
+      requestSync,
+      deferStart: true,
+    });
+
+    useWeeklyMemoStore.getState().setMemo("character", "before start");
+    await Promise.resolve();
+
+    expect(queue.upsertLatest).not.toHaveBeenCalled();
+    expect(requestSync).not.toHaveBeenCalled();
+
+    bridge.start();
+    useWeeklyMemoStore.getState().setMemo("character", "after start");
+    await Promise.resolve();
+
+    expect(queue.upsertLatest).toHaveBeenCalledOnce();
+    expect(requestSync).toHaveBeenCalledOnce();
+    bridge.stop();
+  });
 });

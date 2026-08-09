@@ -20,6 +20,7 @@ type MutationQueueWriter = {
 type StoreSyncBridgeOptions = {
   queue: MutationQueueWriter;
   requestSync: () => void;
+  deferStart?: boolean;
   now?: () => Date;
   createMutationId?: () => string;
   captureDocument?: (documentType: RemotelyPersistedDocumentType) => DocumentWrite;
@@ -33,6 +34,7 @@ const identityKey = (document: { documentType: string; characterId: string | nul
 export const createStoreSyncBridge = ({
   queue,
   requestSync,
+  deferStart = false,
   now = () => new Date(),
   createMutationId = () => crypto.randomUUID(),
   captureDocument = captureStoreDocument,
@@ -105,15 +107,29 @@ export const createStoreSyncBridge = ({
     queueMicrotask(captureChanges);
   };
 
-  const unsubscribers = [
-    useWeeklyMemoStore.subscribe(() => scheduleCapture("memo")),
-    useDdayStore.subscribe(() => scheduleCapture("dday")),
-    useAllowanceStore.subscribe(() => scheduleCapture("allowance")),
-    useTaskStore.subscribe(() => scheduleCapture("tasks")),
-    useHistoryStore.subscribe(() => scheduleCapture("history")),
-  ];
+  let started = false;
+  let unsubscribers: Array<() => void> = [];
+
+  const start = () => {
+    if (started) return;
+
+    started = true;
+    unsubscribers = [
+      useWeeklyMemoStore.subscribe(() => scheduleCapture("memo")),
+      useDdayStore.subscribe(() => scheduleCapture("dday")),
+      useAllowanceStore.subscribe(() => scheduleCapture("allowance")),
+      useTaskStore.subscribe(() => scheduleCapture("tasks")),
+      useHistoryStore.subscribe(() => scheduleCapture("history")),
+    ];
+  };
+
+  if (!deferStart) {
+    start();
+  }
 
   return {
+    start,
+
     hydrate(documents: RemoteDocument[]) {
       suppressWrites = true;
       remoteIndex = new Map(documents.map((document) => [identityKey(document), document]));
@@ -136,6 +152,8 @@ export const createStoreSyncBridge = ({
       suppressWrites = true;
       dirtyDocumentTypes.clear();
       unsubscribers.forEach((unsubscribe) => unsubscribe());
+      unsubscribers = [];
+      started = false;
     },
   };
 };

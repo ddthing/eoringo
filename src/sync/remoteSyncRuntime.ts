@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { useSyncStore } from "../stores/sync/useSyncStore";
 import { createDocumentRepository } from "./documentRepository";
 import { createMutationQueue } from "./mutationQueue";
-import { hydrateStoreDocuments } from "./storeSyncAdapter";
 import { createStoreSyncBridge } from "./storeSyncBridge";
 import { createSupabaseDocumentDataSource } from "./supabaseDocumentDataSource";
 import { createSyncCoordinator } from "./syncCoordinator";
@@ -12,24 +11,25 @@ export const startRemoteSyncRuntime = async (supabase: SupabaseClient) => {
     createSupabaseDocumentDataSource(supabase),
   );
   const queue = createMutationQueue(localStorage);
-  let bridge: ReturnType<typeof createStoreSyncBridge> | null = null;
+  let requestSync = () => {};
+  const bridge = createStoreSyncBridge({
+    queue,
+    deferStart: true,
+    requestSync: () => requestSync(),
+  });
   const coordinator = createSyncCoordinator({
     repository,
     queue,
-    hydrate: (documents) =>
-      bridge ? bridge.hydrate(documents) : hydrateStoreDocuments(documents),
+    hydrate: bridge.hydrate,
     setState: (patch) => useSyncStore.getState().setSyncState(patch),
   });
+  requestSync = () => void coordinator.sync("write");
 
   try {
     await coordinator.sync("startup");
-    bridge = createStoreSyncBridge({
-      queue,
-      requestSync: () => void coordinator.sync("write"),
-    });
-    await coordinator.sync("startup");
+    bridge.start();
   } catch (error) {
-    bridge?.stop();
+    bridge.stop();
     coordinator.stop();
     throw error;
   }
@@ -52,7 +52,7 @@ export const startRemoteSyncRuntime = async (supabase: SupabaseClient) => {
     data.subscription.unsubscribe();
     window.removeEventListener("focus", handleFocus);
     window.removeEventListener("online", handleOnline);
-    bridge?.stop();
+    bridge.stop();
     coordinator.stop();
   };
 };
