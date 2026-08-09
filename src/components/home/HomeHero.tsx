@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronDown, Clock3 } from "lucide-react";
 import {
   formatDurationKo,
@@ -8,21 +8,17 @@ import {
 } from "../../lib/date";
 import { selectActiveCharacter } from "../../stores/character/selectors";
 import { useCharacterStore } from "../../stores/useCharacterStore";
+import { useMinuteNow } from "../../hooks/useMinuteNow";
 import { CharacterAvatar } from "../characters/CharacterAvatar";
 import { CharacterBottomSheet } from "../characters/CharacterBottomSheet";
-import { useHomeTaskProgress } from "./useHomeTaskProgress";
+import { useHomeDashboardTasks } from "./useHomeDashboardTasks";
 
 export const HomeHero = () => {
-  const [now, setNow] = useState(() => new Date());
+  const now = useMinuteNow();
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const character = useCharacterStore(selectActiveCharacter);
-  const { daily } = useHomeTaskProgress();
+  const { progress } = useHomeDashboardTasks();
   const remaining = getTimeUntil(getNextKstDailyReset(now), now);
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => window.clearInterval(timerId);
-  }, []);
 
   return (
     <section className="home-panel overflow-hidden p-4 min-[420px]:p-[18px] md:p-5">
@@ -52,7 +48,7 @@ export const HomeHero = () => {
             </div>
           </button>
           <div className="min-w-[4.25rem] shrink-0 pt-1 text-right">
-            <p className="text-[26px] font-black leading-none tracking-[-0.04em] text-primary tabular-nums min-[420px]:text-[28px]">{daily.percent}%</p>
+            <p className="text-[26px] font-black leading-none tracking-[-0.04em] text-primary tabular-nums min-[420px]:text-[28px]">{progress.daily.percent}%</p>
             <p className="mt-1.5 text-[10px] font-bold tracking-[-0.01em] text-ink-muted">오늘 완료율</p>
           </div>
         </div>

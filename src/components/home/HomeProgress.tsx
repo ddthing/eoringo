@@ -1,4 +1,4 @@
-import { useHomeTaskProgress } from "./useHomeTaskProgress";
+import { useHomeDashboardTasks } from "./useHomeDashboardTasks";
 
 const ProgressRow = ({
   label,
@@ -35,7 +35,7 @@ const ProgressRow = ({
 );
 
 export const HomeProgress = () => {
-  const progress = useHomeTaskProgress();
+  const { progress } = useHomeDashboardTasks();
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress.total.percent / 100);

@@ -1,16 +1,10 @@
-import { useEffect, useState } from "react";
 import type { PropsWithChildren } from "react";
 import { formatKoreanDate } from "../../lib/date";
+import { useMinuteNow } from "../../hooks/useMinuteNow";
 import { BottomNav } from "./BottomNav";
 
 export const AppShell = ({ children }: PropsWithChildren) => {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNow(new Date()), 60_000);
-
-    return () => window.clearInterval(timerId);
-  }, []);
+  const now = useMinuteNow();
 
   return (
     <div className="min-h-screen bg-bg">

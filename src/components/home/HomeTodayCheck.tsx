@@ -7,7 +7,7 @@ import {
   shouldStartTaskCompletion,
 } from "./homeTaskCompletion";
 import { HomeTodayCheckItem } from "./HomeTodayCheckItem";
-import { useHomeTodayTasks } from "./useHomeTodayTasks";
+import { useHomeDashboardTasks } from "./useHomeDashboardTasks";
 
 const displayedTaskLimit = 2;
 
@@ -17,7 +17,7 @@ type CompletingTask = {
 };
 
 export const HomeTodayCheck = () => {
-  const { characterId, groups, toggle, setCount } = useHomeTodayTasks();
+  const { characterId, groups, toggle, setCount } = useHomeDashboardTasks();
   const [expansion, setExpansion] = useState<{
     characterId: string;
     categories: Partial<Record<TaskCategory, boolean>>;

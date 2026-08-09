@@ -46,11 +46,24 @@ export const TaskManagerPage = () => {
     [category, customTasks, disabledIds],
   );
 
-  const groups = useMemo(
-    () => taskGroupOrder.map((group) => {
+  const groups = useMemo(() => {
+    const tasksByGroup = new Map<TaskTemplate["group"], TaskTemplate[]>();
+
+    visibleTasks.forEach((task) => {
+      const groupTasks = tasksByGroup.get(task.group);
+
+      if (groupTasks) {
+        groupTasks.push(task);
+        return;
+      }
+
+      tasksByGroup.set(task.group, [task]);
+    });
+
+    return taskGroupOrder.flatMap((group) => {
       const scopeKey = getTaskOrderScopeKey(characterId, view, group);
       const tasks = sortTasksBySavedOrder(
-        visibleTasks.filter((task) => task.group === group),
+        tasksByGroup.get(group) ?? [],
         orderByGroup[scopeKey] ?? [],
       );
       const filteredTasks = normalizedQuery
@@ -60,12 +73,19 @@ export const TaskManagerPage = () => {
               .some((value) => value?.toLocaleLowerCase("ko").includes(normalizedQuery)),
           )
         : tasks;
-      return { group, scopeKey, tasks, filteredTasks };
-    }).filter(({ tasks, filteredTasks }) =>
-      tasks.length > 0 && (!normalizedQuery || filteredTasks.length > 0),
-    ),
-    [characterId, normalizedQuery, orderByGroup, view, visibleTasks],
-  );
+      if (tasks.length === 0 || (normalizedQuery && filteredTasks.length === 0)) {
+        return [];
+      }
+
+      return [{
+        group,
+        scopeKey,
+        tasks,
+        filteredTasks,
+        progress: getTaskProgress(tasks, completed ?? {}),
+      }];
+    });
+  }, [characterId, completed, normalizedQuery, orderByGroup, view, visibleTasks]);
 
   const moveTask = (scopeKey: string, tasks: TaskTemplate[], sourceId: string, targetId: string) => {
     setGroupOrder(scopeKey, reorderTaskIds(tasks.map((task) => task.id), sourceId, targetId));
@@ -124,12 +144,8 @@ export const TaskManagerPage = () => {
       <div className={`flex min-h-11 items-center justify-between rounded-[12px] px-3 ${isOrderEditing ? "bg-primary-soft" : "bg-card-soft/65"}`} aria-live="polite"><p className="text-xs font-bold text-ink-muted">{isOrderEditing ? "순서 편집 중 · 체크 입력이 잠겼습니다." : "숙제 순서를 변경할 수 있습니다."}</p><button type="button" className="min-h-11 shrink-0 px-2 text-xs font-black text-primary" onClick={()=>setIsOrderEditing(v=>!v)}>{isOrderEditing ? "편집 완료" : "순서 편집"}</button></div>
 
       <div className="space-y-3">
-        {groups.map(({ group, scopeKey, tasks, filteredTasks }) => {
+        {groups.map(({ group, scopeKey, tasks, filteredTasks, progress }) => {
           const isCollapsed = collapsedGroups[scopeKey] && !normalizedQuery;
-          const groupCompleted = Object.fromEntries(
-            tasks.map((task) => [task.id, completed?.[task.id]]),
-          );
-          const progress = getTaskProgress(tasks, groupCompleted);
 
           return (
             <section key={scopeKey} className="overflow-hidden rounded-[14px] border border-[rgb(var(--color-line-soft))] bg-card shadow-[0_4px_16px_rgb(30_35_40/0.045)]">

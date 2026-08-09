@@ -48,8 +48,22 @@ export const orderTasksBySavedGroupOrder = (
   characterId: string,
   view: TaskOrderView,
   orderByGroup: TaskOrderByGroup,
-) => taskGroupOrder.flatMap((group) => {
-  const groupTasks = tasks.filter((task) => task.group === group);
-  const scopeKey = getTaskOrderScopeKey(characterId, view, group);
-  return sortTasksBySavedOrder(groupTasks, orderByGroup[scopeKey] ?? []);
-});
+) => {
+  const tasksByGroup = new Map<TaskGroup, TaskTemplate[]>();
+
+  tasks.forEach((task) => {
+    const groupTasks = tasksByGroup.get(task.group);
+
+    if (groupTasks) {
+      groupTasks.push(task);
+      return;
+    }
+
+    tasksByGroup.set(task.group, [task]);
+  });
+
+  return taskGroupOrder.flatMap((group) => {
+    const scopeKey = getTaskOrderScopeKey(characterId, view, group);
+    return sortTasksBySavedOrder(tasksByGroup.get(group) ?? [], orderByGroup[scopeKey] ?? []);
+  });
+};

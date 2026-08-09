@@ -1,10 +1,11 @@
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { defaultTaskTemplates } from "../../data/tasks";
 import { matchesManagedTask, type ResetFilter } from "../../domain/tasks/taskResetPresentation";
 import { useCurrentCustomTaskTemplates } from "../../stores/useCurrentCustomTaskTemplates";
 import { useCurrentDisabledDefaultTaskIds } from "../../stores/useCurrentDisabledDefaultTaskIds";
+import { useMinuteNow } from "../../hooks/useMinuteNow";
 import { CharacterSwitcher } from "../characters/CharacterSwitcher";
 import { CustomTaskList } from "../dashboard/CustomTaskList";
 import { AllowanceCard } from "./AllowanceCard";
@@ -15,7 +16,7 @@ export const TaskManagementPage = () => {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<TaskStatusFilter>("enabled");
   const [resetFilter, setResetFilter] = useState<ResetFilter>("all");
-  const [now, setNow] = useState(() => new Date());
+  const now = useMinuteNow();
   const disabledIds = useCurrentDisabledDefaultTaskIds();
   const customTasks = useCurrentCustomTaskTemplates();
   const resultCount = useMemo(() => {
@@ -24,11 +25,6 @@ export const TaskManagementPage = () => {
     return defaultTaskTemplates.filter((task) => matchesManagedTask(task, query, resetFilter) && matchesStatus(!disabledSet.has(task.id))).length
       + customTasks.filter((task) => matchesManagedTask(task, query, resetFilter) && matchesStatus(task.enabledByDefault)).length;
   }, [customTasks, disabledIds, query, resetFilter, status]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const resetFilters = () => {
     setQuery("");
