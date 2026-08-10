@@ -27,6 +27,7 @@ vi.mock("./documentRepository", () => ({
 }));
 vi.mock("./mutationQueue", () => ({
   createMutationQueue: mocks.createMutationQueue,
+  getMutationQueueStorageKey: (userId: string) => `eoringo/sync-mutations-v2:${userId}`,
 }));
 vi.mock("./storeSyncBridge", () => ({
   createStoreSyncBridge: mocks.createStoreSyncBridge,
@@ -46,6 +47,8 @@ afterEach(() => {
 });
 
 describe("remote sync runtime", () => {
+  const userId = "00000000-0000-4000-8000-000000000099";
+
   it("hydrates once before starting store subscriptions", async () => {
     const unsubscribe = vi.fn();
     mocks.sync.mockResolvedValue(undefined);
@@ -64,7 +67,7 @@ describe("remote sync runtime", () => {
       },
     } as unknown as SupabaseClient;
 
-    const stop = await startRemoteSyncRuntime(supabase);
+    const stop = await startRemoteSyncRuntime(supabase, userId);
 
     expect(mocks.createStoreSyncBridge).toHaveBeenCalledOnce();
     expect(mocks.createStoreSyncBridge).toHaveBeenCalledWith(
@@ -101,7 +104,7 @@ describe("remote sync runtime", () => {
       auth: { onAuthStateChange: vi.fn() },
     } as unknown as SupabaseClient;
 
-    await expect(startRemoteSyncRuntime(supabase)).rejects.toThrow(startupError);
+    await expect(startRemoteSyncRuntime(supabase, userId)).rejects.toThrow(startupError);
 
     expect(mocks.bridgeStart).not.toHaveBeenCalled();
     expect(mocks.bridgeStop).toHaveBeenCalledOnce();

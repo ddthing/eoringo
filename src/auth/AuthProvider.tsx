@@ -27,6 +27,7 @@ import type {
   AuthSessionSummary,
   AuthState,
 } from "./authTypes";
+import { invalidateSyncAccount } from "../sync/syncConsent";
 
 type AuthAction =
   | { type: "disabled" }
@@ -278,6 +279,7 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
 
     try {
       markPendingAccountSwitch();
+      invalidateSyncAccount();
       await client.signOut("local");
       await client.signInGoogle(buildAuthCallbackUrl(window.location.origin), {
         forceAccountSelection: true,

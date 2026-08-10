@@ -6,19 +6,28 @@ import {
   createSupabaseCharacterImageSyncTransport,
 } from "./characterImageSync";
 import { createDocumentRepository } from "./documentRepository";
-import { createMutationQueue } from "./mutationQueue";
+import { createMutationQueue, getMutationQueueStorageKey } from "./mutationQueue";
 import { createStoreSyncBridge } from "./storeSyncBridge";
 import { createSupabaseDocumentDataSource } from "./supabaseDocumentDataSource";
 import { createSyncCoordinator } from "./syncCoordinator";
 
-export const startRemoteSyncRuntime = async (supabase: SupabaseClient) => {
+export const startRemoteSyncRuntime = async (supabase: SupabaseClient, userId: string) => {
+  if (!userId) {
+    throw new Error("Remote sync requires a verified user identity.");
+  }
+
   const repository = createDocumentRepository(
     createSupabaseDocumentDataSource(supabase),
   );
-  const queue = createMutationQueue(localStorage);
+  const queue = createMutationQueue(
+    localStorage,
+    getMutationQueueStorageKey(userId),
+    userId,
+  );
   let requestSync = () => {};
   const bridge = createStoreSyncBridge({
     queue,
+    ownerUserId: userId,
     deferStart: true,
     requestSync: () => requestSync(),
   });

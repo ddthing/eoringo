@@ -2,13 +2,24 @@ import { z } from "zod";
 import { documentCodecs, type DocumentType } from "./codecs";
 import { getJsonByteLength } from "./codecs/common";
 
+/**
+ * Legacy queue key. It is intentionally no longer opened by the remote sync
+ * runtime because entries created before account isolation have no trustworthy
+ * owner identity.
+ */
 export const mutationQueueStorageKey = "eoringo/sync-mutations-v1";
+export const userMutationQueueStorageKey = "eoringo/sync-mutations-v2";
+
+export const getMutationQueueStorageKey = (userId: string) =>
+  `${userMutationQueueStorageKey}:${encodeURIComponent(userId)}`;
 export const maxMutationQueueItems = 100;
 export const maxMutationQueueBytes = 2 * 1024 * 1024;
 export const maxMutationRetries = 8;
 
 export type SyncMutation = {
   mutationId: string;
+  /** Defense in depth for corrupted or misrouted per-user queue entries. */
+  ownerUserId?: string;
   operation: "insert" | "update";
   documentId: string | null;
   documentType: DocumentType;
@@ -26,6 +37,7 @@ type StorageLike = Pick<Storage, "getItem" | "setItem">;
 const envelopeSchema = z
   .object({
     mutationId: z.uuid(),
+    ownerUserId: z.uuid().optional(),
     operation: z.enum(["insert", "update"]),
     documentId: z.uuid().nullable(),
     documentType: z.enum([
@@ -86,7 +98,15 @@ export const parseSyncMutation = (value: unknown): SyncMutation => {
   }
 };
 
-const parseQueue = (raw: string | null) => {
+const assertQueueOwner = (mutation: SyncMutation, ownerUserId?: string) => {
+  if (ownerUserId && mutation.ownerUserId !== ownerUserId) {
+    throw new MutationQueueFailure("invalid");
+  }
+
+  return mutation;
+};
+
+const parseQueue = (raw: string | null, ownerUserId?: string) => {
   if (!raw) {
     return [];
   }
@@ -98,14 +118,20 @@ const parseQueue = (raw: string | null) => {
       throw new Error("Queue must be an array.");
     }
 
-    const queue = parsed.map(parseSyncMutation);
+    const queue = parsed.map(parseSyncMutation).map((mutation) =>
+      assertQueueOwner(mutation, ownerUserId),
+    );
 
     if (queue.length > maxMutationQueueItems || getJsonByteLength(queue) > maxMutationQueueBytes) {
       throw new Error("Queue exceeds its limits.");
     }
 
     return queue;
-  } catch {
+  } catch (error) {
+    if (error instanceof MutationQueueFailure) {
+      throw error;
+    }
+
     throw new MutationQueueFailure("corrupt");
   }
 };
@@ -129,14 +155,15 @@ export const getRetryDelayMs = (retryCount: number, jitter = Math.random()) => {
 export const createMutationQueue = (
   storage: StorageLike,
   key = mutationQueueStorageKey,
+  ownerUserId?: string,
 ) => ({
   read(): SyncMutation[] {
-    return parseQueue(storage.getItem(key));
+    return parseQueue(storage.getItem(key), ownerUserId);
   },
 
   enqueue(input: SyncMutation): SyncMutation[] {
-    const mutation = parseSyncMutation(input);
-    const queue = parseQueue(storage.getItem(key));
+    const mutation = assertQueueOwner(parseSyncMutation(input), ownerUserId);
+    const queue = parseQueue(storage.getItem(key), ownerUserId);
 
     if (queue.some((item) => item.mutationId === mutation.mutationId)) {
       return queue;
@@ -148,8 +175,8 @@ export const createMutationQueue = (
   },
 
   upsertLatest(input: SyncMutation): SyncMutation[] {
-    const mutation = parseSyncMutation(input);
-    const queue = parseQueue(storage.getItem(key));
+    const mutation = assertQueueOwner(parseSyncMutation(input), ownerUserId);
+    const queue = parseQueue(storage.getItem(key), ownerUserId);
     const existing = queue.find(
       (item) =>
         item.documentType === mutation.documentType &&
@@ -168,7 +195,9 @@ export const createMutationQueue = (
       : mutation;
     const next = existing
       ? queue.map((item) =>
-          item.mutationId === existing.mutationId ? parseSyncMutation(replacement) : item,
+          item.mutationId === existing.mutationId
+            ? assertQueueOwner(parseSyncMutation(replacement), ownerUserId)
+            : item,
         )
       : [...queue, replacement];
     persistQueue(storage, key, next);
@@ -176,7 +205,7 @@ export const createMutationQueue = (
   },
 
   remove(mutationId: string): SyncMutation[] {
-    const queue = parseQueue(storage.getItem(key));
+    const queue = parseQueue(storage.getItem(key), ownerUserId);
     const next = queue.filter((mutation) => mutation.mutationId !== mutationId);
     persistQueue(storage, key, next);
     return next;
@@ -187,7 +216,7 @@ export const createMutationQueue = (
     now: Date,
     jitter?: number,
   ): SyncMutation[] {
-    const queue = parseQueue(storage.getItem(key));
+    const queue = parseQueue(storage.getItem(key), ownerUserId);
     const next = queue.map((mutation) => {
       if (mutation.mutationId !== mutationId) {
         return mutation;
@@ -205,4 +234,30 @@ export const createMutationQueue = (
     persistQueue(storage, key, next);
     return next;
   },
+
+  clear(): void {
+    persistQueue(storage, key, []);
+  },
 });
+
+export const clearMutationQueueForUser = (
+  storage: StorageLike,
+  userId: string,
+) => {
+  persistQueue(storage, getMutationQueueStorageKey(userId), []);
+};
+
+export const clearAllMutationQueues = (
+  storage: Pick<Storage, "length" | "key" | "removeItem">,
+) => {
+  const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index));
+
+  keys.forEach((key) => {
+    if (
+      key === mutationQueueStorageKey ||
+      key?.startsWith(`${userMutationQueueStorageKey}:`)
+    ) {
+      storage.removeItem(key);
+    }
+  });
+};

@@ -1,4 +1,8 @@
-import { clearCharacterImages, saveCharacterImageById } from "./imageStorage";
+import {
+  clearCharacterImages,
+  getAllCharacterImages,
+  saveCharacterImageById,
+} from "./imageStorage";
 import { storageKeys } from "./storage";
 
 type BackupImagePayload = {
@@ -103,23 +107,36 @@ const dataUrlToBlob = async (image: BackupImagePayload) => {
 
 export const importBackup = async (payload: unknown) => {
   const backup = validateBackupPayload(payload);
+  const stagedImages = backup.images
+    ? await Promise.all(
+        Object.entries(backup.images).map(async ([imageId, image]) => [
+          imageId,
+          await dataUrlToBlob(image),
+        ] as const),
+      )
+    : undefined;
+  const previousData = new Map(
+    Object.values(storageKeys).map((key) => [key, localStorage.getItem(key)] as const),
+  );
+  const previousImages = backup.images ? await getAllCharacterImages() : undefined;
 
-  Object.entries(backup.data).forEach(([key, value]) => {
-    if (!knownKeys.has(key)) {
-      return;
-    }
+  try {
+    Object.entries(backup.data).forEach(([key, value]) => {
+      if (!knownKeys.has(key)) {
+        return;
+      }
 
-    if (value === null) {
-      localStorage.removeItem(key);
-      return;
-    }
+      if (value === null) {
+        localStorage.removeItem(key);
+        return;
+      }
 
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {
       throw new Error("복원 데이터를 저장할 수 없습니다. 브라우저 저장 공간을 확인해주세요.");
-    }
-  });
+      }
+    });
 
   if (!backup.images) {
     return;
@@ -127,10 +144,35 @@ export const importBackup = async (payload: unknown) => {
 
   await clearCharacterImages();
 
-  await Promise.all(
-    Object.entries(backup.images).map(async ([imageId, image]) => {
-      const blob = await dataUrlToBlob(image);
-      await saveCharacterImageById(imageId, blob);
-    }),
-  );
+  for (const [imageId, blob] of stagedImages ?? []) {
+    await saveCharacterImageById(imageId, blob);
+  }
+  } catch (error) {
+    for (const [key, value] of previousData) {
+      try {
+        if (value === null) {
+          localStorage.removeItem(key);
+        } else {
+          localStorage.setItem(key, value);
+        }
+      } catch {
+        // Keep the original restore error as the user-facing failure.
+      }
+    }
+
+    if (previousImages) {
+      try {
+        await clearCharacterImages();
+        for (const [imageId, blob] of Object.entries(previousImages)) {
+          await saveCharacterImageById(imageId, blob);
+        }
+      } catch {
+        // Keep the original restore error as the user-facing failure.
+      }
+    }
+
+    throw error instanceof Error
+      ? error
+      : new Error("Backup restore failed.");
+  }
 };

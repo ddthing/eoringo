@@ -1,14 +1,19 @@
 import { type ChangeEvent, useRef, useState } from "react";
 import { Database, Download, RotateCcw, Upload } from "lucide-react";
+import { useAuth } from "../../auth/useAuth";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 import { exportBackup } from "../../lib/exportBackup";
 import { clearCharacterImages } from "../../lib/imageStorage";
 import { importBackup } from "../../lib/importBackup";
 import { storageKeys } from "../../lib/storage";
+import { clearLocalMigrationReceipt } from "../../sync/localMigration";
+import { clearAllMutationQueues } from "../../sync/mutationQueue";
+import { revokeSyncConsent } from "../../sync/syncConsent";
 import { Button, Card, SectionHeader, StatusMessage } from "../ui";
 
 const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const auth = useAuth();
   const [message, setMessage] = useState<{
     text: string;
     variant: "success" | "danger";
@@ -57,6 +62,12 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
     try {
       const text = await file.text();
       await importBackup(JSON.parse(text));
+      const linkedAccountRestore = auth.mode === "permanent" && Boolean(auth.userId);
+
+      if (linkedAccountRestore) {
+        revokeSyncConsent();
+        clearLocalMigrationReceipt();
+      }
       setMessage({
         text: "복원이 끝났습니다. 화면을 새로고침합니다.",
         variant: "success",
@@ -144,6 +155,9 @@ const DataManagementActions = () => {
     setMessage("");
 
     try {
+      revokeSyncConsent();
+      clearLocalMigrationReceipt();
+      clearAllMutationQueues(localStorage);
       Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
       await clearCharacterImages();
       window.location.reload();

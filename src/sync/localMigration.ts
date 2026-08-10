@@ -142,6 +142,12 @@ export const readLocalMigrationReceipt = (
   }
 };
 
+export const clearLocalMigrationReceipt = (
+  storage: Pick<Storage, "removeItem"> = localStorage,
+) => {
+  storage.removeItem(localMigrationReceiptKey);
+};
+
 const toDigestMap = (documents: MigrationDocument[]) =>
   Object.fromEntries(documents.map((document) => [document.documentType, document.digest])) as Partial<
     Record<DocumentType, string>

@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { getSupabaseClient } from "../lib/supabase/client";
 import { useSyncStore } from "../stores/sync/useSyncStore";
-import { hasSyncConsent, syncConsentEvent } from "./syncConsent";
+import { isPendingAccountSwitch } from "../auth/authTransitionStorage";
+import {
+  hasActiveSyncAccount,
+  hasSyncConsent,
+  syncConsentEvent,
+} from "./syncConsent";
 
 export const useRemoteSync = () => {
   const auth = useAuth();
@@ -17,13 +22,18 @@ export const useRemoteSync = () => {
   }, []);
 
   useEffect(() => {
+    const accountBootstrapPending = isPendingAccountSwitch();
+    const userId = auth.userId;
+
     if (
       auth.mode !== "permanent" ||
-      !auth.userId ||
-      !hasSyncConsent(auth.userId)
+      !userId ||
+      !hasSyncConsent(userId) ||
+      !hasActiveSyncAccount(userId) ||
+      accountBootstrapPending
     ) {
       useSyncStore.getState().reset();
-      setHydrationReady(true);
+      setHydrationReady(auth.mode !== "permanent" || !userId);
       return undefined;
     }
 
@@ -42,7 +52,7 @@ export const useRemoteSync = () => {
           throw new Error("Remote sync unavailable.");
         }
 
-        const stopRuntime = await runtime.startRemoteSyncRuntime(supabase);
+        const stopRuntime = await runtime.startRemoteSyncRuntime(supabase, userId);
 
         if (!active) {
           stopRuntime();

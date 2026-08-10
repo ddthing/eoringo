@@ -16,6 +16,7 @@ describe("store sync bridge", () => {
     const bridge = createStoreSyncBridge({
       queue,
       requestSync,
+      ownerUserId: "00000000-0000-4000-8000-000000000031",
       now: () => new Date("2026-08-02T08:00:00.000Z"),
       createMutationId: () => "00000000-0000-4000-8000-000000000001",
     });
@@ -25,6 +26,7 @@ describe("store sync bridge", () => {
 
     expect(queue.upsertLatest).toHaveBeenCalledWith(
       expect.objectContaining({
+        ownerUserId: "00000000-0000-4000-8000-000000000031",
         operation: "insert",
         documentType: "memo",
         payload: { memosByCharacter: { character: "local change" } },
