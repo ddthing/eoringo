@@ -1,4 +1,5 @@
 import { ImageIcon, Minus, Move, Plus, RotateCcw, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import {
   useCallback,
   useEffect,
@@ -14,6 +15,9 @@ const OUTPUT_SIZE = 768;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2.6;
 const ZOOM_STEP = 0.01;
+
+export const IMAGE_LOAD_ERROR_MESSAGE =
+  "이미지를 불러오지 못했습니다. 다른 사진을 선택해 주세요.";
 
 type Offset = {
   x: number;
@@ -76,15 +80,31 @@ export const CharacterImageEditor = ({
   );
   const [imageUrl, setImageUrl] = useState("");
   const [naturalSize, setNaturalSize] = useState<NaturalSize | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const nextImageUrl = URL.createObjectURL(file);
+    let nextImageUrl = "";
+
+    try {
+      nextImageUrl = URL.createObjectURL(file);
+    } catch {
+      setImageUrl("");
+      setNaturalSize(null);
+      setIsImageLoading(false);
+      setImageLoadFailed(true);
+      setErrorMessage(IMAGE_LOAD_ERROR_MESSAGE);
+      return undefined;
+    }
+
     setImageUrl(nextImageUrl);
     setNaturalSize(null);
+    setIsImageLoading(true);
+    setImageLoadFailed(false);
     setZoom(MIN_ZOOM);
     setOffset({ x: 0, y: 0 });
     setErrorMessage("");
@@ -121,10 +141,26 @@ export const CharacterImageEditor = ({
       return;
     }
 
+    if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+      setNaturalSize(null);
+      setIsImageLoading(false);
+      setImageLoadFailed(true);
+      setErrorMessage(IMAGE_LOAD_ERROR_MESSAGE);
+      return;
+    }
+
     setNaturalSize({
       width: image.naturalWidth,
       height: image.naturalHeight,
     });
+    setIsImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setNaturalSize(null);
+    setIsImageLoading(false);
+    setImageLoadFailed(true);
+    setErrorMessage(IMAGE_LOAD_ERROR_MESSAGE);
   };
 
   const updateZoom = (nextZoom: number) => {
@@ -276,12 +312,13 @@ export const CharacterImageEditor = ({
     }
   };
 
-  return (
+  const editorContent = (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-50 grid place-items-end overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[2px] sm:place-items-center"
+      className="fixed inset-0 z-[80] grid place-items-end overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[2px] sm:place-items-center"
       role="dialog"
       aria-modal="true"
+      aria-busy={isImageLoading}
       aria-label="캐릭터 사진 편집"
       tabIndex={-1}
       onKeyDown={handleDialogKeyDown}
@@ -316,7 +353,7 @@ export const CharacterImageEditor = ({
           onPointerUp={stopDragging}
           onPointerCancel={stopDragging}
         >
-          {imageUrl ? (
+          {imageUrl && !imageLoadFailed ? (
             <img
               ref={imageRef}
               src={imageUrl}
@@ -324,6 +361,7 @@ export const CharacterImageEditor = ({
               className="absolute left-1/2 top-1/2 max-w-none select-none"
               draggable={false}
               onLoad={handleImageLoad}
+              onError={handleImageError}
               style={{
                 width: displaySize?.width ?? PREVIEW_SIZE,
                 height: displaySize?.height ?? PREVIEW_SIZE,
@@ -331,10 +369,20 @@ export const CharacterImageEditor = ({
               }}
             />
           ) : (
-            <div className="grid h-full w-full place-items-center text-primary">
+            <div className="grid h-full w-full place-items-center gap-1.5 px-4 text-center text-primary">
               <ImageIcon aria-hidden size={24} />
+              {imageLoadFailed ? (
+                <span className="text-[11px] font-bold text-ink-muted">
+                  {IMAGE_LOAD_ERROR_MESSAGE}
+                </span>
+              ) : null}
             </div>
           )}
+          {isImageLoading ? (
+            <div className="pointer-events-none absolute inset-0 grid place-items-center bg-card-soft/55 text-primary">
+              <ImageIcon aria-hidden size={24} className="animate-pulse" />
+            </div>
+          ) : null}
           <div className="pointer-events-none absolute inset-0 rounded-ui-xl ring-1 ring-inset ring-white/70" />
           <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-white/45" />
           <div className="pointer-events-none absolute inset-y-0 left-1/2 border-l border-white/45" />
@@ -353,7 +401,7 @@ export const CharacterImageEditor = ({
                 setZoom(MIN_ZOOM);
                 setOffset({ x: 0, y: 0 });
               }}
-              disabled={isSaving}
+              disabled={isSaving || isImageLoading || imageLoadFailed}
             >
               <RotateCcw aria-hidden size={12} />
               초기화
@@ -370,7 +418,7 @@ export const CharacterImageEditor = ({
               value={zoom}
               onChange={(event) => updateZoom(Number(event.target.value))}
               aria-label="사진 확대"
-              disabled={isSaving}
+              disabled={isSaving || isImageLoading || imageLoadFailed}
             />
             <Plus aria-hidden size={14} />
           </div>
@@ -395,7 +443,7 @@ export const CharacterImageEditor = ({
             type="button"
             className="primary-button"
             onClick={handleSave}
-            disabled={isSaving || !naturalSize}
+            disabled={isSaving || isImageLoading || imageLoadFailed || !naturalSize}
           >
             {isSaving ? "저장 중…" : "저장"}
           </button>
@@ -403,4 +451,8 @@ export const CharacterImageEditor = ({
       </div>
     </div>
   );
+
+  const portalTarget = typeof document === "undefined" ? null : document.body;
+
+  return portalTarget ? createPortal(editorContent, portalTarget) : editorContent;
 };
