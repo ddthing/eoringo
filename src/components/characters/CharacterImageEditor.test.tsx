@@ -19,6 +19,8 @@ describe("CharacterImageEditor", () => {
     expect(markup).toContain('role="dialog"');
     expect(markup).toContain('aria-modal="true"');
     expect(markup).toContain("z-[80]");
+    expect(markup).toContain("place-items-center");
+    expect(markup).not.toContain("place-items-end");
   });
 
   it("uses a user-facing message when an image cannot be decoded", () => {

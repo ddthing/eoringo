@@ -315,7 +315,7 @@ export const CharacterImageEditor = ({
   const editorContent = (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-[80] grid place-items-end overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[2px] sm:place-items-center"
+      className="fixed inset-0 z-[80] grid place-items-center overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-busy={isImageLoading}
