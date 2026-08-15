@@ -13,6 +13,7 @@ export const BottomNav = () => (
   <nav className="ui-bottom-nav" aria-label="주요 메뉴">
     <div className="ui-bottom-nav-inner mx-auto w-full px-3">
       <div className="ui-navigation-shell">
+        <p className="ui-nav-heading">주요 메뉴</p>
         {bottomNavItems.map((item) => {
           const Icon = navIcons[item.to];
 

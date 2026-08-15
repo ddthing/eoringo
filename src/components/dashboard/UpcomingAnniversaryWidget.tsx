@@ -15,7 +15,7 @@ export const UpcomingAnniversaryWidget = () => {
   const upcomingEvents = useMemo(() => getUpcomingAnniversaries([...events]), [events]);
 
   return (
-    <section className="home-panel p-4 min-[420px]:p-[18px] md:p-5">
+    <section className="home-panel home-dday-panel p-4 min-[420px]:p-[18px] md:p-5">
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
           <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">다가오는 기념일</h2>

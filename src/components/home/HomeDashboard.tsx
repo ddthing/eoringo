@@ -11,7 +11,18 @@ import { HomeDashboardTasksProvider } from "./useHomeDashboardTasks";
 export const HomeDashboard = () => (
   <HomeDashboardTasksProvider>
     <div className="home-dashboard grid gap-3 px-0 min-[420px]:gap-3.5 min-[420px]:px-0.5 md:px-2 lg:grid-cols-12 lg:gap-4">
-      <div className="home-dashboard-hero min-w-0 lg:col-span-12 lg:row-start-1">
+      <header className="home-dashboard-header lg:col-span-12">
+        <div className="home-dashboard-header-copy">
+          <p className="home-dashboard-kicker">오늘의 운영판</p>
+          <h1 className="home-dashboard-title">오늘의 루틴</h1>
+          <p className="home-dashboard-description">먼저 끝낼 숙제와 중요한 일정을 한눈에 확인하세요.</p>
+        </div>
+        <div className="home-dashboard-header-note" aria-label="시간 기준">
+          <span className="home-dashboard-header-note-dot" aria-hidden />
+          <span>KST 기준</span>
+        </div>
+      </header>
+      <div className="home-dashboard-hero min-w-0 lg:col-span-12">
         <HomeHero />
       </div>
       <div className="home-dashboard-primary min-w-0 grid gap-4 lg:col-span-7 lg:col-start-1">

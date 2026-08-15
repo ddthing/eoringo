@@ -128,8 +128,8 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
   };
 
   if (auth.status === "disabled") {
-    return (
-      <Card className={embedded ? "space-y-3 border-0 p-0 shadow-none" : "space-y-3 p-5"}>
+    const disabledContent = (
+      <div className="space-y-3">
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-soft text-ink-muted">
             <CloudOff aria-hidden size={18} />
@@ -140,8 +140,13 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
             description="온라인 동기화가 꺼져 있습니다. 지금까지 입력한 데이터는 브라우저에 그대로 보관됩니다."
           />
         </div>
-      </Card>
+        <p className="pl-12 text-xs font-semibold text-ink-muted">
+          Google 계정 연결은 온라인 동기화가 활성화된 환경에서 사용할 수 있습니다.
+        </p>
+      </div>
     );
+
+    return embedded ? disabledContent : <Card className="space-y-3 p-5">{disabledContent}</Card>;
   }
 
   const isPermanent = auth.mode === "permanent";

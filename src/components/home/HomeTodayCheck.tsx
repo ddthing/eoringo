@@ -71,7 +71,7 @@ export const HomeTodayCheck = () => {
   };
 
   return (
-    <section className="home-panel p-4 min-[420px]:p-[18px] md:p-5">
+    <section className="home-panel home-today-panel p-4 min-[420px]:p-[18px] md:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">
@@ -111,7 +111,7 @@ export const HomeTodayCheck = () => {
           return (
           <section
             key={group.category}
-            className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/42 px-3 py-2.5"
+            className="home-task-group rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/42 px-3 py-2.5"
             aria-labelledby={`home-today-${group.category}`}
           >
             <div className="flex min-h-8 items-center justify-between gap-3">

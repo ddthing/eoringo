@@ -11,7 +11,7 @@ const ProgressRow = ({
   total: number;
   percent: number;
 }) => (
-  <div className="grid gap-2">
+  <div className="home-progress-row grid gap-2">
     <div className="flex items-center justify-between gap-3">
       <span className="text-[13px] font-bold text-ink">{label}</span>
       <span className="text-[11px] font-bold tabular-nums text-ink-muted">
@@ -19,7 +19,7 @@ const ProgressRow = ({
       </span>
     </div>
     <div
-      className="h-2 overflow-hidden rounded-full bg-card-soft"
+      className="home-progress-track h-2 overflow-hidden rounded-full bg-card-soft"
       role="progressbar"
       aria-label={`${label} 숙제 진행률`}
       aria-valuemin={0}
@@ -27,7 +27,7 @@ const ProgressRow = ({
       aria-valuenow={percent}
     >
       <div
-        className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
+        className="home-progress-fill h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
         style={{ width: `${percent}%` }}
       />
     </div>
@@ -38,7 +38,7 @@ export const HomeProgress = () => {
   const { progress } = useHomeDashboardTasks();
 
   return (
-    <section className="home-panel flex flex-col p-4 min-[420px]:p-[18px] md:p-5">
+    <section className="home-panel home-progress-panel flex flex-col p-4 min-[420px]:p-[18px] md:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">
