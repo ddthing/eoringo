@@ -54,7 +54,7 @@ export const TaskManagementPage = () => {
         </div>
       </header>
       <section><p className="muted-label mb-1.5">관리 대상</p><CharacterSwitcher compact showCurrentSummary={false} showSelectionCheck/></section>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid items-start gap-3 md:grid-cols-2">
         <AllowanceCard />
         <TaskManagementToolbar query={query} status={status} resetFilter={resetFilter} resultCount={taskResults.resultCount} onQueryChange={setQuery} onStatusChange={setStatus} onResetFilterChange={setResetFilter} onReset={resetFilters}/>
       </div>

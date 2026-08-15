@@ -77,14 +77,14 @@ export const CharacterManager = () => {
 
   return (
     <section className="card space-y-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="ui-character-manager-header flex items-start justify-between gap-3">
         <div className="ui-section-heading min-w-0">
           <span className="ui-section-icon" aria-hidden>
             <UsersRound size={18} strokeWidth={2.2} />
           </span>
           <div className="ui-section-header-copy">
             <h2 className="ui-section-title">내 캐릭터</h2>
-            <p className="ui-section-description">
+            <p className="ui-section-description break-keep">
               캐릭터를 추가하고 프로필과 대표 캐릭터를 관리합니다.
             </p>
           </div>

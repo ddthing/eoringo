@@ -22,11 +22,11 @@ export const AppShell = ({ children }: PropsWithChildren) => {
             <p className="ui-brand-mark shrink-0">에오링고</p>
             <CurrentDatePill />
           </div>
-          <BottomNav />
         </header>
-        <main className="ui-main">
-          {children}
-        </main>
+        <div className="ui-app-body">
+          <BottomNav />
+          <main className="ui-main">{children}</main>
+        </div>
       </div>
     </div>
   );

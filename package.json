@@ -11,7 +11,7 @@
     "supabase:reset": "supabase db reset --local",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "test:db": "supabase test db",
+    "test:db": "supabase test db --local",
     "test:migration-local": "node scripts/test-local-migration.mjs",
     "orchestrator:build": "pnpm --dir tools/codex-orchestrator run build",
     "orchestrator:typecheck": "pnpm --dir tools/codex-orchestrator run typecheck",

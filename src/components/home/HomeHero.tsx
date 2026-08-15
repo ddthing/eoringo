@@ -51,8 +51,18 @@ export const HomeHero = () => {
             <p className="mt-1.5 text-[10px] font-semibold tracking-[-0.01em] text-ink-muted">오늘 완료율</p>
           </div>
         </div>
-        <div className="mt-3.5 flex items-center justify-end border-t border-[rgb(var(--color-line-muted))] pt-3 text-[11px] font-semibold leading-5 text-ink-muted min-[420px]:text-xs">
-          <span className="inline-flex items-center gap-1.5 tabular-nums">
+        <div className="mt-3.5 grid gap-2 border-t border-[rgb(var(--color-line-muted))] pt-3 sm:flex sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2" aria-label="숙제 요약">
+            <span className="home-hero-metric">
+              <span>오늘</span>
+              <strong>{progress.daily.completed}/{progress.daily.total}</strong>
+            </span>
+            <span className="home-hero-metric">
+              <span>이번 주</span>
+              <strong>{progress.weekly.completed}/{progress.weekly.total}</strong>
+            </span>
+          </div>
+          <span className="inline-flex items-center gap-1.5 justify-self-end text-[11px] font-semibold leading-5 text-ink-muted tabular-nums min-[420px]:text-xs">
             <Clock3 aria-hidden size={14} />
             초기화까지 {formatDurationKo(remaining)}
           </span>

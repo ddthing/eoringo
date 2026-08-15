@@ -684,6 +684,8 @@ input[type="number"] {
     font-size: 0.8125rem;
     font-weight: 600;
     line-height: 1.55;
+    word-break: keep-all;
+    overflow-wrap: normal;
   }
 
   .ui-button {
@@ -935,7 +937,7 @@ input[type="number"] {
   }
 
   .ui-task-filter-card {
-    align-self: stretch;
+    align-self: start;
   }
 
   .ui-task-filter-heading {
@@ -1238,6 +1240,10 @@ input[type="number"] {
     background: rgb(var(--color-bg) / 0.72);
   }
 
+  .ui-app-body {
+    min-height: calc(100dvh - var(--app-top-bar-height));
+  }
+
   .ui-top-app-bar {
     border-bottom: 1px solid rgb(var(--color-outline-variant));
     background: rgb(var(--color-bg) / 0.94);
@@ -1253,6 +1259,7 @@ input[type="number"] {
   .ui-main {
     width: 100%;
     max-width: 74rem;
+    min-width: 0;
     margin: 0 auto;
     padding: 1rem 0.75rem calc(6.5rem + env(safe-area-inset-bottom));
   }
@@ -1391,6 +1398,27 @@ input[type="number"] {
     box-shadow: var(--elevation-1);
     overflow-wrap: anywhere;
     transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .home-hero-metric {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid rgb(var(--color-outline-variant));
+    border-radius: 999px;
+    padding: 0.3rem 0.65rem;
+    background: rgb(var(--color-surface-container) / 0.7);
+    color: rgb(var(--color-muted));
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .home-hero-metric strong {
+    color: rgb(var(--color-text));
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .home-heading {
@@ -1640,6 +1668,65 @@ input[type="number"] {
     width: 1.75rem;
     height: 1.75rem;
   }
+
+  .ui-character-manager-header {
+    flex-direction: column;
+  }
+
+  .ui-character-manager-header > .secondary-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .home-dashboard {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home-dashboard-primary,
+  .home-dashboard-secondary {
+    display: contents;
+  }
+
+  .home-dashboard-hero {
+    order: 1;
+  }
+
+  .home-dashboard-today {
+    order: 2;
+  }
+
+  .home-dashboard-progress {
+    order: 3;
+  }
+
+  .home-dashboard-status {
+    order: 4;
+  }
+
+  .home-dashboard-memo {
+    order: 5;
+  }
+
+  .home-dashboard-dday {
+    order: 6;
+  }
+
+  .home-dashboard-legal {
+    order: 7;
+  }
+
+  .ui-task-filter-reset {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .ui-task-filter-reset .ui-segmented-option {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
 }
 
 @media (min-width: 48rem) {
@@ -1650,7 +1737,13 @@ input[type="number"] {
 
 @media (min-width: 64rem) {
   :root {
-    --app-header-height: 116px;
+    --app-header-height: var(--app-top-bar-height);
+  }
+
+  .ui-app-body {
+    display: grid;
+    grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr);
+    align-items: start;
   }
 
   .ui-main {
@@ -1658,32 +1751,43 @@ input[type="number"] {
   }
 
   .ui-bottom-nav {
-    position: static;
-    height: 56px;
+    position: sticky;
+    top: var(--app-top-bar-height);
+    min-height: calc(100dvh - var(--app-top-bar-height));
+    border-right: 1px solid rgb(var(--color-outline-variant));
+    background: rgb(var(--color-surface-container-low) / 0.72);
   }
 
   .ui-bottom-nav-inner {
-    height: 100%;
-    padding: 0.35rem 1.5rem 0.45rem;
+    padding: 1rem 0.75rem 1.5rem;
   }
 
   .ui-navigation-shell {
-    height: 100%;
-    max-width: 36rem;
-    margin-left: auto;
-    box-shadow: 0 1px 3px rgb(var(--color-shadow) / 0.05);
+    display: flex;
+    max-width: none;
+    flex-direction: column;
+    gap: 0.35rem;
+    border: 0;
+    border-radius: var(--shape-lg);
+    padding: 0.5rem;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .ui-nav-item {
-    min-height: 2.5rem;
+    min-height: 3.25rem;
     flex-direction: row;
-    gap: 0.45rem;
-    font-size: 0.75rem;
+    justify-content: flex-start;
+    gap: 0.7rem;
+    border-radius: 999px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8125rem;
   }
 
   .ui-nav-icon {
-    width: 1.65rem;
-    height: 1.5rem;
+    width: 2rem;
+    height: 2rem;
   }
 }
 
