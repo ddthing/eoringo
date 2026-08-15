@@ -188,7 +188,6 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
     <div className="space-y-4">
       {embedded ? null : (
         <SectionHeader
-          eyebrow="storage"
           title="데이터"
           description="이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다."
         />
@@ -196,7 +195,6 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
       <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4">
         {embedded ? (
           <SectionHeader
-            eyebrow="data"
             title="백업 및 복원"
             description="브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다."
             icon={<Database size={18} strokeWidth={2.2} />}

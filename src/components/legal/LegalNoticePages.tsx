@@ -32,7 +32,7 @@ const LegalLayout = ({
             <ShieldCheck aria-hidden size={20} />
           </span>
           <div>
-            <p className="muted-label">{eyebrow}</p>
+            <p className="muted-label">{eyebrow === "privacy" ? "개인정보" : "이용약관"}</p>
             <h1 className="mt-1 text-xl font-black tracking-[-0.03em] text-ink sm:text-2xl">{title}</h1>
           </div>
         </div>

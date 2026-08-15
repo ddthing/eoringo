@@ -7,6 +7,7 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          "Inter",
           "Pretendard",
           "Pretendard Variable",
           "-apple-system",

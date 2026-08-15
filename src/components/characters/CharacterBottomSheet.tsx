@@ -108,7 +108,6 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[rgb(var(--color-line-soft))]" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="muted-label">quick switch</p>
             <h2 id="character-sheet-title" className="text-lg font-black text-ink">
               캐릭터 전환
             </h2>

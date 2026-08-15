@@ -3,6 +3,8 @@ import { Outlet, useLocation } from "react-router-dom";
 import { ConfirmDialogProvider } from "../components/common/ConfirmDialog";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { AppShell } from "../components/layout/AppShell";
+import { BackgroundPushRuntime } from "../components/notifications/BackgroundPushRuntime";
+import { NotificationRuntime } from "../components/notifications/NotificationRuntime";
 import { syncHistoryAndResets } from "../domain/history/syncHistoryAndResets";
 import {
   getThemeDocumentState,
@@ -101,6 +103,8 @@ export const App = () => {
 
   return (
     <ConfirmDialogProvider>
+      <NotificationRuntime />
+      <BackgroundPushRuntime />
       <AppShell>
         <ErrorBoundary key={getRouteErrorBoundaryKey(location.pathname)}>
           <div key={location.pathname} className="ui-route-content">

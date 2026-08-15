@@ -9,7 +9,7 @@ import {
 import { HomeTodayCheckItem } from "./HomeTodayCheckItem";
 import { useHomeDashboardTasks } from "./useHomeDashboardTasks";
 
-const displayedTaskLimit = 1;
+const displayedTaskLimit = 2;
 
 type CompletingTask = {
   category: TaskCategory;
@@ -74,17 +74,16 @@ export const HomeTodayCheck = () => {
     <section className="home-panel p-4 min-[420px]:p-[18px] md:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="muted-label">action</p>
-          <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">
-            오늘 체크
+          <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">
+            오늘 할 일
           </h2>
-          <p className="mt-1 text-xs font-medium text-ink-muted">우선순위 항목부터 하나씩 체크하세요.</p>
+          <p className="mt-1 text-xs font-medium text-ink-muted">먼저 보이는 항목부터 체크하세요.</p>
         </div>
         <span className="sticker tabular-nums">{completed}/{total}</span>
       </div>
 
       <div className="mt-4 grid gap-2.5">
-        {groups.map((group) => {
+        {groups.filter((group) => group.state !== "empty").map((group) => {
           const isExpanded = expansion.characterId === characterId
             && expansion.categories[group.category] === true;
           const completingTasks = currentCompletingTasks.filter(
@@ -185,7 +184,7 @@ export const HomeTodayCheck = () => {
                       },
                     }))}
                   >
-                    {isExpanded ? "접기" : `미완료 ${hiddenPendingCount}개 모두 펼치기`}
+                    {isExpanded ? "접기" : `남은 숙제 ${hiddenPendingCount}개 더 보기`}
                     <ChevronDown
                       aria-hidden
                       size={14}

@@ -28,8 +28,8 @@ describe("theme colors", () => {
 
   it("defines gray theme tokens", () => {
     expect(grayThemeTokens).toMatchObject({
-      accent: "#7e8793",
-      accentSoft: "#eaedf1",
+      accent: "#27272a",
+      accentSoft: "#f4f4f5",
     });
   });
 
@@ -63,8 +63,8 @@ describe("theme colors", () => {
       /html\[data-color-mode="dark"\]\[data-theme-color="mint"\]\s*\{([^}]+)\}/,
     )?.[1];
 
-    expect(darkBlock).toContain("--color-bg: 21 24 29");
-    expect(darkBlock).toContain("--color-card: 29 33 39");
+    expect(darkBlock).toContain("--color-bg: 9 9 11");
+    expect(darkBlock).toContain("--color-card: 24 24 27");
     expect(darkMintBlock).toContain("--color-accent-soft: 45 57 49");
     expect(darkMintBlock).toContain("--color-accent-ink: 169 218 158");
   });

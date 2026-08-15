@@ -23,11 +23,11 @@ describe("appearance helpers", () => {
   it("provides root document values for both modes", () => {
     expect(getThemeDocumentState("light")).toEqual({
       colorScheme: "light",
-      themeColor: "#f4f6f8",
+      themeColor: "#fafafa",
     });
     expect(getThemeDocumentState("dark")).toEqual({
       colorScheme: "dark",
-      themeColor: "#15181d",
+      themeColor: "#09090b",
     });
   });
 });
