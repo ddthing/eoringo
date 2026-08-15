@@ -59,8 +59,8 @@ describe("AccountDataPanel", () => {
   it("keeps credits and contact in app info without duplicating storage guidance", () => {
     const markup = renderToStaticMarkup(<AppInfoPanel />);
 
-    expect(markup).toContain("Thanks to");
-    expect(markup.match(/Credits/g)).toHaveLength(1);
+    expect(markup).toContain("도움을 주신 분들");
+    expect(markup.match(/크레딧/g)).toHaveLength(1);
     expect(markup).toContain('href="/privacy"');
     expect(markup).toContain('href="/terms"');
     expect(markup).not.toContain('data-variant="success"');

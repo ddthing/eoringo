@@ -33,7 +33,6 @@ export const ThemeSettingsPanel = () => {
   return (
     <Card className="space-y-4 p-5">
       <SectionHeader
-        eyebrow="디자인"
         title="테마"
         description="대표 컬러 하나를 고르면 체크, 버튼, 스티커 색이 같은 계열로 정리됩니다."
         icon={<Palette size={18} strokeWidth={2.2} />}
@@ -110,12 +109,12 @@ export const ThemeSettingsPanel = () => {
         <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-bold text-ink">Custom</p>
+              <p className="text-sm font-bold text-ink">직접 지정</p>
               <p className="mt-0.5 text-xs font-medium text-ink-muted">
                 나만의 포인트 컬러
               </p>
             </div>
-            <Badge variant="accent">Preview</Badge>
+            <Badge variant="accent">미리보기</Badge>
           </div>
 
           <div className="mt-3 grid grid-cols-[3rem_1fr] gap-2">
@@ -127,7 +126,7 @@ export const ThemeSettingsPanel = () => {
                 setCustomDraft(event.target.value);
                 setCustomAccentColor(event.target.value);
               }}
-              aria-label="Custom 포인트 컬러 선택"
+              aria-label="직접 지정 포인트 컬러 선택"
             />
             <Input
               type="text"
@@ -149,7 +148,7 @@ export const ThemeSettingsPanel = () => {
                 setCustomDraft(normalized);
                 setCustomAccentColor(normalized);
               }}
-              aria-label="Custom HEX 색상값"
+              aria-label="직접 지정 HEX 색상값"
             />
           </div>
         </div>

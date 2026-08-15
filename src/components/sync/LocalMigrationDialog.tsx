@@ -75,7 +75,7 @@ export const LocalMigrationDialog = ({
   return (
     <section className="card space-y-4" role="dialog" aria-modal="true" aria-labelledby="migration-title">
       <div>
-        <p className="muted-label">safe migration</p>
+        <p className="muted-label">데이터 안전 이전</p>
         <h2 id="migration-title" className="mt-1 text-lg font-bold text-ink">
           이 기기의 데이터를 계정에서 이어갈까요?
         </h2>

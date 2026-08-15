@@ -100,7 +100,6 @@ export const TaskManagerPage = () => {
               <CheckSquare2 size={19} strokeWidth={2.2} />
             </span>
             <div className="ui-page-heading-copy">
-              <p className="muted-label">루틴</p>
               <h1 className="text-xl font-extrabold text-ink">숙제 관리</h1>
             </div>
           </div>

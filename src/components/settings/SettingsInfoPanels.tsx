@@ -266,15 +266,14 @@ export const NotificationSettingsPanel = () => {
 export const AppInfoPanel = () => (
   <Card className="space-y-4 p-5">
     <SectionHeader
-      eyebrow="about"
       title="앱 정보"
       description="에오링고는 파이널판타지14 루틴을 브라우저에 안전하게 기록하는 로컬 우선 앱입니다."
       icon={<Info size={18} strokeWidth={2.2} />}
     />
     <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/70 p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">Credits</p>
-      <p className="mt-2 text-sm font-bold text-ink">Thanks to ADD, 꼭짓점, 미여워, KILL</p>
-      <p className="mt-1 text-xs font-semibold text-ink-muted">Special thanks to 루피</p>
+      <p className="text-xs font-bold text-primary">크레딧</p>
+      <p className="mt-2 text-sm font-bold text-ink">도움을 주신 분들: ADD, 꼭짓점, 미여워, KILL</p>
+      <p className="mt-1 text-xs font-semibold text-ink-muted">특별히 감사한 분: 루피</p>
     </div>
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-primary">
       <a className="underline underline-offset-4" href="/privacy">개인정보 안내</a>
