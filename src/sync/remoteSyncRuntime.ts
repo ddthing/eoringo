@@ -9,13 +9,16 @@ import { createDocumentRepository } from "./documentRepository";
 import { createMutationQueue, getMutationQueueStorageKey } from "./mutationQueue";
 import { createStoreSyncBridge } from "./storeSyncBridge";
 import { createSupabaseDocumentDataSource } from "./supabaseDocumentDataSource";
+import { registerRemoteSyncController } from "./remoteSyncControl";
 import { createSyncCoordinator } from "./syncCoordinator";
+import { hasActiveSyncAccount } from "./syncConsent";
 
 export const startRemoteSyncRuntime = async (supabase: SupabaseClient, userId: string) => {
   if (!userId) {
     throw new Error("Remote sync requires a verified user identity.");
   }
 
+  let stopped = false;
   const repository = createDocumentRepository(
     createSupabaseDocumentDataSource(supabase),
   );
@@ -28,6 +31,7 @@ export const startRemoteSyncRuntime = async (supabase: SupabaseClient, userId: s
   const bridge = createStoreSyncBridge({
     queue,
     ownerUserId: userId,
+    canWrite: () => !stopped && hasActiveSyncAccount(userId),
     deferStart: true,
     requestSync: () => requestSync(),
   });
@@ -63,17 +67,46 @@ export const startRemoteSyncRuntime = async (supabase: SupabaseClient, userId: s
 
     return imageInFlight;
   };
-  const syncAll = async (trigger: Parameters<typeof coordinator.sync>[0]) => {
-    await coordinator.sync(trigger);
-    await syncImages();
+  const inFlight = new Set<Promise<void>>();
+  const syncAll = (trigger: Parameters<typeof coordinator.sync>[0]) => {
+    const operation = (async () => {
+      if (stopped || !hasActiveSyncAccount(userId)) {
+        return;
+      }
+
+      await coordinator.sync(trigger);
+
+      if (stopped || !hasActiveSyncAccount(userId)) {
+        return;
+      }
+
+      await syncImages();
+    })();
+
+    inFlight.add(operation);
+    void operation.then(
+      () => inFlight.delete(operation),
+      () => inFlight.delete(operation),
+    );
+
+    return operation;
   };
   requestSync = () => void syncAll("write");
+  let unregisterController: (() => void) | null = null;
 
   try {
-    await coordinator.sync("startup");
-    await syncImages();
+    await syncAll("startup");
     bridge.start();
+    unregisterController = registerRemoteSyncController({
+      async pause() {
+        stopped = true;
+        bridge.stop();
+        coordinator.stop();
+        await Promise.allSettled([...inFlight]);
+      },
+    });
   } catch (error) {
+    stopped = true;
     bridge.stop();
     coordinator.stop();
     throw error;
@@ -94,6 +127,8 @@ export const startRemoteSyncRuntime = async (supabase: SupabaseClient, userId: s
   });
 
   return () => {
+    stopped = true;
+    unregisterController?.();
     data.subscription.unsubscribe();
     window.removeEventListener("focus", handleFocus);
     window.removeEventListener("online", handleOnline);

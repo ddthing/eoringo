@@ -22,6 +22,7 @@ type StoreSyncBridgeOptions = {
   queue: MutationQueueWriter;
   requestSync: () => void;
   ownerUserId?: string;
+  canWrite?: () => boolean;
   deferStart?: boolean;
   now?: () => Date;
   createMutationId?: () => string;
@@ -37,6 +38,7 @@ export const createStoreSyncBridge = ({
   queue,
   requestSync,
   ownerUserId,
+  canWrite = () => true,
   deferStart = false,
   now = () => new Date(),
   createMutationId = () => crypto.randomUUID(),
@@ -58,7 +60,8 @@ export const createStoreSyncBridge = ({
   const captureChanges = () => {
     scheduled = false;
 
-    if (suppressWrites) {
+    if (suppressWrites || !canWrite()) {
+      dirtyDocumentTypes.clear();
       return;
     }
 

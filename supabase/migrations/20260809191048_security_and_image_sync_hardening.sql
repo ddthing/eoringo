@@ -4,6 +4,7 @@ returns boolean
 language plpgsql
 immutable
 strict
+security definer
 set search_path = ''
 as $$
 declare
@@ -15,7 +16,7 @@ begin
   end if;
 
   if value_type = 'object' then
-    if jsonb_object_length(value) > 1000 then
+    if (select count(*) from jsonb_object_keys(value)) > 1000 then
       return false;
     end if;
 

@@ -7,7 +7,6 @@ import {
   isSafeCharacterImageId,
   isUserId,
   maxCharacterImageBytes,
-  maxCharacterImageStorageBytes,
   maxCharacterImagesPerUser,
 } from "../_shared/imageValidation.ts";
 
@@ -74,6 +73,18 @@ type ListedObject = {
   size: number;
 };
 
+type QuotaRpcResult = {
+  ok: boolean;
+  code?: string;
+  reservationId?: string;
+};
+
+const reservationIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isQuotaRpcResult = (value: unknown): value is QuotaRpcResult =>
+  isRecord(value) && typeof value.ok === "boolean";
+
 const listUserObjects = async (supabaseUrl: string, serviceRoleKey: string, userId: string) => {
   const response = await fetch(
     `${supabaseUrl}/storage/v1/object/list/${encodeURIComponent(characterImageBucket)}`,
@@ -130,6 +141,38 @@ const listUserObjects = async (supabaseUrl: string, serviceRoleKey: string, user
   }
 
   return objects;
+};
+
+const invokeQuotaRpc = async (
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  functionName:
+    | "reserve_character_image_upload"
+    | "finalize_character_image_upload"
+    | "release_character_image_upload",
+  body: Record<string, unknown>,
+) => {
+  try {
+    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+      method: "POST",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const value: unknown = await response.json();
+
+    return isQuotaRpcResult(value) ? value : null;
+  } catch {
+    return null;
+  }
 };
 
 const digestBytes = async (bytes: Uint8Array) => {
@@ -228,41 +271,92 @@ Deno.serve(async (request) => {
     return jsonResponse(503, { code: "storage_unavailable" }, origin);
   }
 
-  const currentObject = existingObjects.find((object) => object.name === body.imageId);
-  const totalBytes = existingObjects.reduce(
-    (total, object) => total + (object.name === body.imageId ? 0 : object.size),
-    0,
+  const quota = await invokeQuotaRpc(
+    config.supabaseUrl,
+    config.serviceRoleKey,
+    "reserve_character_image_upload",
+    {
+      p_user_id: user.id,
+      p_image_id: body.imageId,
+      p_byte_size: bytes.length,
+      p_existing_objects: existingObjects.map((object) => ({
+        imageId: object.name,
+        bytes: object.size,
+      })),
+    },
   );
 
-  if (!currentObject && existingObjects.length >= maxCharacterImagesPerUser) {
-    return jsonResponse(413, { code: "image_quota" }, origin);
+  if (!quota) {
+    return jsonResponse(503, { code: "quota_unavailable" }, origin);
   }
 
-  if (totalBytes + bytes.length > maxCharacterImageStorageBytes) {
-    return jsonResponse(413, { code: "image_quota" }, origin);
+  if (!quota.ok) {
+    if (quota.code === "image_quota") {
+      return jsonResponse(413, { code: "image_quota" }, origin);
+    }
+
+    if (quota.code === "image_upload_in_progress") {
+      return jsonResponse(409, { code: "image_upload_in_progress" }, origin);
+    }
+
+    return jsonResponse(400, { code: "invalid_payload" }, origin);
   }
+
+  if (!quota.reservationId || !reservationIdPattern.test(quota.reservationId)) {
+    return jsonResponse(503, { code: "quota_unavailable" }, origin);
+  }
+
+  const reservationId = quota.reservationId;
+  const releaseReservation = () =>
+    invokeQuotaRpc(
+      config.supabaseUrl,
+      config.serviceRoleKey,
+      "release_character_image_upload",
+      { p_reservation_id: reservationId },
+    );
 
   const path = buildCharacterImagePath(user.id, body.imageId);
   const encodedPath = path
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/");
-  const uploadResponse = await fetch(
-    `${config.supabaseUrl}/storage/v1/object/${encodeURIComponent(characterImageBucket)}/${encodedPath}`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.serviceRoleKey,
-        Authorization: `Bearer ${config.serviceRoleKey}`,
-        "Content-Type": inspection.contentType,
-        "Cache-Control": "31536000",
-        "x-upsert": "true",
-      },
-      body: bytes,
-    },
-  );
 
-  if (!uploadResponse.ok) {
+  try {
+    const uploadResponse = await fetch(
+      `${config.supabaseUrl}/storage/v1/object/${encodeURIComponent(characterImageBucket)}/${encodedPath}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: config.serviceRoleKey,
+          Authorization: `Bearer ${config.serviceRoleKey}`,
+          "Content-Type": inspection.contentType,
+          "Cache-Control": "31536000",
+          "x-upsert": "true",
+        },
+        body: bytes,
+      },
+    );
+
+    if (!uploadResponse.ok) {
+      await releaseReservation();
+      return jsonResponse(502, { code: "storage_unavailable" }, origin);
+    }
+
+    const finalized = await invokeQuotaRpc(
+      config.supabaseUrl,
+      config.serviceRoleKey,
+      "finalize_character_image_upload",
+      { p_reservation_id: reservationId },
+    );
+
+    if (!finalized?.ok) {
+      // Keep the reservation when finalization fails. The uploaded object is
+      // already present, so releasing here could allow the hard quota to be
+      // exceeded on a retry.
+      return jsonResponse(503, { code: "quota_unavailable" }, origin);
+    }
+  } catch {
+    await releaseReservation();
     return jsonResponse(502, { code: "storage_unavailable" }, origin);
   }
 

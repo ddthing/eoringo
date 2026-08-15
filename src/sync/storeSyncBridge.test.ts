@@ -93,6 +93,25 @@ describe("store sync bridge", () => {
     bridge.stop();
   });
 
+  it("drops local changes after the active account is revoked", async () => {
+    const queue = { upsertLatest: vi.fn() };
+    const requestSync = vi.fn();
+    let canWrite = true;
+    const bridge = createStoreSyncBridge({
+      queue,
+      requestSync,
+      canWrite: () => canWrite,
+    });
+
+    canWrite = false;
+    useWeeklyMemoStore.getState().setMemo("character", "must stay local");
+    await Promise.resolve();
+
+    expect(queue.upsertLatest).not.toHaveBeenCalled();
+    expect(requestSync).not.toHaveBeenCalled();
+    bridge.stop();
+  });
+
   it("defers local change subscriptions until explicitly started", async () => {
     const queue = { upsertLatest: vi.fn() };
     const requestSync = vi.fn();

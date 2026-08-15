@@ -38,6 +38,9 @@ vi.mock("./supabaseDocumentDataSource", () => ({
 vi.mock("./syncCoordinator", () => ({
   createSyncCoordinator: mocks.createSyncCoordinator,
 }));
+vi.mock("./syncConsent", () => ({
+  hasActiveSyncAccount: () => true,
+}));
 
 import { startRemoteSyncRuntime } from "./remoteSyncRuntime";
 

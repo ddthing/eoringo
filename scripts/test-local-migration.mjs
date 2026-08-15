@@ -16,6 +16,7 @@ const apiUrl = environment.API_URL;
 const anonKey = environment.ANON_KEY;
 const serviceRoleKey = environment.SERVICE_ROLE_KEY;
 const jwtSecret = environment.JWT_SECRET;
+const e2eOrigin = process.env.E2E_ORIGIN ?? "https://eoringo.pages.dev";
 
 if (!apiUrl || !anonKey || !serviceRoleKey || !jwtSecret) {
   throw new Error("Local Supabase is not running.");
@@ -140,7 +141,7 @@ try {
         apikey: anonKey,
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
-        Origin: "http://127.0.0.1:5173",
+        Origin: e2eOrigin,
       },
       body: JSON.stringify({ migrationId, documents }),
     });

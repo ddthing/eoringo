@@ -8,6 +8,7 @@ import { importBackup } from "../../lib/importBackup";
 import { storageKeys } from "../../lib/storage";
 import { clearLocalMigrationReceipt } from "../../sync/localMigration";
 import { clearAllMutationQueues } from "../../sync/mutationQueue";
+import { pauseRemoteSync } from "../../sync/remoteSyncControl";
 import { revokeSyncConsent } from "../../sync/syncConsent";
 import { Button, Card, SectionHeader, StatusMessage } from "../ui";
 
@@ -61,13 +62,21 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
 
     try {
       const text = await file.text();
-      await importBackup(JSON.parse(text));
+      const payload: unknown = JSON.parse(text);
       const linkedAccountRestore = auth.mode === "permanent" && Boolean(auth.userId);
 
       if (linkedAccountRestore) {
         revokeSyncConsent();
-        clearLocalMigrationReceipt();
+        await pauseRemoteSync();
       }
+
+      await importBackup(payload);
+
+      if (linkedAccountRestore) {
+        clearLocalMigrationReceipt();
+        clearAllMutationQueues(localStorage);
+      }
+
       setMessage({
         text: "복원이 끝났습니다. 화면을 새로고침합니다.",
         variant: "success",
@@ -156,6 +165,7 @@ const DataManagementActions = () => {
 
     try {
       revokeSyncConsent();
+      await pauseRemoteSync();
       clearLocalMigrationReceipt();
       clearAllMutationQueues(localStorage);
       Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));

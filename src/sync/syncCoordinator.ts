@@ -150,6 +150,10 @@ export const createSyncCoordinator = ({
       .filter((mutation) => Date.parse(mutation.nextAttemptAt) <= currentTime.getTime());
 
     for (const mutation of dueMutations) {
+      if (!active) {
+        return;
+      }
+
       try {
         const outcome =
           mutation.operation === "insert"
@@ -167,6 +171,10 @@ export const createSyncCoordinator = ({
         setQueueState(isOnline() ? "error" : "offline");
         return;
       }
+    }
+
+    if (!active) {
+      return;
     }
 
     const documents = await repository.list();
