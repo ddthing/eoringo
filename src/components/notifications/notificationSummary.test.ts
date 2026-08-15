@@ -57,4 +57,25 @@ describe("background notification summaries", () => {
       },
     ]);
   });
+
+  it("accepts a precomputed summary date for date-boundary updates", () => {
+    expect(
+      getBackgroundNotificationTaskSummaries(
+        characters,
+        {
+          completedByCharacter: {},
+          customTaskTemplatesByCharacter: {},
+          disabledDefaultTaskIdsByCharacter: { a: defaultTaskTemplates.map((task) => task.id) },
+        },
+        "2026-08-16",
+      ),
+    ).toEqual([
+      {
+        characterName: "모험가 A",
+        taskTitles: [],
+        dailyTaskTitles: [],
+        summaryDate: "2026-08-16",
+      },
+    ]);
+  });
 });

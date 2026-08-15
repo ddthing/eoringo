@@ -52,6 +52,7 @@ describe("AccountDataPanel", () => {
     expect(markup).toContain("백업 및 복원");
     expect(markup.match(/백업 및 복원/g)).toHaveLength(1);
     expect(markup).toContain("모든 데이터 초기화");
+    expect(markup.match(/class="ui-card/g)).toHaveLength(1);
     expect(markup).not.toContain('class="card space-y-3"');
     expect(markup).not.toContain('class="card space-y-4"');
   });
