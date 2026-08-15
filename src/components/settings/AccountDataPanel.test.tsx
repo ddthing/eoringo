@@ -75,6 +75,14 @@ describe("AccountDataPanel", () => {
     expect(markup.match(/lucide-bell/g)).toHaveLength(1);
   });
 
+  it("exposes the background notification toggle and schedule control", () => {
+    const markup = renderToStaticMarkup(<NotificationSettingsPanel />);
+
+    expect(markup).toContain("앱이 닫혀도 미완료 숙제 알림");
+    expect(markup).toContain('id="daily-incomplete-notification-time"');
+    expect(markup).toContain("백그라운드 알림을 사용하려면");
+  });
+
   it("gives design, notification, and app info cards the same inner spacing", () => {
     expect(renderToStaticMarkup(<ThemeSettingsPanel />)).toContain(
       'class="ui-card space-y-4 p-5"',

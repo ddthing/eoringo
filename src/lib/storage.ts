@@ -7,6 +7,7 @@ export const storageKeys = {
   taskUi: "ff14-daily-board/task-ui",
   history: "ff14-daily-board/history",
   allowances: "ff14-daily-board/allowances",
+  notifications: "ff14-daily-board/notifications",
 } as const;
 
 export const createId = (prefix: string) =>
