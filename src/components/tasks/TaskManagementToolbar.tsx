@@ -9,8 +9,7 @@ const resetFilters: Array<[ResetFilter,string]> = [["all","전체"],["daily","�
 
 export const TaskManagementToolbar = ({query,status,resetFilter,resultCount,onQueryChange,onStatusChange,onResetFilterChange,onReset}:Props) => (
   <Card className="space-y-3">
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-sm font-bold text-ink">{resultCount}개 숙제</p>
+    <div className="flex items-center justify-end gap-3">
       <Button type="button" variant="ghost" size="sm" onClick={onReset} className="gap-1.5" aria-label="숙제 필터 초기화">
         <RotateCcw aria-hidden size={14}/>
         초기화
@@ -20,12 +19,18 @@ export const TaskManagementToolbar = ({query,status,resetFilter,resultCount,onQu
       <Search aria-hidden size={16}/>
       <Input value={query} onChange={(event)=>onQueryChange(event.target.value)} className="min-w-0 flex-1 border-0 bg-transparent px-0 shadow-none focus:border-transparent focus:shadow-none" placeholder="숙제 검색…" aria-label="관리할 숙제 검색" />
     </label>
-    <SegmentedControl
-      value={status}
-      options={statusFilters.map(([value, label]) => ({ value, label }))}
-      onChange={onStatusChange}
-      aria-label="숙제 상태 필터"
-    />
+    <div className="ui-task-status-control">
+      <div className="ui-task-status-summary" aria-live="polite">
+        <span className="ui-segmented-label">{resultCount}개 숙제</span>
+      </div>
+      <SegmentedControl
+        value={status}
+        options={statusFilters.map(([value, label]) => ({ value, label }))}
+        onChange={onStatusChange}
+        aria-label="숙제 상태 필터"
+        className="ui-task-status-options"
+      />
+    </div>
     <SegmentedControl
       value={resetFilter}
       options={resetFilters.map(([value, label]) => ({ value, label }))}

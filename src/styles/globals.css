@@ -888,6 +888,43 @@ input[type="number"] {
     background: rgb(var(--color-surface-container) / 0.82);
   }
 
+  .ui-task-status-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+    border: 1px solid rgb(var(--color-outline-variant));
+    border-radius: var(--shape-md);
+    padding: 0.35rem;
+    background: rgb(var(--color-surface-container) / 0.82);
+  }
+
+  .ui-task-status-summary {
+    display: flex;
+    min-width: 0;
+    min-height: 3.25rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(var(--color-outline-variant));
+    border-radius: calc(var(--shape-md) - 4px);
+    padding: 0.6rem 0.5rem;
+    background: rgb(var(--color-card-soft));
+    color: rgb(var(--color-text));
+    text-align: center;
+  }
+
+  .ui-task-status-options {
+    display: contents;
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .ui-task-status-control .ui-segmented-option {
+    justify-content: center;
+    padding-inline: 0.5rem;
+    text-align: center;
+  }
+
   .ui-settings-mode-control {
     gap: 0.5rem;
     border: 0;
@@ -1402,6 +1439,12 @@ input[type="number"] {
     gap: 0.35rem;
     padding-inline: 0.35rem;
     text-align: center;
+  }
+
+  .ui-task-status-control .ui-segmented-option {
+    min-height: 3.25rem;
+    flex-direction: row;
+    gap: 0;
   }
 
   .ui-settings-mode-control .ui-segmented-option {
