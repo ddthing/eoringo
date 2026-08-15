@@ -11,15 +11,15 @@ const ProgressRow = ({
   total: number;
   percent: number;
 }) => (
-  <div className="py-2.5">
+  <div className="grid gap-2">
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[13px] font-bold text-ink min-[420px]:text-sm">{label}</span>
+      <span className="text-[13px] font-bold text-ink">{label}</span>
       <span className="text-[11px] font-bold tabular-nums text-ink-muted">
         {completed}/{total} · {percent}%
       </span>
     </div>
     <div
-      className="mt-2 h-1.5 overflow-hidden rounded-full bg-card-soft"
+      className="h-2 overflow-hidden rounded-full bg-card-soft"
       role="progressbar"
       aria-label={`${label} 숙제 진행률`}
       aria-valuemin={0}
@@ -36,36 +36,30 @@ const ProgressRow = ({
 
 export const HomeProgress = () => {
   const { progress } = useHomeDashboardTasks();
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - progress.total.percent / 100);
 
   return (
-    <section className="home-panel flex h-full flex-col p-4 min-[420px]:p-[18px] md:p-5">
-      <div>
-        <p className="muted-label">루틴</p>
-            <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">숙제 진행도</h2>
-      </div>
-      <div className="mt-4 grid flex-1 grid-cols-[92px_1fr] items-center gap-4 max-[360px]:grid-cols-1 min-[420px]:grid-cols-[104px_1fr] min-[420px]:gap-5 md:grid-cols-[116px_1fr]">
-        <div className="relative mx-auto h-[92px] w-[92px] min-[420px]:h-[104px] min-[420px]:w-[104px] md:h-[116px] md:w-[116px]" aria-label={`전체 완료율 ${progress.total.percent}%`}>
-          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden>
-            <circle cx="50" cy="50" r={radius} fill="none" stroke="rgb(var(--color-line-muted))" strokeWidth="9" />
-            <circle
-              cx="50" cy="50" r={radius} fill="none" stroke="rgb(var(--color-primary))" strokeWidth="9"
-              strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
-              className="transition-[stroke-dashoffset] duration-500 ease-out"
-            />
-          </svg>
-          <div className="absolute inset-0 grid place-content-center text-center">
-            <strong className="text-xl font-extrabold tracking-[-0.04em] text-ink tabular-nums min-[420px]:text-2xl">{progress.total.percent}%</strong>
-            <span className="text-[10px] font-bold text-ink-muted">전체</span>
-          </div>
-        </div>
+    <section className="home-panel flex flex-col p-4 min-[420px]:p-[18px] md:p-5">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <ProgressRow label="일일" {...progress.daily} />
-          <ProgressRow label="주간" {...progress.weekly} />
-          <ProgressRow label="기타" {...progress.other} />
+          <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">
+            숙제 진행도
+          </h2>
+          <p className="mt-1 text-xs font-medium text-ink-muted">오늘과 이번 주 현황</p>
         </div>
+        <div className="text-right">
+          <strong className="block text-2xl font-black leading-none tracking-[-0.04em] text-primary tabular-nums">
+            {progress.total.percent}%
+          </strong>
+          <span className="mt-1 block text-[10px] font-bold text-ink-muted">
+            {progress.total.completed}/{progress.total.total} 완료
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-5">
+        <ProgressRow label="일일" {...progress.daily} />
+        <ProgressRow label="주간" {...progress.weekly} />
+        {progress.other.total > 0 ? <ProgressRow label="기타" {...progress.other} /> : null}
       </div>
     </section>
   );

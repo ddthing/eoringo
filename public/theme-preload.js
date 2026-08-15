@@ -29,6 +29,6 @@
   if (resolvedMode === "dark") {
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", "#15181d");
+      ?.setAttribute("content", "#09090b");
   }
 })();

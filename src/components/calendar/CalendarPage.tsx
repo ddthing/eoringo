@@ -115,14 +115,12 @@ export const CalendarPage = () => {
           <CalendarDays size={19} strokeWidth={2.2} />
         </span>
         <div className="ui-page-heading-copy">
-          <p className="muted-label">일정</p>
-          <h1 className="mt-1 text-xl font-extrabold text-ink">전장 / 하우징 달력</h1>
+          <h1 className="text-xl font-extrabold text-ink">전장 / 하우징 달력</h1>
         </div>
       </div>
 
       <section className="space-y-2.5">
-        <div className="flex items-center gap-2 px-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+        <div className="px-1">
           <h2 className="text-sm font-bold text-ink">오늘 요약</h2>
         </div>
         <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
@@ -209,7 +207,7 @@ export const CalendarPage = () => {
             <span className="muted-label block">게임 일정</span>
             <h2 className="mt-1 text-base font-bold text-ink">{monthLabel} 달력</h2>
           </div>
-          <span className="text-[11px] font-bold text-ink-muted">KST 기준</span>
+          <span className="text-[11px] font-bold text-ink-muted">한국 시간(KST) 기준</span>
         </div>
 
         <div className="mt-3 space-y-3">

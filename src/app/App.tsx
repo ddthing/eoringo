@@ -21,6 +21,8 @@ import { useRemoteSync } from "../sync/useRemoteSync";
 import { AccountSyncBootstrapGate } from "../components/sync/AccountSyncBootstrapGate";
 import { subscribeToMinuteClock } from "../hooks/useMinuteNow";
 import { getRouteErrorBoundaryKey } from "./errorBoundaryReset";
+import { NotificationRuntime } from "../components/notifications/NotificationRuntime";
+import { BackgroundPushRuntime } from "../components/notifications/BackgroundPushRuntime";
 
 export const App = () => {
   const auth = useAuth();
@@ -104,6 +106,8 @@ export const App = () => {
 
   return (
     <ConfirmDialogProvider>
+      <NotificationRuntime />
+      <BackgroundPushRuntime />
       <AppShell>
         {auth.mode === "permanent" && auth.userId && !remoteHydrationReady ? (
           <AccountSyncBootstrapGate userId={auth.userId} />

@@ -25,7 +25,7 @@ describe("AuthCallbackPage", () => {
     expect(markup).toContain("기존 Google 계정으로 안전하게 로그인 중");
     expect(markup).toContain("이미 연결된 계정을 확인하고 동기화를 준비하고 있습니다");
     expect(markup).toContain('aria-busy="true"');
-    expect(markup).toContain("secure sign-in");
+    expect(markup).toContain("로그인 확인");
     expect(markup).not.toContain("이미 연결된 Google 계정입니다");
     expect(markup).not.toContain("기존 Google 계정으로 로그인");
     expect(markup).not.toContain("identity_already_exists");

@@ -119,7 +119,7 @@ export const AuthCallbackPage = () => {
         )}
       </span>
       <div>
-        <p className="muted-label">secure sign-in</p>
+        <p className="muted-label">로그인 확인</p>
         <h1 className="mt-1 text-lg font-black text-ink">
           {phase === "working"
             ? isIdentityAlreadyLinked
