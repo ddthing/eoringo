@@ -36,9 +36,11 @@ export const getNotificationTaskSummaries = (
 export const getBackgroundNotificationTaskSummaries = (
   characters: Character[],
   taskSource: NotificationTaskSource,
-  date: Date = new Date(),
-): BackgroundNotificationTaskSummary[] =>
-  characters.map((character) => {
+  date: Date | string = new Date(),
+): BackgroundNotificationTaskSummary[] => {
+  const summaryDate = typeof date === "string" ? date : getKstDateKey(date);
+
+  return characters.map((character) => {
     const visibleTasks = getVisibleTaskTemplates(
       taskSource.disabledDefaultTaskIdsByCharacter[character.id] ?? [],
       taskSource.customTaskTemplatesByCharacter[character.id] ?? [],
@@ -49,6 +51,7 @@ export const getBackgroundNotificationTaskSummaries = (
       characterName: character.name,
       taskTitles: getDailyIncompleteTaskTitles(visibleTasks, completedTasks),
       dailyTaskTitles: getDailyTaskTitles(visibleTasks),
-      summaryDate: getKstDateKey(date),
+      summaryDate,
     };
   });
+};

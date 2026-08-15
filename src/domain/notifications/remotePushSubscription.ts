@@ -7,6 +7,13 @@ type PushSubscriptionSummary = {
   characters: BackgroundNotificationTaskSummary[];
 };
 
+export type PushSubscriptionUpsertInput = {
+  subscription: SerializedPushSubscription;
+  timezone: string;
+  notificationTime: string;
+  summary: PushSubscriptionSummary;
+};
+
 const invokePushSubscriptionFunction = async (body: Record<string, unknown>) => {
   const client = await getSupabaseClient();
 
@@ -21,12 +28,7 @@ const invokePushSubscriptionFunction = async (body: Record<string, unknown>) => 
   }
 };
 
-export const upsertRemotePushSubscription = async (input: {
-  subscription: SerializedPushSubscription;
-  timezone: string;
-  notificationTime: string;
-  summary: PushSubscriptionSummary;
-}) =>
+export const upsertRemotePushSubscription = async (input: PushSubscriptionUpsertInput) =>
   invokePushSubscriptionFunction({
     operation: "upsert",
     subscription: input.subscription,
