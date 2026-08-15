@@ -13,6 +13,9 @@ Release is blocked unless every applicable item is confirmed.
 - [ ] No service-role key, OAuth secret, CAPTCHA secret, DB password, access token, refresh token, OAuth code, QR payload, or user document appears in source, bundle, logs, or analytics.
 - [ ] Existing local data is uploaded automatically only after an explicit guest-to-Google link, an empty destination-account check, digest verification, and client read-back; all other local/remote conflicts require explicit confirmation and a completed backup download.
 - [ ] Migration is idempotent, transactional, payload-bounded, and verified by read-back digest.
+- [ ] The browser mutation queue is keyed by the verified user ID, carries an owner ID, and cannot be replayed under another account.
+- [ ] Account switching blocks app content and remote sync until the local/remote data choice is completed; missing remote domains reset to safe defaults.
+- [ ] Backup restore stages and validates images before applying data, rolls back on failure, and pauses linked-account sync consent until the restored data is reviewed.
 - [ ] Image upload rejects unsupported input, malformed signatures, inputs over 768×768, outputs over 512 KiB, more than 50 images, or more than 10 MiB per account.
 - [ ] `sync-character-images` accepts only an authenticated permanent user, derives the Storage path from the verified user ID, and never exposes the service-role key to the browser.
 - [ ] `ALLOWED_ORIGINS` contains only exact HTTPS production origins and `ALLOW_LOCAL_ORIGINS=false` in production; wildcard origins are not used.

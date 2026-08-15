@@ -5,12 +5,14 @@ import { storageKeys } from "./storage";
 
 vi.mock("./imageStorage", () => ({
   clearCharacterImages: vi.fn().mockResolvedValue(undefined),
+  getAllCharacterImages: vi.fn().mockResolvedValue({}),
   saveCharacterImageById: vi.fn().mockResolvedValue("character-image-test"),
 }));
 
 describe("validateBackupPayload", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
   it("accepts current backup payloads", () => {
     expect(
@@ -94,7 +96,7 @@ describe("validateBackupPayload", () => {
   it("restores History from version 5 backups", async () => {
     const history = { state: { entriesByDate: {} }, version: 1 };
     const setItem = vi.fn();
-    vi.stubGlobal("localStorage", { setItem, removeItem: vi.fn() });
+    vi.stubGlobal("localStorage", { getItem: vi.fn().mockReturnValue(null), setItem, removeItem: vi.fn() });
 
     await importBackup({
       app: "에오링고",
@@ -109,7 +111,7 @@ describe("validateBackupPayload", () => {
   it("restores allowances from version 6 backups", async () => {
     const allowances = { state: { value: 21, lastAccrualKey: "2026-07-12T12:00:00.000Z" }, version: 1 };
     const setItem = vi.fn();
-    vi.stubGlobal("localStorage", { setItem, removeItem: vi.fn() });
+    vi.stubGlobal("localStorage", { getItem: vi.fn().mockReturnValue(null), setItem, removeItem: vi.fn() });
 
     await importBackup({
       app: "에오링고",
@@ -127,7 +129,7 @@ describe("validateBackupPayload", () => {
     const values = Object.fromEntries(
       Object.values(storageKeys).map((key, index) => [key, { state: { index }, version: 1 }]),
     );
-    vi.stubGlobal("localStorage", { setItem, removeItem });
+    vi.stubGlobal("localStorage", { getItem: vi.fn().mockReturnValue(null), setItem, removeItem });
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -156,5 +158,33 @@ describe("validateBackupPayload", () => {
       "character-image-test",
       expect.objectContaining({ type: "image/webp" }),
     );
+  });
+
+  it("rolls back local data when image restoration fails", async () => {
+    const setItem = vi.fn();
+    const removeItem = vi.fn();
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn((key: string) => key === storageKeys.history ? "old-value" : null),
+      setItem,
+      removeItem,
+    });
+    vi.mocked(saveCharacterImageById).mockRejectedValueOnce(new Error("disk full"));
+
+    await expect(
+      importBackup({
+        app: "FF14 Daily Board",
+        version: 6,
+        exportedAt: "2026-08-01T00:00:00.000Z",
+        data: { [storageKeys.history]: { state: { entriesByDate: {} }, version: 1 } },
+        images: {
+          "character-image-test": {
+            type: "image/webp",
+            dataUrl: "data:image/webp;base64,aW1hZ2U=",
+          },
+        },
+      }),
+    ).rejects.toThrow("disk full");
+
+    expect(setItem).toHaveBeenLastCalledWith(storageKeys.history, "old-value");
   });
 });

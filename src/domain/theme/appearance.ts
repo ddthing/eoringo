@@ -18,5 +18,5 @@ export const resolveAppearance = (
 
 export const getThemeDocumentState = (appearance: ResolvedAppearance) =>
   appearance === "dark"
-    ? { colorScheme: "dark", themeColor: "#15181d" }
-    : { colorScheme: "light", themeColor: "#f4f6f8" };
+    ? { colorScheme: "dark", themeColor: "#09090b" }
+    : { colorScheme: "light", themeColor: "#fafafa" };

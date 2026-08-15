@@ -5,6 +5,7 @@ export const storageKeys = {
   weeklyMemo: "ff14-daily-board/weekly-memo",
   theme: "ff14-daily-board/theme",
   taskUi: "ff14-daily-board/task-ui",
+  notifications: "ff14-daily-board/notifications",
   history: "ff14-daily-board/history",
   allowances: "ff14-daily-board/allowances",
 } as const;

@@ -76,4 +76,23 @@ describe("default task reset rules", () => {
     expect(byId.get("weekly-fashion-report")?.availabilityRuleId).toBe("weekly-fri-1700");
     expect(byId.get("weekly-wondrous-tails")?.retentionDays).toBe(14);
   });
+
+  it("includes every current duty roulette category", () => {
+    const rouletteTitles = defaultTaskTemplates
+      .filter((task) => task.group === "roulette")
+      .map((task) => task.title);
+
+    expect(rouletteTitles).toEqual([
+      "무작위 임무: 숙련자",
+      "무작위 임무: 최고 레벨 던전",
+      "무작위 임무: 상급 레벨링",
+      "무작위 임무: 레벨링",
+      "무작위 임무: 토벌전",
+      "무작위 임무: 주요 퀘스트",
+      "무작위 임무: 길드 작전",
+      "무작위 임무: 연합 레이드",
+      "무작위 임무: 일반 레이드",
+      "무작위 임무: 멘토",
+    ]);
+  });
 });

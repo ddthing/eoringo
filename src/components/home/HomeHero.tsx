@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronDown, Clock3 } from "lucide-react";
 import {
   formatDurationKo,
-  formatKoreanDate,
   getNextKstDailyReset,
   getTimeUntil,
 } from "../../lib/date";
@@ -52,8 +51,7 @@ export const HomeHero = () => {
             <p className="mt-1.5 text-[10px] font-semibold tracking-[-0.01em] text-ink-muted">오늘 완료율</p>
           </div>
         </div>
-        <div className="mt-3.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 border-t border-[rgb(var(--color-line-muted))] pt-3 text-[11px] font-semibold leading-5 text-ink-muted min-[420px]:text-xs">
-          <span className="tabular-nums">{formatKoreanDate(now)}</span>
+        <div className="mt-3.5 flex items-center justify-end border-t border-[rgb(var(--color-line-muted))] pt-3 text-[11px] font-semibold leading-5 text-ink-muted min-[420px]:text-xs">
           <span className="inline-flex items-center gap-1.5 tabular-nums">
             <Clock3 aria-hidden size={14} />
             초기화까지 {formatDurationKo(remaining)}

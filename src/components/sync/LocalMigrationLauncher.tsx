@@ -21,9 +21,15 @@ import {
 import { createDocumentRepository } from "../../sync/documentRepository";
 import { createSupabaseDocumentDataSource } from "../../sync/supabaseDocumentDataSource";
 import { createSupabaseLocalMigrationTransport } from "../../sync/supabaseLocalMigrationTransport";
+import { clearCharacterImages } from "../../lib/imageStorage";
+import { clearMutationQueueForUser } from "../../sync/mutationQueue";
 import { LocalMigrationDialog } from "./LocalMigrationDialog";
 import { hydrateStoreDocuments } from "../../sync/storeSyncAdapter";
-import { grantSyncConsent, hasSyncConsent } from "../../sync/syncConsent";
+import {
+  grantSyncConsent,
+  hasActiveSyncAccount,
+  hasSyncConsent,
+} from "../../sync/syncConsent";
 
 type LocalMigrationLauncherProps = { userId: string };
 
@@ -31,12 +37,18 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
   const [transport, setTransport] = useState<LocalMigrationTransport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [completed, setCompleted] = useState(() => hasSyncConsent(userId));
+  const [completed, setCompleted] = useState(
+    () =>
+      hasSyncConsent(userId) &&
+      hasActiveSyncAccount(userId) &&
+      !isPendingAccountSwitch(),
+  );
   const [completionMessage, setCompletionMessage] = useState(
     "이 기기의 데이터 이전을 검증했습니다. 원본은 보존 기간 동안 그대로 유지됩니다.",
   );
   const [accountSwitchNotice, setAccountSwitchNotice] = useState(false);
   const autoStarted = useRef(false);
+  const previousUserId = useRef(userId);
   const [remoteDocuments, setRemoteDocuments] = useState<Awaited<
     ReturnType<ReturnType<typeof createDocumentRepository>["list"]>
   > | null>(null);
@@ -56,8 +68,13 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       const repository = createDocumentRepository(
         createSupabaseDocumentDataSource(supabase),
       );
+      const accountSwitch = isPendingAccountSwitch();
 
-      if (readLocalMigrationReceipt(userId)) {
+      if (
+        !accountSwitch &&
+        hasActiveSyncAccount(userId) &&
+        readLocalMigrationReceipt(userId)
+      ) {
         grantSyncConsent(userId);
         clearAutomaticSyncAttempt(userId);
         setCompleted(true);
@@ -76,7 +93,6 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       const existingDocuments = await repository.list();
       const prepared = await prepareLocalMigration();
       const hasMeaningfulLocalData = hasMeaningfulLocalSnapshot(prepared.preview);
-      const accountSwitch = isPendingAccountSwitch();
       const automaticDecision = decideAutomaticSync({
         remoteDocumentCount: existingDocuments.length,
         hasMeaningfulLocalData,
@@ -86,9 +102,11 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       if (existingDocuments.length > 0) {
         if (automaticDecision === "hydrate-remote") {
           hydrateStoreDocuments(existingDocuments);
+          await clearCharacterImages();
+          clearMutationQueueForUser(localStorage, userId);
+          clearPendingAuthTransition();
           grantSyncConsent(userId);
           clearAutomaticSyncAttempt(userId);
-          clearPendingAuthTransition();
           setCompletionMessage("계정 데이터를 이 기기에 자동으로 불러왔습니다.");
           setCompleted(true);
         } else {
@@ -103,18 +121,22 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
         await runLocalMigration(prepared, createSupabaseLocalMigrationTransport(supabase, repository), {
           userId,
         });
+        clearMutationQueueForUser(localStorage, userId);
+        clearPendingAuthTransition();
         grantSyncConsent(userId);
         clearAutomaticSyncAttempt(userId);
-        clearPendingAuthTransition();
         setCompletionMessage("이 기기의 데이터가 계정과 자동으로 동기화되었습니다.");
         setCompleted(true);
         return;
       }
 
       if (automatic && automaticDecision === "enable-empty") {
+        await clearCharacterImages();
+        hydrateStoreDocuments([]);
+        clearMutationQueueForUser(localStorage, userId);
+        clearPendingAuthTransition();
         grantSyncConsent(userId);
         clearAutomaticSyncAttempt(userId);
-        clearPendingAuthTransition();
         setCompletionMessage("새 계정의 동기화를 자동으로 준비했습니다.");
         setCompleted(true);
         return;
@@ -144,9 +166,11 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       const prepared = await prepareLocalMigration();
       downloadMigrationBackup(prepared.backup);
       hydrateStoreDocuments(remoteDocuments);
+      await clearCharacterImages();
+      clearMutationQueueForUser(localStorage, userId);
+      clearPendingAuthTransition();
       grantSyncConsent(userId);
       clearAutomaticSyncAttempt(userId);
-      clearPendingAuthTransition();
       setAccountSwitchNotice(false);
       setCompletionMessage("계정 데이터를 백업 후 이 기기에 불러왔습니다.");
       setCompleted(true);
@@ -157,6 +181,23 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (previousUserId.current === userId) {
+      return;
+    }
+
+    previousUserId.current = userId;
+    autoStarted.current = false;
+    setTransport(null);
+    setRemoteDocuments(null);
+    setError(false);
+    setCompleted(
+      hasSyncConsent(userId) &&
+        hasActiveSyncAccount(userId) &&
+        !isPendingAccountSwitch(),
+    );
+  }, [userId]);
 
   useEffect(() => {
     if (completed || autoStarted.current) {
@@ -181,9 +222,10 @@ export const LocalMigrationLauncher = ({ userId }: LocalMigrationLauncherProps) 
         userId={userId}
         transport={transport}
         onComplete={() => {
+          clearMutationQueueForUser(localStorage, userId);
+          clearPendingAuthTransition();
           grantSyncConsent(userId);
           clearAutomaticSyncAttempt(userId);
-          clearPendingAuthTransition();
           setAccountSwitchNotice(false);
           setCompletionMessage("이 기기의 데이터 이전을 검증했습니다. 원본은 보존 기간 동안 그대로 유지됩니다.");
           setCompleted(true);

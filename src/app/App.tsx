@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
 import { ConfirmDialogProvider } from "../components/common/ConfirmDialog";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { AppShell } from "../components/layout/AppShell";
@@ -17,10 +18,14 @@ import {
 import { useAllowanceStore } from "../stores/useAllowanceStore";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useRemoteSync } from "../sync/useRemoteSync";
+import { AccountSyncBootstrapGate } from "../components/sync/AccountSyncBootstrapGate";
 import { subscribeToMinuteClock } from "../hooks/useMinuteNow";
 import { getRouteErrorBoundaryKey } from "./errorBoundaryReset";
+import { NotificationRuntime } from "../components/notifications/NotificationRuntime";
+import { BackgroundPushRuntime } from "../components/notifications/BackgroundPushRuntime";
 
 export const App = () => {
+  const auth = useAuth();
   const location = useLocation();
   const themeColorId = useThemeStore((state) => state.themeColorId);
   const customAccentColor = useThemeStore((state) => state.customAccentColor);
@@ -101,12 +106,18 @@ export const App = () => {
 
   return (
     <ConfirmDialogProvider>
+      <NotificationRuntime />
+      <BackgroundPushRuntime />
       <AppShell>
-        <ErrorBoundary key={getRouteErrorBoundaryKey(location.pathname)}>
-          <div key={location.pathname} className="ui-route-content">
-            <Outlet />
-          </div>
-        </ErrorBoundary>
+        {auth.mode === "permanent" && auth.userId && !remoteHydrationReady ? (
+          <AccountSyncBootstrapGate userId={auth.userId} />
+        ) : (
+          <ErrorBoundary key={getRouteErrorBoundaryKey(location.pathname)}>
+            <div key={location.pathname} className="ui-route-content">
+              <Outlet />
+            </div>
+          </ErrorBoundary>
+        )}
       </AppShell>
     </ConfirmDialogProvider>
   );

@@ -21,6 +21,8 @@ type MutationQueueWriter = {
 type StoreSyncBridgeOptions = {
   queue: MutationQueueWriter;
   requestSync: () => void;
+  ownerUserId?: string;
+  canWrite?: () => boolean;
   deferStart?: boolean;
   now?: () => Date;
   createMutationId?: () => string;
@@ -35,6 +37,8 @@ const identityKey = (document: { documentType: string; characterId: string | nul
 export const createStoreSyncBridge = ({
   queue,
   requestSync,
+  ownerUserId,
+  canWrite = () => true,
   deferStart = false,
   now = () => new Date(),
   createMutationId = () => crypto.randomUUID(),
@@ -56,7 +60,8 @@ export const createStoreSyncBridge = ({
   const captureChanges = () => {
     scheduled = false;
 
-    if (suppressWrites) {
+    if (suppressWrites || !canWrite()) {
+      dirtyDocumentTypes.clear();
       return;
     }
 
@@ -78,6 +83,7 @@ export const createStoreSyncBridge = ({
       const timestamp = now().toISOString();
       queue.upsertLatest({
         mutationId: createMutationId(),
+        ...(ownerUserId ? { ownerUserId } : {}),
         operation: remote ? "update" : "insert",
         documentId: remote?.id ?? null,
         documentType: write.documentType,

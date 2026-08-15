@@ -59,8 +59,8 @@ describe("AccountDataPanel", () => {
   it("keeps credits and contact in app info without duplicating storage guidance", () => {
     const markup = renderToStaticMarkup(<AppInfoPanel />);
 
-    expect(markup).toContain("Thanks to");
-    expect(markup.match(/Credits/g)).toHaveLength(1);
+    expect(markup).toContain("도움을 주신 분들");
+    expect(markup.match(/크레딧/g)).toHaveLength(1);
     expect(markup).toContain('href="/privacy"');
     expect(markup).toContain('href="/terms"');
     expect(markup).not.toContain('data-variant="success"');
@@ -73,6 +73,14 @@ describe("AccountDataPanel", () => {
 
     expect(markup.match(/lucide-info/g)).toHaveLength(1);
     expect(markup.match(/lucide-bell/g)).toHaveLength(1);
+  });
+
+  it("offers a daily incomplete-task reminder setting", () => {
+    const markup = renderToStaticMarkup(<NotificationSettingsPanel />);
+
+    expect(markup).toContain("미완료 숙제 알림");
+    expect(markup).toContain("앱이 닫혀도");
+    expect(markup).toContain("한국 시간 기준");
   });
 
   it("gives design, notification, and app info cards the same inner spacing", () => {

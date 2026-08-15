@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createMutationQueue,
+  getMutationQueueStorageKey,
   getRetryDelayMs,
   maxMutationQueueItems,
   MutationQueueFailure,
@@ -33,6 +34,25 @@ const makeStorage = (initial: string | null = null) => {
 };
 
 describe("durable mutation queue", () => {
+  it("uses an account-specific key and rejects mutations owned by another account", () => {
+    const userA = "00000000-0000-4000-8000-000000000011";
+    const userB = "00000000-0000-4000-8000-000000000012";
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    };
+    const queueA = createMutationQueue(storage, getMutationQueueStorageKey(userA), userA);
+
+    queueA.enqueue({ ...mutation, ownerUserId: userA });
+
+    expect(getMutationQueueStorageKey(userA)).not.toBe(getMutationQueueStorageKey(userB));
+    expect(() =>
+      createMutationQueue(storage, getMutationQueueStorageKey(userA), userB).read(),
+    ).toThrowError(expect.objectContaining({ code: "invalid" }));
+    expect(createMutationQueue(storage, getMutationQueueStorageKey(userB), userB).read()).toEqual([]);
+  });
+
   it("deduplicates mutation IDs for safe replay", () => {
     const queue = createMutationQueue(makeStorage());
 

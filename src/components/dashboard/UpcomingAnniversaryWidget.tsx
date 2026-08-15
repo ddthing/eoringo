@@ -18,8 +18,7 @@ export const UpcomingAnniversaryWidget = () => {
     <section className="home-panel p-4 min-[420px]:p-[18px] md:p-5">
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
-          <p className="muted-label">내 일정</p>
-          <h2 className="home-heading mt-1 text-base font-bold tracking-[-0.02em] text-ink">다가오는 기념일</h2>
+          <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">다가오는 기념일</h2>
         </div>
         <Link to="/calendar" className="secondary-button home-touch-target gap-1.5">
           일정에서 관리 <ArrowRight aria-hidden size={14} />

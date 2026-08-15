@@ -16,6 +16,7 @@ describe("store sync bridge", () => {
     const bridge = createStoreSyncBridge({
       queue,
       requestSync,
+      ownerUserId: "00000000-0000-4000-8000-000000000031",
       now: () => new Date("2026-08-02T08:00:00.000Z"),
       createMutationId: () => "00000000-0000-4000-8000-000000000001",
     });
@@ -25,6 +26,7 @@ describe("store sync bridge", () => {
 
     expect(queue.upsertLatest).toHaveBeenCalledWith(
       expect.objectContaining({
+        ownerUserId: "00000000-0000-4000-8000-000000000031",
         operation: "insert",
         documentType: "memo",
         payload: { memosByCharacter: { character: "local change" } },
@@ -88,6 +90,25 @@ describe("store sync bridge", () => {
     await Promise.resolve();
 
     expect(queue.upsertLatest).not.toHaveBeenCalled();
+    bridge.stop();
+  });
+
+  it("drops local changes after the active account is revoked", async () => {
+    const queue = { upsertLatest: vi.fn() };
+    const requestSync = vi.fn();
+    let canWrite = true;
+    const bridge = createStoreSyncBridge({
+      queue,
+      requestSync,
+      canWrite: () => canWrite,
+    });
+
+    canWrite = false;
+    useWeeklyMemoStore.getState().setMemo("character", "must stay local");
+    await Promise.resolve();
+
+    expect(queue.upsertLatest).not.toHaveBeenCalled();
+    expect(requestSync).not.toHaveBeenCalled();
     bridge.stop();
   });
 

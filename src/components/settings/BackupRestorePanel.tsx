@@ -1,14 +1,20 @@
 import { type ChangeEvent, useRef, useState } from "react";
 import { Database, Download, RotateCcw, Upload } from "lucide-react";
+import { useAuth } from "../../auth/useAuth";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 import { exportBackup } from "../../lib/exportBackup";
 import { clearCharacterImages } from "../../lib/imageStorage";
 import { importBackup } from "../../lib/importBackup";
 import { storageKeys } from "../../lib/storage";
+import { clearLocalMigrationReceipt } from "../../sync/localMigration";
+import { clearAllMutationQueues } from "../../sync/mutationQueue";
+import { pauseRemoteSync } from "../../sync/remoteSyncControl";
+import { revokeSyncConsent } from "../../sync/syncConsent";
 import { Button, Card, SectionHeader, StatusMessage } from "../ui";
 
 const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const auth = useAuth();
   const [message, setMessage] = useState<{
     text: string;
     variant: "success" | "danger";
@@ -56,7 +62,21 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
 
     try {
       const text = await file.text();
-      await importBackup(JSON.parse(text));
+      const payload: unknown = JSON.parse(text);
+      const linkedAccountRestore = auth.mode === "permanent" && Boolean(auth.userId);
+
+      if (linkedAccountRestore) {
+        revokeSyncConsent();
+        await pauseRemoteSync();
+      }
+
+      await importBackup(payload);
+
+      if (linkedAccountRestore) {
+        clearLocalMigrationReceipt();
+        clearAllMutationQueues(localStorage);
+      }
+
       setMessage({
         text: "복원이 끝났습니다. 화면을 새로고침합니다.",
         variant: "success",
@@ -144,6 +164,10 @@ const DataManagementActions = () => {
     setMessage("");
 
     try {
+      revokeSyncConsent();
+      await pauseRemoteSync();
+      clearLocalMigrationReceipt();
+      clearAllMutationQueues(localStorage);
       Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
       await clearCharacterImages();
       window.location.reload();
@@ -188,7 +212,6 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
     <div className="space-y-4">
       {embedded ? null : (
         <SectionHeader
-          eyebrow="storage"
           title="데이터"
           description="이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다."
         />
@@ -196,7 +219,6 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
       <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4">
         {embedded ? (
           <SectionHeader
-            eyebrow="data"
             title="백업 및 복원"
             description="브라우저에 저장된 루틴 데이터와 캐릭터 사진을 JSON 파일로 백업합니다."
             icon={<Database size={18} strokeWidth={2.2} />}

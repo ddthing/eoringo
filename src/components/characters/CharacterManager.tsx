@@ -83,10 +83,9 @@ export const CharacterManager = () => {
             <UsersRound size={18} strokeWidth={2.2} />
           </span>
           <div className="ui-section-header-copy">
-            <p className="ui-section-eyebrow">characters</p>
             <h2 className="ui-section-title">내 캐릭터</h2>
             <p className="ui-section-description">
-              캐릭터를 전환하거나 프로필과 대표 캐릭터를 관리합니다.
+              캐릭터를 추가하고 프로필과 대표 캐릭터를 관리합니다.
             </p>
           </div>
         </div>
@@ -106,9 +105,11 @@ export const CharacterManager = () => {
         </button>
       </div>
 
-      <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/45 p-2.5">
-        <CharacterSwitcher embedded compact />
-      </div>
+      {characters.length > 1 ? (
+        <div className="rounded-ui-md border border-[rgb(var(--color-line-muted))] bg-card-soft/45 p-2.5">
+          <CharacterSwitcher embedded compact />
+        </div>
+      ) : null}
 
       {isAdding || editingCharacter ? (
         <CharacterForm

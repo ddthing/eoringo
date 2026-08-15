@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { useAllowanceStore } from "../stores/allowance/useAllowanceStore";
 import { useCharacterStore } from "../stores/character/useCharacterStore";
+import { useDdayStore } from "../stores/dday/useDdayStore";
+import { useHistoryStore } from "../stores/history/useHistoryStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
+import { useTaskStore } from "../stores/task/useTaskStore";
 import {
   captureStoreDocument,
   captureStoreDocuments,
@@ -18,11 +21,25 @@ const originalCharacters = {
   characters: useCharacterStore.getState().characters,
   activeCharacterId: useCharacterStore.getState().activeCharacterId,
 };
+const originalDday = useDdayStore.getState().eventsByCharacter;
+const originalTasks = {
+  completedByCharacter: useTaskStore.getState().completedByCharacter,
+  completedAtByCharacter: useTaskStore.getState().completedAtByCharacter,
+  customTaskTemplatesByCharacter: useTaskStore.getState().customTaskTemplatesByCharacter,
+  disabledDefaultTaskIdsByCharacter: useTaskStore.getState().disabledDefaultTaskIdsByCharacter,
+  dailyResetKey: useTaskStore.getState().dailyResetKey,
+  weeklyResetKey: useTaskStore.getState().weeklyResetKey,
+  resetKeysByRule: useTaskStore.getState().resetKeysByRule,
+};
+const originalHistory = useHistoryStore.getState().entriesByDate;
 
 afterEach(() => {
   useWeeklyMemoStore.setState({ memosByCharacter: originalMemo });
   useAllowanceStore.setState(originalAllowance);
   useCharacterStore.setState(originalCharacters);
+  useDdayStore.setState({ eventsByCharacter: originalDday });
+  useTaskStore.setState(originalTasks);
+  useHistoryStore.setState({ entriesByDate: originalHistory });
 });
 
 describe("store sync adapters", () => {
@@ -136,5 +153,22 @@ describe("store sync adapters", () => {
 
     expect(() => hydrateStoreDocuments([document])).toThrow("account-scoped");
     expect(useWeeklyMemoStore.getState().memosByCharacter).toEqual(before);
+  });
+
+  it("resets local domains that are absent from the remote account", () => {
+    useWeeklyMemoStore.setState({ memosByCharacter: { old: "local" } });
+    useDdayStore.setState({ eventsByCharacter: { old: [] } });
+    useTaskStore.setState({
+      completedByCharacter: { old: { task: 1 } },
+      completedAtByCharacter: { old: { task: "2026-08-02T08:00:00.000Z" } },
+    });
+    useHistoryStore.setState({ entriesByDate: { old: {} as never } });
+
+    hydrateStoreDocuments([]);
+
+    expect(useWeeklyMemoStore.getState().memosByCharacter).toEqual({});
+    expect(useDdayStore.getState().eventsByCharacter).toEqual({});
+    expect(useTaskStore.getState().completedByCharacter).toEqual({});
+    expect(useHistoryStore.getState().entriesByDate).toEqual({});
   });
 });

@@ -136,7 +136,6 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
           </span>
           <SectionHeader
             className="min-w-0 flex-1"
-            eyebrow="account"
             title="이 기기에서만 저장 중"
             description="온라인 동기화가 꺼져 있습니다. 지금까지 입력한 데이터는 브라우저에 그대로 보관됩니다."
           />
@@ -157,7 +156,6 @@ export const AccountPanel = ({ embedded = false }: AccountPanelProps = {}) => {
         </span>
         <SectionHeader
           className="min-w-0 flex-1"
-          eyebrow="account"
           title={
             isPermanent ? "Google 계정 연결됨" : isGuest ? "게스트로 사용 중" : "게스트로 시작하기"
           }
