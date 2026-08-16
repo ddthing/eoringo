@@ -1,13 +1,20 @@
 import { isAllowedOrigin, resolveAllowedOrigins } from "../_shared/cors.ts";
 import { isUserId } from "../_shared/imageValidation.ts";
 import {
+  isAllowedPushEndpoint,
   isValidNotificationTime,
   isValidTimezone,
   normalizePushSubscription,
   normalizePushSummary,
 } from "../_shared/pushNotification.ts";
+import {
+  parsePushSubscriptionDeleteResult,
+  parsePushSubscriptionRateLimitResult,
+  parsePushSubscriptionUpsertResult,
+} from "../_shared/pushSubscriptionManagement.ts";
 
 const maxRequestBytes = 128 * 1024;
+const maxPushSubscriptionsPerUser = 5;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -19,13 +26,19 @@ const hasExactKeys = (value: Record<string, unknown>, keys: string[]) => {
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 };
 
-const jsonResponse = (status: number, body: unknown, origin: string | null) =>
+const jsonResponse = (
+  status: number,
+  body: unknown,
+  origin: string | null,
+  extraHeaders: Record<string, string> = {},
+) =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
+      ...extraHeaders,
       ...(origin
         ? {
             "Access-Control-Allow-Origin": origin,
@@ -70,6 +83,91 @@ const restHeaders = (serviceRoleKey: string) => ({
   Authorization: `Bearer ${serviceRoleKey}`,
   "Content-Type": "application/json",
 });
+
+const invokeServiceRpc = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  functionName: string,
+  body: Record<string, unknown>,
+) => {
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: restHeaders(config.serviceRoleKey),
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error("service_rpc_failed");
+  }
+
+  return response.json();
+};
+
+const consumePushSubscriptionRateLimit = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  userId: string,
+) => {
+  const result = parsePushSubscriptionRateLimitResult(
+    await invokeServiceRpc(config, "consume_push_subscription_rate_limit", {
+      p_user_id: userId,
+    }),
+  );
+
+  if (!result) {
+    throw new Error("rate_limit_response_invalid");
+  }
+
+  return result;
+};
+
+const upsertPushSubscription = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  body: {
+    userId: string;
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    timezone: string;
+    notificationTime: string;
+    summary: unknown;
+  },
+) => {
+  const result = parsePushSubscriptionUpsertResult(
+    await invokeServiceRpc(config, "upsert_push_notification_subscription", {
+      p_user_id: body.userId,
+      p_endpoint: body.endpoint,
+      p_p256dh: body.p256dh,
+      p_auth: body.auth,
+      p_timezone: body.timezone,
+      p_notification_time: body.notificationTime,
+      p_task_summary: body.summary,
+    }),
+  );
+
+  if (!result) {
+    throw new Error("subscription_response_invalid");
+  }
+
+  return result;
+};
+
+const deletePushSubscription = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  userId: string,
+  endpoint: string,
+) => {
+  const result = parsePushSubscriptionDeleteResult(
+    await invokeServiceRpc(config, "delete_push_notification_subscription", {
+      p_user_id: userId,
+      p_endpoint: endpoint,
+    }),
+  );
+
+  if (result === null) {
+    throw new Error("subscription_response_invalid");
+  }
+
+  return result;
+};
 
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
@@ -123,6 +221,26 @@ Deno.serve(async (request) => {
     return jsonResponse(403, { code: "permanent_account_required" }, origin);
   }
 
+  let rateLimit: Awaited<ReturnType<typeof consumePushSubscriptionRateLimit>>;
+
+  try {
+    rateLimit = await consumePushSubscriptionRateLimit(config, user.id);
+  } catch {
+    return jsonResponse(503, { code: "rate_limit_unavailable" }, origin);
+  }
+
+  if (!rateLimit.allowed) {
+    return jsonResponse(
+      429,
+      {
+        code: "rate_limited",
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+      origin,
+      { "Retry-After": String(rateLimit.retryAfterSeconds) },
+    );
+  }
+
   const declaredLength = Number(request.headers.get("Content-Length") ?? 0);
 
   if (declaredLength > maxRequestBytes) {
@@ -166,36 +284,35 @@ Deno.serve(async (request) => {
       return jsonResponse(400, { code: "invalid_payload" }, origin);
     }
 
-    let response: Response;
+    let result: Awaited<ReturnType<typeof upsertPushSubscription>>;
 
     try {
-      response = await fetch(
-        `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?on_conflict=endpoint`,
-        {
-          method: "POST",
-          headers: {
-            ...restHeaders(config.serviceRoleKey),
-            Prefer: "resolution=merge-duplicates,return=minimal",
-          },
-          body: JSON.stringify({
-            user_id: user.id,
-            endpoint: subscription.endpoint,
-            p256dh: subscription.keys.p256dh,
-            auth: subscription.keys.auth,
-            timezone: body.timezone,
-            notification_time: body.notificationTime,
-            notification_enabled: true,
-            task_summary: summary,
-            last_error: null,
-          }),
-        },
-      );
+      result = await upsertPushSubscription(config, {
+        userId: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
+        timezone: body.timezone,
+        notificationTime: body.notificationTime,
+        summary,
+      });
     } catch {
       return jsonResponse(503, { code: "storage_unavailable" }, origin);
     }
 
-    if (!response.ok) {
-      return jsonResponse(502, { code: "storage_rejected" }, origin);
+    if (result === "quota_exceeded") {
+      return jsonResponse(
+        409,
+        {
+          code: "subscription_limit_reached",
+          maxSubscriptions: maxPushSubscriptionsPerUser,
+        },
+        origin,
+      );
+    }
+
+    if (result === "endpoint_conflict") {
+      return jsonResponse(409, { code: "subscription_endpoint_conflict" }, origin);
     }
 
     return jsonResponse(200, { ok: true }, origin);
@@ -206,7 +323,7 @@ Deno.serve(async (request) => {
       return jsonResponse(400, { code: "invalid_payload" }, origin);
     }
 
-    if (!body.endpoint.startsWith("https://") || body.endpoint.length > 2048) {
+    if (!isAllowedPushEndpoint(body.endpoint)) {
       return jsonResponse(400, { code: "invalid_payload" }, origin);
     }
 
@@ -271,34 +388,19 @@ Deno.serve(async (request) => {
       return jsonResponse(400, { code: "invalid_payload" }, origin);
     }
 
-    if (!body.endpoint.startsWith("https://") || body.endpoint.length > 2048) {
+    if (!isAllowedPushEndpoint(body.endpoint)) {
       return jsonResponse(400, { code: "invalid_payload" }, origin);
     }
 
-    const params = new URLSearchParams({
-      user_id: `eq.${user.id}`,
-      endpoint: `eq.${body.endpoint}`,
-    });
-
-    let response: Response;
+    let deleted: boolean;
 
     try {
-      response = await fetch(
-        `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
-        {
-          method: "DELETE",
-          headers: restHeaders(config.serviceRoleKey),
-        },
-      );
+      deleted = await deletePushSubscription(config, user.id, body.endpoint);
     } catch {
       return jsonResponse(503, { code: "storage_unavailable" }, origin);
     }
 
-    if (!response.ok) {
-      return jsonResponse(502, { code: "storage_rejected" }, origin);
-    }
-
-    return jsonResponse(200, { ok: true }, origin);
+    return jsonResponse(200, { ok: true, deleted }, origin);
   }
 
   return jsonResponse(400, { code: "invalid_operation" }, origin);

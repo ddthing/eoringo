@@ -30,6 +30,13 @@ const base64UrlPattern = /^[A-Za-z0-9_-]+$/;
 const dateKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
 const timezonePattern = /^[A-Za-z0-9_./+~-]{1,64}$/;
 const notificationTimePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const supportedPushServiceHosts = new Set([
+  "android.googleapis.com",
+  "fcm.googleapis.com",
+  "updates.push.services.mozilla.com",
+  "web.push.apple.com",
+]);
+const supportedPushServiceHostSuffixes = [".notify.windows.com", ".push.apple.com"];
 const isValidNotificationSourceDigest = (value: unknown): value is string =>
   typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
 
@@ -77,15 +84,37 @@ export const isValidTimezone = (value: unknown): value is string => {
 export const isValidNotificationTime = (value: unknown): value is string =>
   typeof value === "string" && notificationTimePattern.test(value);
 
+export const isAllowedPushEndpoint = (value: unknown): value is string => {
+  if (typeof value !== "string" || value.length > 2048) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    const isSupportedHost =
+      supportedPushServiceHosts.has(url.hostname) ||
+      supportedPushServiceHostSuffixes.some((suffix) => url.hostname.endsWith(suffix));
+
+    return (
+      url.protocol === "https:" &&
+      url.username === "" &&
+      url.password === "" &&
+      url.port === "" &&
+      url.hash === "" &&
+      isSupportedHost
+    );
+  } catch {
+    return false;
+  }
+};
+
 export const normalizePushSubscription = (
   value: unknown,
 ): PushSubscriptionInput | null => {
   if (
     !isRecord(value) ||
     !hasExactKeys(value, ["endpoint", "expirationTime", "keys"]) ||
-    typeof value.endpoint !== "string" ||
-    !value.endpoint.startsWith("https://") ||
-    value.endpoint.length > 2048 ||
+    !isAllowedPushEndpoint(value.endpoint) ||
     (value.expirationTime !== null &&
       typeof value.expirationTime !== "number" &&
       value.expirationTime !== undefined) ||

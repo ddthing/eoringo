@@ -8,7 +8,7 @@ import {
 } from "./pushNotification";
 
 const subscription = {
-  endpoint: "https://push.example.test/send/abc",
+  endpoint: "https://fcm.googleapis.com/fcm/send/abc",
   expirationTime: null,
   keys: {
     p256dh: "BabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-",
@@ -36,6 +36,48 @@ describe("push notification boundary validation", () => {
 
   it("rejects extra subscription fields", () => {
     expect(normalizePushSubscription({ ...subscription, extra: true })).toBeNull();
+  });
+
+  it("rejects endpoints outside the supported push providers", () => {
+    expect(
+      normalizePushSubscription({
+        ...subscription,
+        endpoint: "https://push.example.test/send/abc",
+      }),
+    ).toBeNull();
+    expect(
+      normalizePushSubscription({
+        ...subscription,
+        endpoint: "https://127.0.0.1/internal",
+      }),
+    ).toBeNull();
+    expect(
+      normalizePushSubscription({
+        ...subscription,
+        endpoint: "https://169.254.169.254/latest/meta-data",
+      }),
+    ).toBeNull();
+  });
+
+  it("accepts the supported browser push providers", () => {
+    for (const endpoint of [
+      "https://android.googleapis.com/gcm/send/abc",
+      "https://updates.push.services.mozilla.com/wpush/v2/abc",
+      "https://web.push.apple.com/3/device/abc",
+      "https://wns2-by3p.notify.windows.com/?token=abc",
+    ]) {
+      expect(normalizePushSubscription({ ...subscription, endpoint })).not.toBeNull();
+    }
+  });
+
+  it("rejects endpoint URLs with credentials, ports, or fragments", () => {
+    for (const endpoint of [
+      "https://user:pass@fcm.googleapis.com/fcm/send/abc",
+      "https://fcm.googleapis.com:8443/fcm/send/abc",
+      "https://fcm.googleapis.com/fcm/send/abc#fragment",
+    ]) {
+      expect(normalizePushSubscription({ ...subscription, endpoint })).toBeNull();
+    }
   });
 
   it("uses all daily tasks after the saved summary date changes", () => {
