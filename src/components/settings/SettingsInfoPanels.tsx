@@ -236,9 +236,8 @@ export const NotificationSettingsPanel = () => {
             }}
           />
           <span>
-            <span className="block text-sm font-bold text-ink">앱이 닫혀도 미완료 숙제 알림</span>
-            <span className="mt-0.5 block text-xs font-medium text-ink-muted">
-              설정이 되면 앱을 닫아도 서버가 정해진 시간에 한 번 알려줍니다.
+            <span className="block text-sm font-bold text-ink">
+              매일 남은 미완료 숙제를 정해진 시간에 알려드려요.
             </span>
           </span>
         </label>

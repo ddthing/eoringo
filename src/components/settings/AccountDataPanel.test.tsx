@@ -83,7 +83,9 @@ describe("AccountDataPanel", () => {
   it("exposes the background notification toggle and schedule control", () => {
     const markup = renderToStaticMarkup(<NotificationSettingsPanel />);
 
-    expect(markup).toContain("앱이 닫혀도 미완료 숙제 알림");
+    expect(markup).toContain("매일 남은 미완료 숙제를 정해진 시간에 알려드려요.");
+    expect(markup).not.toContain("앱이 닫혀도 미완료 숙제 알림");
+    expect(markup).not.toContain("설정이 되면 앱을 닫아도 서버가");
     expect(markup).toContain('id="daily-incomplete-notification-time"');
     expect(markup).toContain("notification-time-field");
     expect(markup).toContain("notification-time-control");
