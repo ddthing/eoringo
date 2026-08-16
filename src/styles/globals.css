@@ -1509,14 +1509,6 @@ input[type="number"] {
     min-width: 0;
   }
 
-  .notification-time-input {
-    display: block;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-    inline-size: 100%;
-  }
-
   .primary-button:disabled,
   .secondary-button:disabled {
     cursor: not-allowed;
@@ -1542,6 +1534,44 @@ input[type="number"] {
   .field:focus {
     border-color: rgb(var(--color-primary));
     box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.16);
+  }
+
+  .notification-time-control {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid rgb(var(--color-outline-variant));
+    border-radius: var(--shape-md);
+    background: rgb(var(--color-card) / 0.96);
+    contain: paint;
+    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .notification-time-control:focus-within {
+    border-color: rgb(var(--color-primary));
+    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.16);
+  }
+
+  .notification-time-input {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    inline-size: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .notification-time-input:hover,
+  .notification-time-input:focus {
+    border-color: transparent;
+    box-shadow: none;
   }
 
   .range-field {

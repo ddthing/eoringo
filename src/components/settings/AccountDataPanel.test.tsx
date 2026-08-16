@@ -86,6 +86,7 @@ describe("AccountDataPanel", () => {
     expect(markup).toContain("앱이 닫혀도 미완료 숙제 알림");
     expect(markup).toContain('id="daily-incomplete-notification-time"');
     expect(markup).toContain("notification-time-field");
+    expect(markup).toContain("notification-time-control");
     expect(markup).toContain("notification-time-input");
     expect(markup).toContain("한국 시간 기준");
     expect(markup).not.toContain("HTTPS 배포");

@@ -253,14 +253,16 @@ export const NotificationSettingsPanel = () => {
               : "한국 시간 기준 · 앱이 열려 있을 때 브라우저 알림을 보냅니다."
           }
         >
-          <Input
-            className="notification-time-input"
-            id="daily-incomplete-notification-time"
-            type="time"
-            value={dailyIncompleteTime}
-            disabled={!dailyIncompleteEnabled && !backgroundPushEnabled}
-            onChange={(event) => setDailyIncompleteTime(event.target.value)}
-          />
+          <div className="notification-time-control">
+            <Input
+              className="notification-time-input"
+              id="daily-incomplete-notification-time"
+              type="time"
+              value={dailyIncompleteTime}
+              disabled={!dailyIncompleteEnabled && !backgroundPushEnabled}
+              onChange={(event) => setDailyIncompleteTime(event.target.value)}
+            />
+          </div>
         </Field>
       </div>
 
