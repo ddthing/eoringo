@@ -201,6 +201,71 @@ Deno.serve(async (request) => {
     return jsonResponse(200, { ok: true }, origin);
   }
 
+  if (body.operation === "status") {
+    if (!hasExactKeys(body, ["operation", "endpoint"]) || typeof body.endpoint !== "string") {
+      return jsonResponse(400, { code: "invalid_payload" }, origin);
+    }
+
+    if (!body.endpoint.startsWith("https://") || body.endpoint.length > 2048) {
+      return jsonResponse(400, { code: "invalid_payload" }, origin);
+    }
+
+    const params = new URLSearchParams({
+      user_id: `eq.${user.id}`,
+      endpoint: `eq.${body.endpoint}`,
+      select: "notification_enabled,last_error,updated_at",
+      limit: "1",
+    });
+
+    let response: Response;
+
+    try {
+      response = await fetch(
+        `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
+        { headers: restHeaders(config.serviceRoleKey) },
+      );
+    } catch {
+      return jsonResponse(503, { code: "storage_unavailable" }, origin);
+    }
+
+    if (!response.ok) {
+      return jsonResponse(502, { code: "storage_rejected" }, origin);
+    }
+
+    const rows: unknown = await response.json();
+
+    if (!Array.isArray(rows)) {
+      return jsonResponse(502, { code: "storage_response_invalid" }, origin);
+    }
+
+    const row = rows[0];
+
+    if (row === undefined) {
+      return jsonResponse(200, { ok: true, registered: false }, origin);
+    }
+
+    if (
+      !isRecord(row) ||
+      typeof row.notification_enabled !== "boolean" ||
+      (row.last_error !== null && typeof row.last_error !== "string") ||
+      typeof row.updated_at !== "string"
+    ) {
+      return jsonResponse(502, { code: "storage_response_invalid" }, origin);
+    }
+
+    return jsonResponse(
+      200,
+      {
+        ok: true,
+        registered: true,
+        enabled: row.notification_enabled,
+        lastError: row.last_error,
+        updatedAt: row.updated_at,
+      },
+      origin,
+    );
+  }
+
   if (body.operation === "delete") {
     if (!hasExactKeys(body, ["operation", "endpoint"]) || typeof body.endpoint !== "string") {
       return jsonResponse(400, { code: "invalid_payload" }, origin);

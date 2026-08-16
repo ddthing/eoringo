@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPushNotificationPayload,
+  isPushSummaryFresh,
   isValidTimezone,
   normalizePushSubscription,
   normalizePushSummary,
@@ -17,6 +18,7 @@ const subscription = {
 
 const summary = {
   summaryDate: "2026-08-15",
+  sourceDigest: "a".repeat(64),
   characters: [
     {
       characterName: "모험가",
@@ -66,6 +68,22 @@ describe("push notification boundary validation", () => {
         characters: [{ ...summary.characters[0], characterName: "bad\nname" }],
       }),
     ).toBeNull();
+    expect(normalizePushSummary({ ...summary, sourceDigest: "not-a-digest" })).toBeNull();
+  });
+
+  it("accepts legacy summaries but keeps them without a freshness digest", () => {
+    expect(normalizePushSummary({ summaryDate: summary.summaryDate, characters: [] })).toEqual({
+      summaryDate: summary.summaryDate,
+      characters: [],
+    });
+  });
+
+  it("only treats a summary as fresh when its source digest matches", () => {
+    expect(isPushSummaryFresh(summary, "a".repeat(64))).toBe(true);
+    expect(isPushSummaryFresh(summary, "b".repeat(64))).toBe(false);
+    expect(
+      isPushSummaryFresh({ summaryDate: summary.summaryDate, characters: [] }, "a".repeat(64)),
+    ).toBe(false);
   });
 
   it("accepts real IANA zones and rejects lookalikes", () => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, ExternalLink, Info } from "lucide-react";
 import { useAuth } from "../../auth/useAuth";
 import {
@@ -15,7 +15,9 @@ import {
 } from "../../domain/notifications/pushSubscription";
 import { webPushPublicKey } from "../../domain/notifications/pushConfig";
 import {
+  getRemotePushSubscriptionStatus,
   removeRemotePushSubscription,
+  type RemotePushSubscriptionStatus,
   upsertRemotePushSubscription,
 } from "../../domain/notifications/remotePushSubscription";
 import { KST_TIME_ZONE, getKstDateKey } from "../../lib/date";
@@ -23,7 +25,10 @@ import { remoteSyncEnvironment } from "../../lib/supabase/env";
 import { useCharacterStore } from "../../stores/character/useCharacterStore";
 import { useNotificationStore } from "../../stores/notifications/useNotificationStore";
 import { useTaskStore } from "../../stores/task/useTaskStore";
-import { getBackgroundNotificationTaskSummaries } from "../notifications/notificationSummary";
+import {
+  getBackgroundNotificationTaskSummaries,
+  getNotificationSourceDigest,
+} from "../notifications/notificationSummary";
 import { Badge, Card, SectionHeader, StatusMessage } from "../ui";
 import { Button, Field, Input } from "../ui";
 
@@ -57,6 +62,32 @@ export const getBackgroundPushGuidance = ({
   return null;
 };
 
+export const getBackgroundPushStatusMessage = (
+  status: RemotePushSubscriptionStatus | null,
+) => {
+  if (!status?.registered) {
+    return "서버 알림 설정을 확인하지 못했어요. 앱을 다시 열면 설정을 동기화합니다.";
+  }
+
+  if (!status.enabled) {
+    return "서버 알림이 꺼져 있어요. 알림을 다시 켜 주세요.";
+  }
+
+  if (status.lastError === "stale_task_summary") {
+    return "최근 숙제 변경을 서버에 동기화하는 중이에요. 동기화가 끝나면 다음 알림부터 반영됩니다.";
+  }
+
+  if (status.lastError === "source_read_failed") {
+    return "알림 서버가 최신 숙제 상태를 확인하지 못했어요. 앱을 잠시 열어 둔 뒤 다시 확인해 주세요.";
+  }
+
+  if (status.lastError) {
+    return "최근 알림 상태를 확인하지 못했어요. 잠시 후 다시 확인해 주세요.";
+  }
+
+  return "서버에 알림 설정이 저장되어 있어 앱이 닫혀 있어도 정해진 시간에 확인합니다.";
+};
+
 export const NotificationSettingsPanel = () => {
   const auth = useAuth();
   const dailyIncompleteEnabled = useNotificationStore(
@@ -78,6 +109,7 @@ export const NotificationSettingsPanel = () => {
   );
   const [permissionMessage, setPermissionMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [remoteStatus, setRemoteStatus] = useState<RemotePushSubscriptionStatus | null>(null);
 
   const backgroundPushSupported = isBackgroundPushSupported();
   const backgroundPushAvailable =
@@ -94,16 +126,56 @@ export const NotificationSettingsPanel = () => {
     browserSupported: backgroundPushSupported,
   });
 
-  const getCurrentBackgroundSummary = (date = new Date()) => {
+  useEffect(() => {
+    let cancelled = false;
+
+    if (auth.mode !== "permanent" || !auth.userId || !backgroundPushEnabled) {
+      setRemoteStatus(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void (async () => {
+      try {
+        const subscription = await getExistingPushSubscription();
+        const serializedSubscription = subscription
+          ? serializePushSubscription(subscription)
+          : null;
+
+        if (!serializedSubscription) {
+          if (!cancelled) {
+            setBackgroundPushEnabled(false);
+            setRemoteStatus(null);
+          }
+          return;
+        }
+
+        const status = await getRemotePushSubscriptionStatus(serializedSubscription.endpoint);
+
+        if (!cancelled) {
+          setRemoteStatus(status);
+        }
+      } catch {
+        if (!cancelled) {
+          setRemoteStatus(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.mode, auth.userId, backgroundPushEnabled, setBackgroundPushEnabled]);
+
+  const getCurrentBackgroundSummary = async (date = new Date()) => {
     const taskState = useTaskStore.getState();
+    const characters = useCharacterStore.getState().characters;
 
     return {
       summaryDate: getKstDateKey(date),
-      characters: getBackgroundNotificationTaskSummaries(
-        useCharacterStore.getState().characters,
-        taskState,
-        date,
-      ),
+      characters: getBackgroundNotificationTaskSummaries(characters, taskState, date),
+      sourceDigest: await getNotificationSourceDigest(characters, taskState),
     };
   };
 
@@ -143,10 +215,15 @@ export const NotificationSettingsPanel = () => {
           subscription,
           timezone: KST_TIME_ZONE,
           notificationTime: dailyIncompleteTime,
-          summary: getCurrentBackgroundSummary(),
+          summary: await getCurrentBackgroundSummary(),
         });
         setBackgroundPushEnabled(true);
         setDailyIncompleteEnabled(true);
+        try {
+          setRemoteStatus(await getRemotePushSubscriptionStatus(subscription.endpoint));
+        } catch {
+          setRemoteStatus(null);
+        }
         setPermissionMessage("앱이 닫혀 있어도 미완료 숙제 알림을 보냅니다.");
       } else {
         setBackgroundPushEnabled(false);
@@ -195,6 +272,7 @@ export const NotificationSettingsPanel = () => {
       await unsubscribeFromPushNotifications();
       setDailyIncompleteEnabled(false);
       setBackgroundPushEnabled(false);
+      setRemoteStatus(null);
       setPermissionMessage(
         serverRemovalFailed
           ? "이 기기에서는 해제했지만 서버 설정을 확인하지 못했습니다. 다음에 앱을 열면 다시 정리합니다."
@@ -215,7 +293,13 @@ export const NotificationSettingsPanel = () => {
         icon={<Bell size={18} strokeWidth={2.2} />}
         action={
           <Badge variant={dailyIncompleteEnabled || backgroundPushEnabled ? "success" : "neutral"}>
-            {backgroundPushEnabled ? "백그라운드 사용 중" : dailyIncompleteEnabled ? "사용 중" : "꺼짐"}
+            {backgroundPushEnabled
+              ? remoteStatus?.registered && remoteStatus.enabled
+                ? "서버 사용 중"
+                : "확인 중"
+              : dailyIncompleteEnabled
+                ? "사용 중"
+                : "꺼짐"}
           </Badge>
         }
       />
@@ -273,6 +357,12 @@ export const NotificationSettingsPanel = () => {
           </span>
         ) : null}
       </StatusMessage>
+
+      {backgroundPushEnabled ? (
+        <p className="text-xs font-semibold text-ink-muted" role="status">
+          {getBackgroundPushStatusMessage(remoteStatus)}
+        </p>
+      ) : null}
 
       {permission === "unsupported" ? (
         <p className="text-xs font-semibold text-ink-muted">

@@ -9,6 +9,7 @@ import type { Character } from "../../types";
 import type { NotificationState } from "../../stores/notifications/useNotificationStore";
 import {
   getBackgroundNotificationTaskSummaries,
+  getNotificationSourceDigest,
   type NotificationTaskSource,
 } from "./notificationSummary";
 
@@ -81,6 +82,13 @@ export const syncBackgroundPushSubscription = async ({
   }
 
   const summaryDate = getKstDateKey(getNow());
+  const characters = getCharacters();
+  const taskSource = getTaskSource();
+  const sourceDigest = await getNotificationSourceDigest(characters, taskSource);
+
+  if (!isMounted()) {
+    return;
+  }
 
   await upsert({
     subscription: serializedSubscription,
@@ -88,11 +96,8 @@ export const syncBackgroundPushSubscription = async ({
     notificationTime: currentNotificationState.dailyIncompleteTime,
     summary: {
       summaryDate,
-      characters: getBackgroundNotificationTaskSummaries(
-        getCharacters(),
-        getTaskSource(),
-        summaryDate,
-      ),
+      characters: getBackgroundNotificationTaskSummaries(characters, taskSource, summaryDate),
+      sourceDigest,
     },
   });
 };

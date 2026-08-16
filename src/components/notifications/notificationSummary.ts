@@ -1,5 +1,10 @@
 import { getVisibleTaskTemplates } from "../../domain/tasks/getVisibleTaskTemplates";
 import {
+  createNotificationSource,
+  digestNotificationSource,
+  type NotificationSource,
+} from "../../../supabase/functions/_shared/notificationSource";
+import {
   getDailyIncompleteTaskTitles,
   getDailyTaskTitles,
   type BackgroundNotificationTaskSummary,
@@ -13,6 +18,16 @@ export type NotificationTaskSource = {
   customTaskTemplatesByCharacter: Record<string, TaskTemplate[]>;
   disabledDefaultTaskIdsByCharacter: Record<string, string[]>;
 };
+
+export const getNotificationSource = (
+  characters: Character[],
+  taskSource: NotificationTaskSource,
+): NotificationSource => createNotificationSource(characters, taskSource);
+
+export const getNotificationSourceDigest = (
+  characters: Character[],
+  taskSource: NotificationTaskSource,
+) => digestNotificationSource(getNotificationSource(characters, taskSource));
 
 export const getNotificationTaskSummaries = (
   characters: Character[],

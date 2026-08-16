@@ -111,4 +111,18 @@ describe("background push runtime sync", () => {
 
     await expect(syncBackgroundPushSubscription(options)).rejects.toBe(error);
   });
+
+  it("includes a digest of the source data in the server snapshot", async () => {
+    const { options } = buildOptions();
+
+    await syncBackgroundPushSubscription(options);
+
+    expect(options.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        summary: expect.objectContaining({
+          sourceDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
+        }),
+      }),
+    );
+  });
 });

@@ -17,6 +17,7 @@ export type PushNotificationCharacterSummary = {
 export type PushNotificationSummary = {
   summaryDate: string;
   characters: PushNotificationCharacterSummary[];
+  sourceDigest?: string;
 };
 
 export type PushNotificationPayload = {
@@ -29,6 +30,8 @@ const base64UrlPattern = /^[A-Za-z0-9_-]+$/;
 const dateKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
 const timezonePattern = /^[A-Za-z0-9_./+~-]{1,64}$/;
 const notificationTimePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const isValidNotificationSourceDigest = (value: unknown): value is string =>
+  typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -130,12 +133,18 @@ const normalizeTitles = (value: unknown) => {
 };
 
 export const normalizePushSummary = (value: unknown): PushNotificationSummary | null => {
+  const hasSupportedKeys =
+    isRecord(value) &&
+    (hasExactKeys(value, ["summaryDate", "characters"]) ||
+      hasExactKeys(value, ["summaryDate", "characters", "sourceDigest"]));
+
   if (
     !isRecord(value) ||
-    !hasExactKeys(value, ["summaryDate", "characters"]) ||
+    !hasSupportedKeys ||
     !isDateKey(value.summaryDate) ||
     !Array.isArray(value.characters) ||
-    value.characters.length > 50
+    value.characters.length > 50 ||
+    (value.sourceDigest !== undefined && !isValidNotificationSourceDigest(value.sourceDigest))
   ) {
     return null;
   }
@@ -164,10 +173,23 @@ export const normalizePushSummary = (value: unknown): PushNotificationSummary | 
       : null;
   });
 
-  return characters.every((character) => character !== null)
-    ? { summaryDate: value.summaryDate, characters: characters as PushNotificationCharacterSummary[] }
-    : null;
+  if (!characters.every((character) => character !== null)) {
+    return null;
+  }
+
+  return {
+    summaryDate: value.summaryDate,
+    characters: characters as PushNotificationCharacterSummary[],
+    ...(typeof value.sourceDigest === "string" ? { sourceDigest: value.sourceDigest } : {}),
+  };
 };
+
+export const isPushSummaryFresh = (
+  summary: PushNotificationSummary,
+  remoteSourceDigest: string | null,
+) =>
+  isValidNotificationSourceDigest(summary.sourceDigest) &&
+  summary.sourceDigest === remoteSourceDigest;
 
 export const getPendingPushCharacters = (
   summary: PushNotificationSummary,

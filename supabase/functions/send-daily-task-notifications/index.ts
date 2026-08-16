@@ -1,24 +1,30 @@
 import webpush from "npm:web-push@3.6.7";
 import {
+  buildNotificationSourceFromDocuments,
+  digestNotificationSource,
+} from "../_shared/notificationSource.ts";
+import {
   buildPushNotificationPayload,
   isValidNotificationTime,
+  isPushSummaryFresh,
   isValidTimezone,
   normalizePushSubscription,
   normalizePushSummary,
   type PushNotificationSummary,
 } from "../_shared/pushNotification.ts";
+import { deliverPushNotification } from "./delivery.ts";
 
 const pageSize = 500;
 
 type PushSubscriptionRow = {
   id: string;
+  user_id: string;
   endpoint: string;
   p256dh: string;
   auth: string;
   timezone: string;
   notification_time: string;
   task_summary: unknown;
-  last_delivery_key: string | null;
 };
 
 const jsonResponse = (status: number, body: unknown) =>
@@ -102,7 +108,7 @@ const fetchSubscriptions = async (config: NonNullable<ReturnType<typeof getConfi
 
   for (let offset = 0; ; offset += pageSize) {
     const params = new URLSearchParams({
-      select: "id,endpoint,p256dh,auth,timezone,notification_time,task_summary,last_delivery_key",
+      select: "id,user_id,endpoint,p256dh,auth,timezone,notification_time,task_summary",
       notification_enabled: "eq.true",
       limit: String(pageSize),
       offset: String(offset),
@@ -136,7 +142,7 @@ const updateSubscription = async (
   patch: Record<string, unknown>,
 ) => {
   const params = new URLSearchParams({ id: `eq.${id}` });
-  await fetch(
+  const response = await fetch(
     `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
     {
       method: "PATCH",
@@ -147,6 +153,10 @@ const updateSubscription = async (
       body: JSON.stringify(patch),
     },
   );
+
+  if (!response.ok) {
+    throw new Error("subscription_update_failed");
+  }
 };
 
 const removeSubscription = async (
@@ -154,10 +164,66 @@ const removeSubscription = async (
   id: string,
 ) => {
   const params = new URLSearchParams({ id: `eq.${id}` });
-  await fetch(
+  const response = await fetch(
     `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
     { method: "DELETE", headers: restHeaders(config.serviceRoleKey) },
   );
+
+  if (!response.ok) {
+    throw new Error("subscription_delete_failed");
+  }
+};
+
+const invokeDeliveryRpc = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  functionName: string,
+  body: Record<string, unknown>,
+  resultKey: string,
+) => {
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: restHeaders(config.serviceRoleKey),
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`${functionName}_failed`);
+  }
+
+  const raw: unknown = await response.json();
+  const row = Array.isArray(raw) ? raw[0] : raw;
+
+  return isRecord(row) && row[resultKey] === true;
+};
+
+const fetchRemoteNotificationSourceDigest = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  userId: string,
+) => {
+  const params = new URLSearchParams({
+    select: "document_type,payload",
+    user_id: `eq.${userId}`,
+    document_type: "in.(characters,tasks)",
+    deleted_at: "is.null",
+  });
+  const response = await fetch(
+    `${config.supabaseUrl}/rest/v1/user_documents?${params.toString()}`,
+    { headers: restHeaders(config.serviceRoleKey) },
+  );
+
+  if (!response.ok) {
+    throw new Error("notification_source_read_failed");
+  }
+
+  const documents: unknown = await response.json();
+
+  if (!Array.isArray(documents)) {
+    throw new Error("notification_source_response_invalid");
+  }
+
+  const source = buildNotificationSourceFromDocuments(documents);
+
+  return source ? digestNotificationSource(source) : null;
 };
 
 const getPushStatusCode = (error: unknown) =>
@@ -193,30 +259,53 @@ const deliverSubscription = async (
     return "empty" as const;
   }
 
-  if (subscriptionRow.last_delivery_key === key) {
-    return "already_delivered" as const;
-  }
+  const claimToken = crypto.randomUUID();
 
-  try {
-    await webpush.sendNotification(subscription, JSON.stringify(payload));
-    await updateSubscription(config, subscriptionRow.id, {
-      last_delivery_key: key,
-      last_error: null,
-    });
-    return "sent" as const;
-  } catch (error) {
-    const statusCode = getPushStatusCode(error);
+  return deliverPushNotification({
+    claim: async () =>
+      invokeDeliveryRpc(
+        config,
+        "claim_push_notification_delivery",
+        {
+          p_subscription_id: subscriptionRow.id,
+          p_delivery_key: key,
+          p_claim_token: claimToken,
+        },
+        "claimed",
+      ),
+    send: () => webpush.sendNotification(subscription, JSON.stringify(payload)),
+    finalize: async () => {
+      const completed = await invokeDeliveryRpc(
+        config,
+        "complete_push_notification_delivery",
+        {
+          p_subscription_id: subscriptionRow.id,
+          p_delivery_key: key,
+          p_claim_token: claimToken,
+        },
+        "completed",
+      );
 
-    if (statusCode === 404 || statusCode === 410) {
-      await removeSubscription(config, subscriptionRow.id);
-      return "removed" as const;
-    }
-
-    await updateSubscription(config, subscriptionRow.id, {
-      last_error: "push_delivery_failed",
-    });
-    return "failed" as const;
-  }
+      if (!completed) {
+        throw new Error("delivery_finalize_rejected");
+      }
+    },
+    markFailure: async () => {
+      await invokeDeliveryRpc(
+        config,
+        "record_failed_push_notification_delivery",
+        {
+          p_subscription_id: subscriptionRow.id,
+          p_delivery_key: key,
+          p_claim_token: claimToken,
+          p_error: "push_delivery_failed",
+        },
+        "recorded",
+      );
+    },
+    remove: () => removeSubscription(config, subscriptionRow.id),
+    getStatusCode: getPushStatusCode,
+  });
 };
 
 Deno.serve(async (request) => {
@@ -249,6 +338,18 @@ Deno.serve(async (request) => {
       removed: 0,
       failed: 0,
       invalid: 0,
+    };
+    const sourceDigestCache = new Map<string, Promise<string | null>>();
+    const getRemoteSourceDigest = (userId: string) => {
+      const existing = sourceDigestCache.get(userId);
+
+      if (existing) {
+        return existing;
+      }
+
+      const pending = fetchRemoteNotificationSourceDigest(config, userId);
+      sourceDigestCache.set(userId, pending);
+      return pending;
     };
 
     for (const subscription of subscriptions) {
@@ -295,6 +396,34 @@ Deno.serve(async (request) => {
         continue;
       }
 
+      if (!summary.sourceDigest) {
+        results.skipped += 1;
+        await updateSubscription(config, subscription.id, {
+          last_error: "stale_task_summary",
+        });
+        continue;
+      }
+
+      let remoteSourceDigest: string | null;
+
+      try {
+        remoteSourceDigest = await getRemoteSourceDigest(subscription.user_id);
+      } catch {
+        results.failed += 1;
+        await updateSubscription(config, subscription.id, {
+          last_error: "source_read_failed",
+        });
+        continue;
+      }
+
+      if (!isPushSummaryFresh(summary, remoteSourceDigest)) {
+        results.skipped += 1;
+        await updateSubscription(config, subscription.id, {
+          last_error: "stale_task_summary",
+        });
+        continue;
+      }
+
       const result = await deliverSubscription(
         config,
         subscription,
@@ -307,7 +436,7 @@ Deno.serve(async (request) => {
         results.sent += 1;
       } else if (result === "removed") {
         results.removed += 1;
-      } else if (["empty", "already_delivered"].includes(result)) {
+      } else if (["empty", "already_claimed"].includes(result)) {
         results.skipped += 1;
       } else if (result === "invalid") {
         results.invalid += 1;
