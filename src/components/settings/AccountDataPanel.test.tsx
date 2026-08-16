@@ -1,7 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountDataPanel } from "./AccountDataPanel";
-import { AppInfoPanel, NotificationSettingsPanel } from "./SettingsInfoPanels";
+import {
+  AppInfoPanel,
+  getBackgroundPushGuidance,
+  NotificationSettingsPanel,
+} from "./SettingsInfoPanels";
 import { ThemeSettingsPanel } from "./ThemeSettingsPanel";
 
 vi.mock("../../auth/useAuth", () => ({
@@ -81,7 +85,53 @@ describe("AccountDataPanel", () => {
 
     expect(markup).toContain("앱이 닫혀도 미완료 숙제 알림");
     expect(markup).toContain('id="daily-incomplete-notification-time"');
-    expect(markup).toContain("백그라운드 알림을 사용하려면");
+    expect(markup).toContain("notification-time-field");
+    expect(markup).toContain("notification-time-input");
+    expect(markup).toContain("한국 시간 기준");
+    expect(markup).not.toContain("HTTPS 배포");
+    expect(markup).not.toContain("VAPID");
+  });
+
+  it("translates background notification prerequisites into user-facing guidance", () => {
+    expect(
+      getBackgroundPushGuidance({
+        authMode: "guest",
+        hasUserId: true,
+        remoteSyncEnabled: true,
+        hasPublicKey: true,
+        browserSupported: true,
+      }),
+    ).toBe("앱을 닫은 뒤에도 알림을 받으려면 Google 계정을 연결해 주세요.");
+
+    expect(
+      getBackgroundPushGuidance({
+        authMode: "permanent",
+        hasUserId: true,
+        remoteSyncEnabled: false,
+        hasPublicKey: false,
+        browserSupported: true,
+      }),
+    ).toBe("앱을 닫은 뒤 알림은 아직 이 환경에서 사용할 수 없어요.");
+
+    expect(
+      getBackgroundPushGuidance({
+        authMode: "permanent",
+        hasUserId: true,
+        remoteSyncEnabled: true,
+        hasPublicKey: true,
+        browserSupported: false,
+      }),
+    ).toBe("현재 브라우저에서는 앱을 닫은 뒤 알림을 지원하지 않아요.");
+
+    expect(
+      getBackgroundPushGuidance({
+        authMode: "permanent",
+        hasUserId: true,
+        remoteSyncEnabled: true,
+        hasPublicKey: true,
+        browserSupported: true,
+      }),
+    ).toBeNull();
   });
 
   it("gives design, notification, and app info cards the same inner spacing", () => {

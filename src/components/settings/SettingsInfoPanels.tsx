@@ -27,6 +27,36 @@ import { getBackgroundNotificationTaskSummaries } from "../notifications/notific
 import { Badge, Card, SectionHeader, StatusMessage } from "../ui";
 import { Button, Field, Input } from "../ui";
 
+type BackgroundPushGuidanceOptions = {
+  authMode: "local-only" | "guest" | "permanent";
+  hasUserId: boolean;
+  remoteSyncEnabled: boolean;
+  hasPublicKey: boolean;
+  browserSupported: boolean;
+};
+
+export const getBackgroundPushGuidance = ({
+  authMode,
+  hasUserId,
+  remoteSyncEnabled,
+  hasPublicKey,
+  browserSupported,
+}: BackgroundPushGuidanceOptions) => {
+  if (!remoteSyncEnabled || !hasPublicKey) {
+    return "앱을 닫은 뒤 알림은 아직 이 환경에서 사용할 수 없어요.";
+  }
+
+  if (!browserSupported) {
+    return "현재 브라우저에서는 앱을 닫은 뒤 알림을 지원하지 않아요.";
+  }
+
+  if (authMode !== "permanent" || !hasUserId) {
+    return "앱을 닫은 뒤에도 알림을 받으려면 Google 계정을 연결해 주세요.";
+  }
+
+  return null;
+};
+
 export const NotificationSettingsPanel = () => {
   const auth = useAuth();
   const dailyIncompleteEnabled = useNotificationStore(
@@ -49,12 +79,20 @@ export const NotificationSettingsPanel = () => {
   const [permissionMessage, setPermissionMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
 
+  const backgroundPushSupported = isBackgroundPushSupported();
   const backgroundPushAvailable =
     remoteSyncEnvironment.enabled &&
     auth.mode === "permanent" &&
     Boolean(auth.userId) &&
     Boolean(webPushPublicKey) &&
-    isBackgroundPushSupported();
+    backgroundPushSupported;
+  const backgroundPushGuidance = getBackgroundPushGuidance({
+    authMode: auth.mode,
+    hasUserId: Boolean(auth.userId),
+    remoteSyncEnabled: remoteSyncEnvironment.enabled,
+    hasPublicKey: Boolean(webPushPublicKey),
+    browserSupported: backgroundPushSupported,
+  });
 
   const getCurrentBackgroundSummary = (date = new Date()) => {
     const taskState = useTaskStore.getState();
@@ -114,7 +152,7 @@ export const NotificationSettingsPanel = () => {
         setBackgroundPushEnabled(false);
         setDailyIncompleteEnabled(true);
         setPermissionMessage(
-          "현재는 앱이 열려 있을 때만 알림을 보냅니다. 백그라운드 알림은 Google 계정, HTTPS, Web Push 설정이 필요합니다.",
+          backgroundPushGuidance ?? "앱이 닫혀 있어도 알림을 보낼 수 있습니다.",
         );
       }
     } catch (error) {
@@ -206,15 +244,17 @@ export const NotificationSettingsPanel = () => {
         </label>
 
         <Field
+          className="notification-time-field"
           id="daily-incomplete-notification-time"
           label="알림 시간"
           hint={
             backgroundPushEnabled
-              ? "한국 시간 기준이며, 앱이 닫혀 있어도 알림을 보냅니다."
-              : "한국 시간 기준이며, 백그라운드 설정 전에는 앱이 열려 있을 때만 브라우저 알림을 보냅니다."
+              ? "한국 시간 기준 · 앱이 닫혀 있어도 알림을 보냅니다."
+              : "한국 시간 기준 · 앱이 열려 있을 때 브라우저 알림을 보냅니다."
           }
         >
           <Input
+            className="notification-time-input"
             id="daily-incomplete-notification-time"
             type="time"
             value={dailyIncompleteTime}
@@ -225,10 +265,10 @@ export const NotificationSettingsPanel = () => {
       </div>
 
       <StatusMessage variant="info">
-        알림은 완료한 숙제를 제외하고 캐릭터별 남은 일일 숙제를 한 번에 요약합니다.
-        {!backgroundPushAvailable ? (
+        완료한 숙제를 제외하고 캐릭터별 남은 일일 숙제를 한 번에 알려드려요.
+        {!backgroundPushAvailable && backgroundPushGuidance ? (
           <span className="mt-1 block">
-            백그라운드 알림을 사용하려면 Google 계정 연결, HTTPS 배포, 공개 VAPID 키 설정이 필요합니다.
+            {backgroundPushGuidance}
           </span>
         ) : null}
       </StatusMessage>

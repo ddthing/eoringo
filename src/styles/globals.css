@@ -1505,6 +1505,18 @@ input[type="number"] {
     transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
   }
 
+  .notification-time-field {
+    min-width: 0;
+  }
+
+  .notification-time-input {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    inline-size: 100%;
+  }
+
   .primary-button:disabled,
   .secondary-button:disabled {
     cursor: not-allowed;
