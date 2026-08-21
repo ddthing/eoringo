@@ -20,6 +20,7 @@ export const HousingListingsMemo = () => (
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-11 items-center text-primary underline decoration-primary/35 underline-offset-2 transition hover:text-primary/80"
+            aria-label="@ff14gingers, 새 탭에서 열림"
           >
             @ff14gingers
           </a>
@@ -31,6 +32,7 @@ export const HousingListingsMemo = () => (
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[rgb(var(--color-line-muted))] bg-primary px-3 text-xs font-bold text-primary-foreground transition hover:brightness-[0.98] active:scale-[0.98]"
+        aria-label="원본 시트 보기, 새 탭에서 열림"
       >
         원본 시트 보기
         <ExternalLink aria-hidden size={13} />

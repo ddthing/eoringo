@@ -1,4 +1,15 @@
-import { ImageIcon, Minus, Move, Plus, RotateCcw, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ImageIcon,
+  Minus,
+  Move,
+  Plus,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import { createPortal } from "react-dom";
 import {
   useCallback,
@@ -15,6 +26,7 @@ const OUTPUT_SIZE = 768;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2.6;
 const ZOOM_STEP = 0.01;
+const PAN_STEP = 16;
 
 export const IMAGE_LOAD_ERROR_MESSAGE =
   "이미지를 불러오지 못했습니다. 다른 사진을 선택해 주세요.";
@@ -199,6 +211,20 @@ export const CharacterImageEditor = ({
   const stopDragging = () => {
     dragStartRef.current = null;
     setIsDragging(false);
+  };
+
+  const moveImage = (x: number, y: number) => {
+    if (!naturalSize || isSaving) {
+      return;
+    }
+
+    setOffset((currentOffset) =>
+      clampOffset(
+        { x: currentOffset.x + x, y: currentOffset.y + y },
+        naturalSize,
+        zoom,
+      ),
+    );
   };
 
   const handleDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -392,7 +418,7 @@ export const CharacterImageEditor = ({
           <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-ink-muted">
             <span className="inline-flex items-center gap-1.5">
               <Move aria-hidden size={13} />
-              드래그해서 위치 조정
+              드래그하거나 버튼으로 위치 조정
             </span>
             <button
               type="button"
@@ -406,6 +432,49 @@ export const CharacterImageEditor = ({
               <RotateCcw aria-hidden size={12} />
               초기화
             </button>
+          </div>
+          <div className="mt-2 grid grid-cols-3 justify-items-center gap-1" role="group" aria-label="사진 위치 조정">
+            <span aria-hidden />
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-ui-sm border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted"
+              onClick={() => moveImage(0, -PAN_STEP)}
+              disabled={isSaving || isImageLoading || imageLoadFailed}
+              aria-label="사진 위로 이동"
+            >
+              <ChevronUp aria-hidden size={16} />
+            </button>
+            <span aria-hidden />
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-ui-sm border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted"
+              onClick={() => moveImage(-PAN_STEP, 0)}
+              disabled={isSaving || isImageLoading || imageLoadFailed}
+              aria-label="사진 왼쪽으로 이동"
+            >
+              <ChevronLeft aria-hidden size={16} />
+            </button>
+            <span className="sr-only">방향 버튼으로 사진 위치를 조정할 수 있습니다.</span>
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-ui-sm border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted"
+              onClick={() => moveImage(PAN_STEP, 0)}
+              disabled={isSaving || isImageLoading || imageLoadFailed}
+              aria-label="사진 오른쪽으로 이동"
+            >
+              <ChevronRight aria-hidden size={16} />
+            </button>
+            <span aria-hidden />
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-ui-sm border border-[rgb(var(--color-line-muted))] bg-card text-ink-muted"
+              onClick={() => moveImage(0, PAN_STEP)}
+              disabled={isSaving || isImageLoading || imageLoadFailed}
+              aria-label="사진 아래로 이동"
+            >
+              <ChevronDown aria-hidden size={16} />
+            </button>
+            <span aria-hidden />
           </div>
           <div className="flex items-center gap-2 text-ink-muted">
             <Minus aria-hidden size={14} />

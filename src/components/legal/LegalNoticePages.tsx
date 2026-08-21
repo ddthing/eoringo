@@ -1,4 +1,5 @@
 import { ExternalLink, ShieldCheck } from "lucide-react";
+import { useEffect } from "react";
 
 type LegalNoticePageProps = {
   kind: "privacy" | "terms";
@@ -16,9 +17,17 @@ const LegalLayout = ({
   title: string;
   updatedAt: string;
   children: React.ReactNode;
-}) => (
-  <div className="min-h-dvh bg-bg px-4 py-6 sm:py-10">
-    <main className="mx-auto max-w-2xl space-y-4">
+}) => {
+  useEffect(() => {
+    document.title = `${title} | 에오링고`;
+  }, [title]);
+
+  return (
+    <div className="min-h-dvh bg-bg px-4 py-6 sm:py-10">
+      <a className="ui-skip-link" href="#main-content">
+        본문으로 바로가기
+      </a>
+      <main id="main-content" className="mx-auto max-w-2xl space-y-4" tabIndex={-1}>
       <header className="flex items-center justify-between gap-3 px-1">
         <a className="ui-brand-mark shrink-0 no-underline" href="/" aria-label="에오링고 홈으로">
           에오링고
@@ -42,13 +51,14 @@ const LegalLayout = ({
       <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-2 text-xs font-bold text-ink-muted" aria-label="법적 안내">
         <a className="underline underline-offset-4 hover:text-ink" href="/privacy">개인정보 안내</a>
         <a className="underline underline-offset-4 hover:text-ink" href="/terms">서비스 이용 안내</a>
-        <a className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-ink" href={supportUrl} target="_blank" rel="noreferrer">
+        <a className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-ink" href={supportUrl} target="_blank" rel="noreferrer" aria-label="문의하기, 새 탭에서 열림">
           문의하기 <ExternalLink aria-hidden size={13} />
         </a>
       </nav>
-    </main>
-  </div>
-);
+      </main>
+    </div>
+  );
+};
 
 const NoticeSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section>

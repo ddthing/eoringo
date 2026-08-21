@@ -445,7 +445,7 @@ a {
 
 @media (hover: hover) and (pointer: fine) {
   .hover\:text-primary\/80:hover {
-    color: rgb(var(--color-accent-ink) / 0.8);
+    color: rgb(var(--color-accent-ink));
   }
 }
 
@@ -622,6 +622,28 @@ a {
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
+}
+
+.ui-skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-180%);
+  border: 1px solid rgb(var(--color-outline));
+  border-radius: var(--shape-sm);
+  background: rgb(var(--color-card));
+  color: rgb(var(--color-text));
+  padding: 0.65rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  box-shadow: var(--elevation-2);
+  transition: transform 160ms ease;
+}
+
+.ui-skip-link:focus,
+.ui-skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 button[aria-pressed] {
@@ -1724,11 +1746,6 @@ input[type="number"] {
   .home-dashboard {
     display: flex;
     flex-direction: column;
-  }
-
-  .home-dashboard-primary,
-  .home-dashboard-secondary {
-    display: contents;
   }
 
   .home-dashboard-hero {

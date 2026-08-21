@@ -100,23 +100,63 @@ export const CalendarAnniversaryManager = () => {
             기념일 이름
             <Input
               className="field mt-1 min-h-11"
+              id="anniversary-title"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                if (errors.title) {
+                  setErrors((current) => ({ ...current, title: "" }));
+                }
+              }}
+              invalid={Boolean(errors.title)}
+              aria-describedby={errors.title ? "anniversary-title-error" : undefined}
+              required
+              onInvalid={(event) => {
+                event.preventDefault();
+                setErrors((current) => ({
+                  ...current,
+                  title: "기념일 이름을 입력해주세요.",
+                }));
+              }}
               autoComplete="off"
               placeholder="예: 언약일…"
             />
           </label>
-          {errors.title ? <p className="text-xs text-[rgb(var(--color-danger))]" aria-live="polite">{errors.title}</p> : null}
+          {errors.title ? (
+            <p id="anniversary-title-error" className="text-xs text-[rgb(var(--color-danger))]" role="alert">
+              {errors.title}
+            </p>
+          ) : null}
           <label className="text-xs font-bold">
             날짜
             <AnniversaryDateField
               className="field mt-1 min-h-11"
+              id="anniversary-date"
               ariaLabel="기념일 날짜"
+              required
+              invalid={Boolean(errors.date)}
+              describedBy={errors.date ? "anniversary-date-error" : undefined}
+              onInvalid={(event) => {
+                event.preventDefault();
+                setErrors((current) => ({
+                  ...current,
+                  date: "날짜를 선택해주세요.",
+                }));
+              }}
               value={date}
-              onChange={setDate}
+              onChange={(value) => {
+                setDate(value);
+                if (errors.date) {
+                  setErrors((current) => ({ ...current, date: "" }));
+                }
+              }}
             />
           </label>
-          {errors.date ? <p className="text-xs text-[rgb(var(--color-danger))]" aria-live="polite">{errors.date}</p> : null}
+          {errors.date ? (
+            <p id="anniversary-date-error" className="text-xs text-[rgb(var(--color-danger))]" role="alert">
+              {errors.date}
+            </p>
+          ) : null}
           <div className="flex gap-2">
             <Button type="submit">
               {editingEventId ? "수정 저장" : "기념일 저장"}

@@ -68,6 +68,7 @@ export const CustomTaskList = ({ tasks, query = "", status = "enabled", resetFil
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [titleError, setTitleError] = useState("");
   const enabledCustomTasks = useMemo(
     () => customTasks.filter((task) => task.enabledByDefault),
     [customTasks],
@@ -90,6 +91,7 @@ export const CustomTaskList = ({ tasks, query = "", status = "enabled", resetFil
   const resetForm = () => {
     setDraft(emptyDraft);
     setEditingTaskId(null);
+    setTitleError("");
   };
 
   const closeForm = () => {
@@ -100,14 +102,18 @@ export const CustomTaskList = ({ tasks, query = "", status = "enabled", resetFil
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!draft.title.trim()) {
+    const trimmedTitle = draft.title.trim();
+
+    if (!trimmedTitle) {
+      setTitleError("숙제 이름을 입력해주세요.");
       return;
     }
 
+    setTitleError("");
     const payload = {
       ...draft,
       characterScoped: true,
-      title: draft.title.trim(),
+      title: trimmedTitle,
       description: draft.description.trim() || undefined,
       note: draft.note.trim() || undefined,
       maxCount: Math.max(1, draft.maxCount),
@@ -172,12 +178,31 @@ export const CustomTaskList = ({ tasks, query = "", status = "enabled", resetFil
           <input
             className="field"
             name="custom-task-title"
+            id="custom-task-title"
             aria-label="숙제 이름"
+            aria-invalid={titleError ? true : undefined}
+            aria-describedby={titleError ? "custom-task-title-error" : undefined}
+            required
+            onInvalid={(event) => {
+              event.preventDefault();
+              setTitleError("숙제 이름을 입력해주세요.");
+            }}
             autoComplete="off"
             value={draft.title}
-            onChange={(event) => setDraft((value) => ({ ...value, title: event.target.value }))}
+            onChange={(event) => {
+              const value = event.target.value;
+              setDraft((current) => ({ ...current, title: value }));
+              if (value.trim()) {
+                setTitleError("");
+              }
+            }}
             placeholder="새 커스텀 숙제"
           />
+          {titleError ? (
+            <p id="custom-task-title-error" className="text-xs font-semibold text-[rgb(var(--color-danger))]" role="alert">
+              {titleError}
+            </p>
+          ) : null}
           <input
             className="field"
             name="custom-task-description"

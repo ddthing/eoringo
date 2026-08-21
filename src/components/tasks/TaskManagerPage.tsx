@@ -127,7 +127,7 @@ export const TaskManagerPage = () => {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             disabled={isOrderEditing}
-            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted/60"
+            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted"
             placeholder="숙제 검색"
             aria-label="숙제 검색"
           />

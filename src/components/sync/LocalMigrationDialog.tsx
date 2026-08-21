@@ -73,7 +73,7 @@ export const LocalMigrationDialog = ({
   };
 
   return (
-    <section className="card space-y-4" role="dialog" aria-modal="true" aria-labelledby="migration-title">
+    <section className="card space-y-4" aria-labelledby="migration-title">
       <div>
         <p className="muted-label">데이터 안전 이전</p>
         <h2 id="migration-title" className="mt-1 text-lg font-bold text-ink">

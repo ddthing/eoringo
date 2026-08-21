@@ -28,7 +28,7 @@ export const HomeHero = () => {
           onClick={() => setIsCharacterSheetOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={isCharacterSheetOpen}
-          aria-label="캐릭터 전환 열기"
+          aria-label={`${character?.name ?? "나의 모험가"} 캐릭터 전환 열기`}
         >
           <CharacterAvatar
             imageId={character?.profileImageId}

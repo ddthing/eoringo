@@ -43,6 +43,7 @@ export const CharacterForm = ({
 }: CharacterFormProps) => {
   const [draft, setDraft] = useState<CharacterFormValues>(() => initialValues);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [nameError, setNameError] = useState("");
   const imageTransactionRef = useRef(
     createCharacterImageTransaction(initialValues.profileImageId),
   );
@@ -64,10 +65,18 @@ export const CharacterForm = ({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!draft.name.trim() || isFinalizing) {
+    if (isFinalizing) {
       return;
     }
 
+    const trimmedName = draft.name.trim();
+
+    if (!trimmedName) {
+      setNameError("캐릭터 이름을 입력해주세요.");
+      return;
+    }
+
+    setNameError("");
     setIsFinalizing(true);
     const previousTransaction = imageTransactionRef.current;
     const committed = commitCharacterImageTransaction(previousTransaction);
@@ -76,7 +85,7 @@ export const CharacterForm = ({
     try {
       await onSubmit({
         ...draft,
-        name: draft.name.trim(),
+        name: trimmedName,
         server: draft.server || DEFAULT_KOREAN_SERVER,
       });
       await cleanupImages(committed.cleanupImageIds);
@@ -112,14 +121,31 @@ export const CharacterForm = ({
       <input
         className="field"
         name="character-name"
+        id="character-name"
         aria-label="캐릭터 이름"
+        aria-invalid={nameError ? true : undefined}
+        aria-describedby={nameError ? "character-name-error" : undefined}
+        required
+        onInvalid={(event) => {
+          event.preventDefault();
+          setNameError("캐릭터 이름을 입력해주세요.");
+        }}
         autoComplete="off"
         value={draft.name}
-        onChange={(event) =>
-          setDraft((value) => ({ ...value, name: event.target.value }))
-        }
+        onChange={(event) => {
+          const value = event.target.value;
+          setDraft((current) => ({ ...current, name: value }));
+          if (value.trim()) {
+            setNameError("");
+          }
+        }}
         placeholder="닉네임"
       />
+      {nameError ? (
+        <p id="character-name-error" className="text-xs font-semibold text-[rgb(var(--color-danger))]" role="alert">
+          {nameError}
+        </p>
+      ) : null}
       <select
         className="field"
         name="character-server"

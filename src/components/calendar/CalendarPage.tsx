@@ -96,15 +96,22 @@ export const CalendarPage = () => {
         }))
       : housingLegendItems;
 
-  const monthCells = useMemo(() => {
+  const monthWeeks = useMemo(() => {
     const monthStart = startOfMonth(parseISO(todayKey));
     const monthEnd = endOfMonth(monthStart);
     const leadingBlankCount = getDay(monthStart);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd }).map((date) =>
       format(date, "yyyy-MM-dd"),
     );
+    const cells = [...Array<string | null>(leadingBlankCount).fill(null), ...days];
 
-    return [...Array<string | null>(leadingBlankCount).fill(null), ...days];
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+
+    return Array.from({ length: cells.length / 7 }, (_, weekIndex) =>
+      cells.slice(weekIndex * 7, weekIndex * 7 + 7),
+    );
   }, [todayKey]);
 
   const monthLabel = format(parseISO(todayKey), "M월");
@@ -236,56 +243,102 @@ export const CalendarPage = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 rounded-ui-xs bg-card-soft/80 px-1 py-2 text-center text-[10px] font-bold text-ink-muted">
-            {weekdays.map((weekday, index) => (
-              <span key={weekday} className={index === 0 ? "text-[rgb(var(--color-danger))]" : index === 6 ? "text-primary" : ""}>{weekday}</span>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {monthCells.map((dateKey, index) => {
-              if (!dateKey) {
-                return <div key={`blank-${index}`} className="min-h-14" />;
-              }
+          <table className="w-full table-fixed border-separate border-spacing-1 rounded-ui-xs bg-card-soft/80 px-1 py-2 text-center text-[10px] font-bold text-ink-muted">
+            <caption className="sr-only">
+              {monthLabel} {monthlyMode === "frontline" ? "전장" : "하우징"} 월간 달력
+            </caption>
+            <thead>
+              <tr>
+                {weekdays.map((weekday, index) => (
+                  <th
+                    key={weekday}
+                    scope="col"
+                    abbr={weekday + "요일"}
+                    aria-label={weekday + "요일"}
+                    className={[
+                      "h-7 font-bold",
+                      index === 0
+                        ? "text-[rgb(var(--color-danger))]"
+                        : index === 6
+                          ? "text-primary"
+                          : "",
+                    ].join(" ")}
+                  >
+                    {weekday}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {monthWeeks.map((week, weekIndex) => (
+                <tr key={"week-" + weekIndex}>
+                  {week.map((dateKey, dayIndex) => {
+                    if (!dateKey) {
+                      return (
+                        <td
+                          key={"blank-" + weekIndex + "-" + dayIndex}
+                          className="h-14 rounded-ui-xs"
+                          aria-hidden="true"
+                        />
+                      );
+                    }
 
-              const isToday = dateKey === todayKey;
-              const frontline = getFrontlineByDateKey(dateKey);
-              const housing = getHousingPhase(toKstDate(dateKey));
-              const dateAnniversaries = anniversaryEventsByDate[dateKey] ?? [];
-              const label =
-                monthlyMode === "frontline" ? frontline.shortName : phaseLabel[housing.phase];
-              const toneClassName = isToday
-                ? "border-primary bg-card text-ink ring-2 ring-primary/35"
-                : monthlyMode === "frontline"
-                  ? frontlineCellClassName[frontline.id]
-                  : housingCellClassName[housing.phase];
+                    const isToday = dateKey === todayKey;
+                    const frontline = getFrontlineByDateKey(dateKey);
+                    const housing = getHousingPhase(toKstDate(dateKey));
+                    const dateAnniversaries = anniversaryEventsByDate[dateKey] ?? [];
+                    const label =
+                      monthlyMode === "frontline" ? frontline.shortName : phaseLabel[housing.phase];
+                    const dateLabel =
+                      format(parseISO(dateKey), "M월 d일") +
+                      " " +
+                      (monthlyMode === "frontline"
+                        ? frontline.displayName
+                        : phaseLabel[housing.phase]) +
+                      (dateAnniversaries.length
+                        ? " · " + dateAnniversaries.map((event) => event.title).join(", ")
+                        : "");
+                    const toneClassName = isToday
+                      ? "border-primary bg-card text-ink ring-2 ring-primary/35"
+                      : monthlyMode === "frontline"
+                        ? frontlineCellClassName[frontline.id]
+                        : housingCellClassName[housing.phase];
 
-              return (
-                <div
-                  key={dateKey}
-                  className={[
-                    "calendar-cell min-h-14 rounded-ui-xs border px-1 py-1.5 text-center transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
-                    toneClassName,
-                  ].join(" ")}
-                  aria-current={isToday ? "date" : undefined}
-                  data-calendar-mode={monthlyMode}
-                  data-calendar-tone={monthlyMode === "frontline" ? frontline.id : housing.phase}
-                  data-today={isToday ? "true" : undefined}
-                  title={`${format(parseISO(dateKey), "M월 d일")} ${monthlyMode === "frontline" ? frontline.displayName : phaseLabel[housing.phase]}${dateAnniversaries.length ? ` · ${dateAnniversaries.map((event) => event.title).join(", ")}` : ""}`}
-                >
-                  <p className="text-[11px] font-bold text-ink">
-                    {format(parseISO(dateKey), "d")}
-                  </p>
-                  <p className="mt-1 truncate text-xs font-bold">{label}</p>
-                  {dateAnniversaries.length ? (
-                    <span className="mt-1 inline-flex max-w-full items-center justify-center gap-1 truncate text-[10px] font-extrabold text-primary">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
-                      {dateAnniversaries.length > 1 ? `${dateAnniversaries.length}개` : "기념"}
-                    </span>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
+                    return (
+                      <td
+                        key={dateKey}
+                        className="p-0 align-top"
+                        aria-current={isToday ? "date" : undefined}
+                        aria-label={dateLabel}
+                      >
+                        <div
+                          className={[
+                            "calendar-cell min-h-14 rounded-ui-xs border px-1 py-1.5 text-center transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
+                            toneClassName,
+                          ].join(" ")}
+                          data-calendar-mode={monthlyMode}
+                          data-calendar-tone={monthlyMode === "frontline" ? frontline.id : housing.phase}
+                          data-today={isToday ? "true" : undefined}
+                          title={dateLabel}
+                        >
+                          <p className="text-[11px] font-bold text-ink">
+                            {format(parseISO(dateKey), "d")}
+                          </p>
+                          <p className="mt-1 truncate text-xs font-bold">{label}</p>
+                          {dateAnniversaries.length ? (
+                            <span className="mt-1 inline-flex max-w-full items-center justify-center gap-1 truncate text-[10px] font-extrabold text-primary">
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                              {dateAnniversaries.length > 1 ? dateAnniversaries.length + "개" : "기념"}
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
