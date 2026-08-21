@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(17);
 
 select ok(
   (select relrowsecurity and relforcerowsecurity
