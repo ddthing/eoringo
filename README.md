@@ -8,7 +8,7 @@
 
 에오링고는 “오늘 무엇을 해야 하지?”를 다시 검색하는 시간을 줄이고, 지금 체크할 숙제와 중요한 일정을 한 화면에 보여주는 개인용 루틴 도구입니다.
 
-## 마케팅 관점과 개발자 자문의 합의
+## 제품과 기술의 기준
 
 | 질문 | 제품·기술의 답 |
 | --- | --- |
@@ -136,7 +136,7 @@ pnpm run check
 pnpm run supabase:start
 pnpm run supabase:reset
 pnpm run test:db
-pnpm run test-local-migration
+pnpm run test:migration-local
 pnpm run supabase:stop
 ```
 
@@ -239,3 +239,51 @@ tools/           Codex orchestrator
 - [백업과 복원 운영 문서](docs/operations/backup-and-restore.md)
 - [Web Push 알림 운영 문서](docs/web-push-notifications.md)
 - [기능 설계 문서](docs/superpowers/specs/)
+
+## 현재 운영 기준
+
+운영 설정은 저장소 코드와 Supabase Dashboard가 함께 구성합니다. 아래 값은 2026-08-21 운영 점검 기준입니다.
+
+| 항목 | 상태 | 이유 |
+| --- | --- | --- |
+| Anonymous sign-ins | 활성화 | 계정 없이 시작하고 로컬 데이터를 선택적으로 동기화 |
+| Google provider | 활성화 | 게스트 세션에 영구 identity 연결 |
+| Manual linking | 활성화 | 익명 사용자와 Google identity의 안전한 연결 |
+| Email provider | 비활성화 | 사용하지 않는 비밀번호 인증 표면 제거 |
+| Turnstile CAPTCHA | 활성화 | 익명 가입 남용 방지 |
+| Anonymous rate limit | IP당 시간당 30회 | Auth endpoint burst 제한 |
+
+운영 provider와 rate limit은 Supabase Dashboard에서 확인합니다. 로컬 <code>supabase/config.toml</code>은 개발·CI 재현성을 위한 설정이며, 운영 secret을 담지 않습니다.
+
+## 오픈소스 고지와 출처
+
+아래 목록은 <code>package.json</code>에 선언된 직접 의존성 기준입니다. 설치 버전은 <code>package.json</code>과 <code>pnpm-lock.yaml</code>을 기준으로 하며, 간접 의존성은 lockfile과 각 패키지의 라이선스를 따릅니다.
+
+### 런타임
+
+| 패키지 | 사용 목적 | 라이선스 | 공식 출처 |
+| --- | --- | --- | --- |
+| React / React DOM | UI 렌더링과 컴포넌트 | MIT | [react/react](https://github.com/facebook/react) |
+| React Router DOM | 클라이언트 라우팅 | MIT | [remix-run/react-router](https://github.com/remix-run/react-router) |
+| Zustand | 로컬 상태 관리 | MIT | [pmndrs/zustand](https://github.com/pmndrs/zustand) |
+| <code>@supabase/supabase-js</code> | Auth·Postgres·Storage·Edge Function client | MIT | [supabase/supabase-js](https://github.com/supabase/supabase-js) |
+| date-fns | 날짜·주기 계산 | MIT | [date-fns/date-fns](https://github.com/date-fns/date-fns) |
+| date-fns-tz | IANA timezone 계산 | MIT | [marnusw/date-fns-tz](https://github.com/marnusw/date-fns-tz) |
+| Zod | 입력·데이터 schema 검증 | MIT | [colinhacks/zod](https://github.com/colinhacks/zod) |
+| Lucide React | 아이콘 | ISC | [lucide-icons/lucide](https://github.com/lucide-icons/lucide) |
+
+### 빌드·테스트·개발 도구
+
+| 패키지 | 사용 목적 | 라이선스 | 공식 출처 |
+| --- | --- | --- | --- |
+| Vite / <code>@vitejs/plugin-react</code> | 개발 서버·번들·React transform | MIT | [vitejs/vite](https://github.com/vitejs/vite) · [vitejs/vite-plugin-react](https://github.com/vitejs/vite-plugin-react) |
+| TypeScript | 정적 타입 검사 | Apache-2.0 | [microsoft/TypeScript](https://github.com/microsoft/TypeScript) |
+| Vitest | 단위·통합 테스트 | MIT | [vitest-dev/vitest](https://github.com/vitest-dev/vitest) |
+| Tailwind CSS | utility-first 스타일링 | MIT | [tailwindlabs/tailwindcss](https://github.com/tailwindlabs/tailwindcss) |
+| PostCSS / Autoprefixer | CSS 변환·브라우저 prefix | MIT | [postcss/postcss](https://github.com/postcss/postcss) · [postcss/autoprefixer](https://github.com/postcss/autoprefixer) |
+| Supabase CLI | 로컬 DB·migration·Edge Function 도구 | MIT | [supabase/cli](https://github.com/supabase/cli) |
+| <code>@types/node</code>, <code>@types/react</code>, <code>@types/react-dom</code> | TypeScript 타입 정의 | MIT | [DefinitelyTyped/DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped) |
+
+Cloudflare Pages, Supabase, Cloudflare Turnstile, Google OAuth와 Web Push는 오픈소스 패키지와 구분되는 외부 서비스·플랫폼입니다. 운영 약관과 서비스 문서는 각 공급자의 공식 문서를 따릅니다.
+
+오픈소스 라이선스 원문은 각 공식 저장소와 설치된 패키지의 <code>LICENSE</code> 파일을 기준으로 합니다. 패키지를 업데이트하거나 배포 방식을 바꿀 때는 라이선스와 보안 공지를 함께 재검토합니다.
