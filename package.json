@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build --configLoader runner",
+    "build": "tsc -b && vite build --configLoader runner && node scripts/prerender-public-pages.mjs",
     "check": "pnpm run test && pnpm run orchestrator:typecheck && pnpm run orchestrator:test && pnpm run orchestrator:build && pnpm run verify:security && pnpm run verify:free-tier && pnpm run build && pnpm run verify:bundle",
     "preview": "vite preview",
     "supabase:reset": "supabase db reset --local",

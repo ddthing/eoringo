@@ -5,6 +5,15 @@ import {
   legacyCharactersPath,
 } from "./navigation";
 import { HomeDashboard } from "../components/home/HomeDashboard";
+import {
+  CalendarGuidePage,
+  GettingStartedGuidePage,
+  GuideIndexPage,
+  RoutineGuidePage,
+  TaskCatalogGuidePage,
+  AboutPage,
+} from "../components/guides/GuidePages";
+import { DemoPage } from "../components/demo/DemoPage";
 import { PrivacyNoticePage, TermsNoticePage } from "../components/legal/LegalNoticePages";
 import { App } from "./App";
 
@@ -13,6 +22,13 @@ const CharactersCompatibilityRedirect = () => (
 );
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
+  { path: "/guide", element: <GuideIndexPage /> },
+  { path: "/guide/routine", element: <RoutineGuidePage /> },
+  { path: "/guide/getting-started", element: <GettingStartedGuidePage /> },
+  { path: "/guide/calendar", element: <CalendarGuidePage /> },
+  { path: "/guide/task-catalog", element: <TaskCatalogGuidePage /> },
+  { path: "/about", element: <AboutPage /> },
+  { path: "/demo", element: <DemoPage /> },
   { path: "/privacy", element: <PrivacyNoticePage /> },
   { path: "/terms", element: <TermsNoticePage /> },
   {

@@ -13,7 +13,6 @@ export const HomeDashboard = () => (
     <div className="home-dashboard grid gap-3 px-0 min-[420px]:gap-3.5 min-[420px]:px-0.5 md:px-2 lg:grid-cols-12 lg:gap-4">
       <header className="home-dashboard-header lg:col-span-12">
         <div className="home-dashboard-header-copy">
-          <p className="home-dashboard-kicker">오늘의 운영판</p>
           <h1 className="home-dashboard-title">오늘의 루틴</h1>
           <p className="home-dashboard-description">먼저 끝낼 숙제와 중요한 일정을 한눈에 확인하세요.</p>
         </div>

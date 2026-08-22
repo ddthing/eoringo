@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { formatKoreanDate } from "../../lib/date";
 import { useMinuteNow } from "../../hooks/useMinuteNow";
 import { BottomNav } from "./BottomNav";
+import { setPageMetadata } from "../../lib/seo";
 
 const CurrentDatePill = () => {
   const now = useMinuteNow();
@@ -73,7 +74,12 @@ export const AppShell = ({ children }: PropsWithChildren) => {
   const previousPathnameRef = useRef(location.pathname);
 
   useEffect(() => {
-    document.title = pageContext.title;
+    setPageMetadata({
+      title: pageContext.title,
+      description: `${pageContext.copy}. 에오링고 앱에서 캐릭터별 파이널판타지14 루틴을 기록하세요.`,
+      canonicalPath: location.pathname,
+      robots: "noindex,nofollow",
+    });
 
     if (previousPathnameRef.current !== location.pathname) {
       requestAnimationFrame(() => mainRef.current?.focus({ preventScroll: true }));

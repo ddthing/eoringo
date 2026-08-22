@@ -2,7 +2,7 @@
 
 > 파이널판타지14 플레이어가 매일·매주 해야 할 일을 잊지 않고, 캐릭터별 루틴을 가볍게 기록하는 로컬 우선 대시보드입니다.
 
-[운영 페이지](https://eoringo.pages.dev/) · [개인정보 안내](https://eoringo.pages.dev/privacy) · [서비스 이용 안내](https://eoringo.pages.dev/terms) · [문의하기](https://coner.luv3r.me/)
+[운영 페이지](https://eoringo.pages.dev/) · [공개 가이드](https://eoringo.pages.dev/guide) · [운영 원칙](https://eoringo.pages.dev/about) · [개인정보 안내](https://eoringo.pages.dev/privacy) · [서비스 이용 안내](https://eoringo.pages.dev/terms) · [문의하기](https://coner.luv3r.me/)
 
 ## 제품 한 문장
 
@@ -40,6 +40,13 @@
 | `/tasks/manage` | 기본·커스텀 숙제, 초기화 규칙, 순서 관리 |
 | `/calendar` | 전장·하우징·기념일 달력 |
 | `/settings` | 캐릭터, 테마, 알림, 계정, 백업·복원 |
+| `/guide` | 검색 방문자를 위한 공개 가이드 허브 |
+| `/guide/routine` | 일일·주간·18시간 루틴 설계 문서 |
+| `/guide/getting-started` | 첫 설정·백업·Google 연결 안내 |
+| `/guide/calendar` | 전장·하우징 일정 해석 문서 |
+| `/guide/task-catalog` | 기본 숙제 항목의 리셋·횟수 기준표 |
+| `/about` | 제작 목적·출처·편집·수정 원칙 |
+| `/demo` | 샘플 데이터로 로그인 없이 핵심 흐름 체험(noindex) |
 | `/privacy` | 개인정보 안내 |
 | `/terms` | 서비스 이용 안내 |
 | `/auth/callback` | Google OAuth 콜백 |
@@ -176,6 +183,8 @@ Edge Function은 다음 경로에 있습니다.
 - SPA fallback: `public/_redirects`
 - 보안 헤더: `public/_headers`
 
+`pnpm run build`는 Vite 번들 뒤에 `scripts/prerender-public-pages.mjs`를 실행합니다. 공개 가이드·운영 원칙·법적 안내·체험 화면은 정적 HTML을 함께 생성해 JavaScript를 실행하지 않아도 본문·제목·canonical·robots 신호를 확인할 수 있게 합니다. 브라우저가 시작되면 임시 정적 셸을 제거하고 React 라우터가 같은 화면을 이어서 렌더링합니다.
+
 배포 전 최소 절차:
 
 ```bash
@@ -287,3 +296,17 @@ tools/           Codex orchestrator
 Cloudflare Pages, Supabase, Cloudflare Turnstile, Google OAuth와 Web Push는 오픈소스 패키지와 구분되는 외부 서비스·플랫폼입니다. 운영 약관과 서비스 문서는 각 공급자의 공식 문서를 따릅니다.
 
 오픈소스 라이선스 원문은 각 공식 저장소와 설치된 패키지의 <code>LICENSE</code> 파일을 기준으로 합니다. 패키지를 업데이트하거나 배포 방식을 바꿀 때는 라이선스와 보안 공지를 함께 재검토합니다.
+
+## 검색·애드센스 콘텐츠 운영
+
+에오링고는 개인 기록을 위한 앱 화면과 검색 방문자가 읽는 공개 콘텐츠를 분리합니다. Google의 “가치가 별로 없는 콘텐츠” 피드백에 대응할 때는 문장 수를 기계적으로 늘리지 않고, 실제 플레이어가 판단에 사용할 수 있는 원문·출처·갱신일을 함께 제공합니다.
+
+- 검색 대상 공개 문서: [가이드 허브](https://eoringo.pages.dev/guide), [루틴 설계 가이드](https://eoringo.pages.dev/guide/routine), [처음 사용하기](https://eoringo.pages.dev/guide/getting-started), [일정 해석 가이드](https://eoringo.pages.dev/guide/calendar), [숙제 항목 사전](https://eoringo.pages.dev/guide/task-catalog), [운영 원칙](https://eoringo.pages.dev/about), 개인정보 안내, 서비스 이용 안내
+- 공개 문서의 초기 HTML: Vite 빌드 후 공개 경로별 본문을 정적 HTML로 사전 렌더링합니다. `/demo`는 실제 사용자 콘텐츠가 아닌 샘플 상호작용이므로 `noindex,nofollow`로 유지합니다.
+- 검색 제외 앱 화면: `/`, `/tasks`, `/tasks/manage`, `/calendar`, `/settings`, `/auth/*`는 사용자 행동·개인 기록 중심이므로 `noindex,nofollow`를 적용합니다.
+- 공개 문서 원칙: 에오링고 운영 주체, 실제 검토일, 독창적인 설명, 앱 데이터 모델의 범위, 외부 데이터의 출처와 한계를 명시합니다.
+- 탐색 원칙: 공개 문서 사이에 상호 링크를 제공하고, 앱으로 이동하는 CTA와 개인정보·서비스 이용 안내를 모든 공개 문서에서 확인할 수 있게 합니다.
+- 크롤링 파일: `public/robots.txt`는 사이트맵을 안내하고, `public/sitemap.xml`에는 검색 대상 공개 문서만 등록합니다.
+- 광고 배치 원칙: 체크·탐색·설정이 주목적인 앱 화면에 광고를 우선 배치하지 않습니다. 광고를 게재할 경우에도 게시자 콘텐츠가 광고보다 먼저 이해되도록 별도 검토합니다.
+
+정책 확인 출처: [Google 게시자 정책](https://support.google.com/adsense/answer/10502938?hl=ko), [AdSense 사이트 준비 요건](https://support.google.com/adsense/answer/7299563?hl=ko), [Google의 사용자 중심 콘텐츠 안내](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), [부가 가치가 전혀 또는 거의 없는 빈약한 콘텐츠](https://support.google.com/webmasters/answer/9044175#thin-content). 정책 준수와 애드센스 승인 여부는 Google의 실제 심사 결과를 따르며, 코드 변경만으로 승인을 보장하지 않습니다.

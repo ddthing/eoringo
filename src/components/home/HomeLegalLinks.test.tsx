@@ -7,6 +7,9 @@ describe("HomeLegalLinks", () => {
     const markup = renderToStaticMarkup(<HomeLegalLinks />);
 
     expect(markup).toContain('aria-label="법적 안내"');
+    expect(markup).toContain('href="/guide"');
+    expect(markup).toContain('href="/about"');
+    expect(markup).toContain('href="/demo"');
     expect(markup).toContain('href="/privacy"');
     expect(markup).toContain('href="/terms"');
     expect(markup).not.toContain("supabase.co");

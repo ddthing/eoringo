@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /tasks/manage
+
+Sitemap: https://eoringo.pages.dev/sitemap.xml
