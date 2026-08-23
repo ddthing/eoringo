@@ -23,21 +23,27 @@ export const HomeDashboard = () => (
       <div className="home-dashboard-hero min-w-0 lg:col-span-12">
         <HomeHero />
       </div>
-      <div className="home-dashboard-today min-w-0 lg:col-span-7 lg:col-start-1 lg:row-start-3">
-        <HomeTodayCheck />
-      </div>
-      <div className="home-dashboard-progress min-w-0 lg:col-span-5 lg:col-start-8 lg:row-start-3">
-        <HomeProgress />
-      </div>
-      <div className="home-dashboard-status min-w-0 grid grid-cols-2 items-stretch gap-3 max-[360px]:grid-cols-1 md:gap-3.5 lg:col-span-5 lg:col-start-8 lg:row-start-4 lg:gap-4">
-        <HomePvPWidget />
-        <HomeHousingWidget />
-      </div>
-      <div className="home-dashboard-memo min-w-0 lg:col-span-7 lg:col-start-1 lg:row-start-4">
-        <HomeMemo />
-      </div>
-      <div className="home-dashboard-dday min-w-0 lg:col-span-5 lg:col-start-8 lg:row-start-5">
-        <HomeDday />
+      <div className="home-dashboard-columns min-w-0 lg:col-span-12">
+        <div className="home-dashboard-column home-dashboard-column-primary min-w-0">
+          <div className="home-dashboard-today min-w-0">
+            <HomeTodayCheck />
+          </div>
+          <div className="home-dashboard-memo min-w-0">
+            <HomeMemo />
+          </div>
+        </div>
+        <div className="home-dashboard-column home-dashboard-column-secondary min-w-0">
+          <div className="home-dashboard-progress min-w-0">
+            <HomeProgress />
+          </div>
+          <div className="home-dashboard-status min-w-0 grid grid-cols-2 items-stretch gap-3 max-[360px]:grid-cols-1 md:gap-3.5 lg:gap-4">
+            <HomePvPWidget />
+            <HomeHousingWidget />
+          </div>
+          <div className="home-dashboard-dday min-w-0">
+            <HomeDday />
+          </div>
+        </div>
       </div>
     </div>
   </HomeDashboardTasksProvider>
