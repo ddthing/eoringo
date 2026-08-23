@@ -66,8 +66,17 @@ describe("AccountDataPanel", () => {
 
     expect(markup).toContain("도움을 주신 분들");
     expect(markup.match(/크레딧/g)).toHaveLength(1);
+    expect(markup).toContain('aria-label="서비스 안내"');
+    expect(markup).toContain('href="/guide"');
+    expect(markup).toContain('href="/about"');
+    expect(markup).toContain('href="/demo"');
     expect(markup).toContain('href="/privacy"');
     expect(markup).toContain('href="/terms"');
+    expect(markup).toContain("사용 가이드");
+    expect(markup).toContain("운영 원칙");
+    expect(markup).toContain("로그인 없이 체험");
+    expect(markup).toContain("개인정보 처리방침");
+    expect(markup).toContain("서비스 이용약관");
     expect(markup).not.toContain('data-variant="success"');
     expect(markup).toContain("문의하기");
     expect(markup).not.toContain("데이터는 직접 백업하거나 초기화하기 전까지");

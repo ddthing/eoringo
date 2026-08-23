@@ -1,6 +1,5 @@
 import { HomeDday } from "./HomeDday";
 import { HomeHero } from "./HomeHero";
-import { HomeLegalLinks } from "./HomeLegalLinks";
 import { HomeHousingWidget } from "./HomeHousingWidget";
 import { HomeMemo } from "./HomeMemo";
 import { HomeProgress } from "./HomeProgress";
@@ -39,9 +38,6 @@ export const HomeDashboard = () => (
       </div>
       <div className="home-dashboard-dday min-w-0 lg:col-span-5 lg:col-start-8 lg:row-start-5">
         <HomeDday />
-      </div>
-      <div className="home-dashboard-legal lg:col-span-12">
-        <HomeLegalLinks />
       </div>
     </div>
   </HomeDashboardTasksProvider>

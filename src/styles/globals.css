@@ -1772,10 +1772,6 @@ input[type="number"] {
     order: 6;
   }
 
-  .home-dashboard-legal {
-    order: 7;
-  }
-
   .ui-task-filter-reset {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

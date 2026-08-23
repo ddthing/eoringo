@@ -406,9 +406,28 @@ export const AppInfoPanel = () => (
       <p className="mt-2 text-sm font-bold text-ink">도움을 주신 분들: ADD, 꼭짓점, 미여워, KILL</p>
       <p className="mt-1 text-xs font-semibold text-ink-muted">특별히 감사한 분: 루피</p>
     </div>
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-primary">
-      <a className="underline underline-offset-4" href="/privacy">개인정보 안내</a>
-      <a className="underline underline-offset-4" href="/terms">서비스 이용 안내</a>
+    <div className="space-y-3">
+      <p className="text-xs font-bold text-primary">서비스 안내</p>
+      <nav
+        className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-ink-muted"
+        aria-label="서비스 안내"
+      >
+        <a className="underline underline-offset-4 hover:text-ink" href="/guide">
+          사용 가이드
+        </a>
+        <a className="underline underline-offset-4 hover:text-ink" href="/about">
+          운영 원칙
+        </a>
+        <a className="underline underline-offset-4 hover:text-ink" href="/demo">
+          로그인 없이 체험
+        </a>
+        <a className="underline underline-offset-4 hover:text-ink" href="/privacy">
+          개인정보 처리방침
+        </a>
+        <a className="underline underline-offset-4 hover:text-ink" href="/terms">
+          서비스 이용약관
+        </a>
+      </nav>
     </div>
     <a
       href="https://coner.luv3r.me/"
