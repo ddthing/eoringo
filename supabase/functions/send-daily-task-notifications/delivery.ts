@@ -1,3 +1,5 @@
+import { withTimeout } from "../_shared/asyncControl.ts";
+
 export type PushDeliveryResult = "sent" | "removed" | "failed" | "already_claimed";
 
 type PushDeliveryOptions = {
@@ -7,6 +9,7 @@ type PushDeliveryOptions = {
   markFailure: () => Promise<void>;
   remove: () => Promise<void>;
   getStatusCode: (error: unknown) => number | null;
+  timeoutMs?: number;
 };
 
 export const deliverPushNotification = async ({
@@ -16,11 +19,12 @@ export const deliverPushNotification = async ({
   markFailure,
   remove,
   getStatusCode,
+  timeoutMs = 8_000,
 }: PushDeliveryOptions): Promise<PushDeliveryResult> => {
   let claimed: boolean;
 
   try {
-    claimed = await claim();
+    claimed = await withTimeout(claim, timeoutMs, "push_claim");
   } catch {
     return "failed";
   }
@@ -30,15 +34,15 @@ export const deliverPushNotification = async ({
   }
 
   try {
-    await send();
-    await finalize();
+    await withTimeout(send, timeoutMs, "push_send");
+    await withTimeout(finalize, timeoutMs, "push_finalize");
     return "sent";
   } catch (error) {
     const statusCode = getStatusCode(error);
 
     if (statusCode === 404 || statusCode === 410) {
       try {
-        await remove();
+        await withTimeout(remove, timeoutMs, "push_remove");
         return "removed";
       } catch {
         // Fall through and retain the subscription with a delivery error.
@@ -46,7 +50,7 @@ export const deliverPushNotification = async ({
     }
 
     try {
-      await markFailure();
+      await withTimeout(markFailure, timeoutMs, "push_failure_record");
     } catch {
       // The caller still needs the failed result if the error state cannot be stored.
     }

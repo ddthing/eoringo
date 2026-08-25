@@ -1,3 +1,4 @@
+import { fetchWithTimeout, withTimeout } from "../_shared/asyncControl.ts";
 import { resolveAllowedOrigins, isAllowedOrigin } from "../_shared/cors.ts";
 import {
   buildCharacterImagePath,
@@ -12,6 +13,7 @@ import {
 } from "../_shared/imageValidation.ts";
 
 const maxRequestBytes = 720 * 1024;
+const externalRequestTimeoutMs = 8_000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -52,15 +54,33 @@ const getConfig = () => {
 };
 
 const getUser = async (supabaseUrl: string, anonKey: string, authorization: string) => {
-  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: anonKey, Authorization: authorization },
-  });
+  let response: Response;
+
+  try {
+    response = await fetchWithTimeout(
+      `${supabaseUrl}/auth/v1/user`,
+      { headers: { apikey: anonKey, Authorization: authorization } },
+      externalRequestTimeoutMs,
+    );
+  } catch {
+    return null;
+  }
 
   if (!response.ok) {
     return null;
   }
 
-  const user: unknown = await response.json();
+  let user: unknown;
+
+  try {
+    user = await withTimeout(
+      () => response.json(),
+      externalRequestTimeoutMs,
+      "auth_user_body_read",
+    );
+  } catch {
+    return null;
+  }
 
   if (!isRecord(user) || !isUserId(user.id) || user.is_anonymous === true) {
     return null;
@@ -75,29 +95,46 @@ type ListedObject = {
 };
 
 const listUserObjects = async (supabaseUrl: string, serviceRoleKey: string, userId: string) => {
-  const response = await fetch(
-    `${supabaseUrl}/storage/v1/object/list/${encodeURIComponent(characterImageBucket)}`,
-    {
-      method: "POST",
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-        "Content-Type": "application/json",
+  let response: Response;
+
+  try {
+    response = await fetchWithTimeout(
+      `${supabaseUrl}/storage/v1/object/list/${encodeURIComponent(characterImageBucket)}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prefix: `${userId}/`,
+          limit: maxCharacterImagesPerUser + 1,
+          offset: 0,
+          sortBy: { column: "name", order: "asc" },
+        }),
       },
-      body: JSON.stringify({
-        prefix: `${userId}/`,
-        limit: maxCharacterImagesPerUser + 1,
-        offset: 0,
-        sortBy: { column: "name", order: "asc" },
-      }),
-    },
-  );
+      externalRequestTimeoutMs,
+    );
+  } catch {
+    return null;
+  }
 
   if (!response.ok) {
     return null;
   }
 
-  const values: unknown = await response.json();
+  let values: unknown;
+
+  try {
+    values = await withTimeout(
+      () => response.json(),
+      externalRequestTimeoutMs,
+      "storage_list_body_read",
+    );
+  } catch {
+    return null;
+  }
 
   if (!Array.isArray(values)) {
     return null;
@@ -184,7 +221,17 @@ Deno.serve(async (request) => {
     return jsonResponse(413, { code: "payload_too_large" }, origin);
   }
 
-  const rawBody = await request.text();
+  let rawBody: string;
+
+  try {
+    rawBody = await withTimeout(
+      () => request.text(),
+      externalRequestTimeoutMs,
+      "image_request_body_read",
+    );
+  } catch {
+    return jsonResponse(408, { code: "request_timeout" }, origin);
+  }
 
   if (new TextEncoder().encode(rawBody).byteLength > maxRequestBytes) {
     return jsonResponse(413, { code: "payload_too_large" }, origin);
@@ -247,20 +294,27 @@ Deno.serve(async (request) => {
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/");
-  const uploadResponse = await fetch(
-    `${config.supabaseUrl}/storage/v1/object/${encodeURIComponent(characterImageBucket)}/${encodedPath}`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.serviceRoleKey,
-        Authorization: `Bearer ${config.serviceRoleKey}`,
-        "Content-Type": inspection.contentType,
-        "Cache-Control": "31536000",
-        "x-upsert": "true",
+  let uploadResponse: Response;
+
+  try {
+    uploadResponse = await fetchWithTimeout(
+      `${config.supabaseUrl}/storage/v1/object/${encodeURIComponent(characterImageBucket)}/${encodedPath}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: config.serviceRoleKey,
+          Authorization: `Bearer ${config.serviceRoleKey}`,
+          "Content-Type": inspection.contentType,
+          "Cache-Control": "31536000",
+          "x-upsert": "true",
+        },
+        body: bytes,
       },
-      body: bytes,
-    },
-  );
+      externalRequestTimeoutMs,
+    );
+  } catch {
+    return jsonResponse(502, { code: "storage_unavailable" }, origin);
+  }
 
   if (!uploadResponse.ok) {
     return jsonResponse(502, { code: "storage_unavailable" }, origin);

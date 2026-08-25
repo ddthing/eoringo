@@ -62,6 +62,11 @@ describe("remote domain codecs", () => {
         [characterId]: [{ id: "event-1", title: "Event", date: "tomorrow" }],
       },
     })).toThrow();
+    expect(() => ddayCodec.parse({
+      eventsByCharacter: {
+        [characterId]: [{ id: "event-1", title: "Event", date: "2026-02-29" }],
+      },
+    })).toThrow();
     expect(() => allowanceCodec.parse({ value: Number.POSITIVE_INFINITY, lastAccrualKey: "x" })).toThrow();
   });
 

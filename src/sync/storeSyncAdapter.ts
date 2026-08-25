@@ -5,6 +5,7 @@ import { useHistoryStore } from "../stores/history/useHistoryStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
 import { useTaskStore } from "../stores/task/useTaskStore";
 import { documentCodecs, type DocumentType } from "./codecs";
+import { canonicalStringify } from "./codecs/common";
 import type { DocumentWrite, RemoteDocument } from "./documentRepository";
 
 export const remotelyPersistedDocumentTypes = [
@@ -80,6 +81,12 @@ export const hydrateStoreDocuments = (documents: RemoteDocument[]) => {
   }
 
   supported.forEach((document) => {
+    const current = captureStoreDocument(document.documentType as RemotelyPersistedDocumentType);
+
+    if (canonicalStringify(current.payload) === canonicalStringify(document.payload)) {
+      return;
+    }
+
     switch (document.documentType) {
       case "characters":
         useCharacterStore.setState(documentCodecs.characters.parse(document.payload));

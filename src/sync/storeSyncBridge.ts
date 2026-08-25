@@ -4,6 +4,7 @@ import { useDdayStore } from "../stores/dday/useDdayStore";
 import { useHistoryStore } from "../stores/history/useHistoryStore";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
 import { useTaskStore } from "../stores/task/useTaskStore";
+import { storageKeys } from "../lib/storage";
 import { canonicalStringify } from "./codecs/common";
 import type { DocumentWrite, RemoteDocument } from "./documentRepository";
 import type { SyncMutation } from "./mutationQueue";
@@ -18,9 +19,13 @@ type MutationQueueWriter = {
   upsertLatest: (mutation: SyncMutation) => SyncMutation[];
 };
 
+export type StoreSyncRequest = {
+  imageSyncRequired: boolean;
+};
+
 type StoreSyncBridgeOptions = {
   queue: MutationQueueWriter;
-  requestSync: () => void;
+  requestSync: (request: StoreSyncRequest) => void;
   deferStart?: boolean;
   now?: () => Date;
   createMutationId?: () => string;
@@ -31,6 +36,15 @@ type StoreSyncBridgeOptions = {
 
 const identityKey = (document: { documentType: string; characterId: string | null }) =>
   `${document.documentType}:${document.characterId ?? "account"}`;
+
+const storageKeyByDocumentType = {
+  characters: storageKeys.characters,
+  memo: storageKeys.weeklyMemo,
+  dday: storageKeys.dday,
+  allowance: storageKeys.allowances,
+  tasks: storageKeys.tasks,
+  history: storageKeys.history,
+} as const satisfies Record<RemotelyPersistedDocumentType, string>;
 
 export const createStoreSyncBridge = ({
   queue,
@@ -53,6 +67,37 @@ export const createStoreSyncBridge = ({
     ]),
   );
 
+  const enqueueDocument = (
+    documentType: RemotelyPersistedDocumentType,
+    force = false,
+  ) => {
+    const write = captureDocument(documentType);
+    const key = identityKey(write);
+    const serialized = canonicalStringify(write.payload);
+
+    if (!force && baseline.get(key) === serialized) {
+      return false;
+    }
+
+    baseline.set(key, serialized);
+    const remote = remoteIndex.get(key);
+    const timestamp = now().toISOString();
+    queue.upsertLatest({
+      mutationId: createMutationId(),
+      operation: remote ? "update" : "insert",
+      documentId: remote?.id ?? null,
+      documentType: write.documentType,
+      characterId: write.characterId,
+      payload: write.payload,
+      schemaVersion: write.schemaVersion,
+      expectedRevision: remote?.revision ?? null,
+      retryCount: 0,
+      createdAt: timestamp,
+      nextAttemptAt: timestamp,
+    });
+    return true;
+  };
+
   const captureChanges = () => {
     scheduled = false;
 
@@ -62,38 +107,12 @@ export const createStoreSyncBridge = ({
 
     const documentTypes = [...dirtyDocumentTypes];
     dirtyDocumentTypes.clear();
-    let queued = false;
-
-    documentTypes.forEach((documentType) => {
-      const write = captureDocument(documentType);
-      const key = identityKey(write);
-      const serialized = canonicalStringify(write.payload);
-
-      if (baseline.get(key) === serialized) {
-        return;
-      }
-
-      baseline.set(key, serialized);
-      const remote = remoteIndex.get(key);
-      const timestamp = now().toISOString();
-      queue.upsertLatest({
-        mutationId: createMutationId(),
-        operation: remote ? "update" : "insert",
-        documentId: remote?.id ?? null,
-        documentType: write.documentType,
-        characterId: write.characterId,
-        payload: write.payload,
-        schemaVersion: write.schemaVersion,
-        expectedRevision: remote?.revision ?? null,
-        retryCount: 0,
-        createdAt: timestamp,
-        nextAttemptAt: timestamp,
-      });
-      queued = true;
-    });
+    const queued = documentTypes.some((documentType) => enqueueDocument(documentType));
 
     if (queued) {
-      requestSync();
+      requestSync({
+        imageSyncRequired: documentTypes.includes("characters"),
+      });
     }
   };
 
@@ -130,6 +149,22 @@ export const createStoreSyncBridge = ({
   }
 
   return {
+    capturePersistedChangesSince(snapshot: ReadonlyMap<string, string | null>) {
+      (Object.entries(storageKeyByDocumentType) as Array<[
+        RemotelyPersistedDocumentType,
+        string,
+      ]>).forEach(([documentType, storageKey]) => {
+        if (
+          !snapshot.has(storageKey) ||
+          snapshot.get(storageKey) === localStorage.getItem(storageKey)
+        ) {
+          return;
+        }
+
+        enqueueDocument(documentType, true);
+      });
+    },
+
     start,
 
     hydrate(documents: RemoteDocument[]) {

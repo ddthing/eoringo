@@ -3,6 +3,7 @@ import {
   remoteSyncEnvironment,
   type RemoteSyncEnvironment,
 } from "./env";
+import { createTimeoutFetch } from "./timeoutFetch";
 
 type EnabledRemoteEnvironment = Extract<RemoteSyncEnvironment, { enabled: true }>;
 type SupabaseFactory = (
@@ -10,6 +11,8 @@ type SupabaseFactory = (
   publishableKey: string,
   options: SupabaseClientOptions<"public">,
 ) => SupabaseClient;
+
+const browserSupabaseFetch = createTimeoutFetch();
 
 const getStorageKey = (supabaseUrl: string) => {
   const projectHost = new URL(supabaseUrl).hostname.replace(/[^a-z0-9.-]/gi, "-");
@@ -29,6 +32,7 @@ export const getBrowserClientOptions = (
   },
   db: { schema: "public" },
   global: {
+    fetch: browserSupabaseFetch,
     headers: { "X-Client-Info": "eoringo-web/0.1.0" },
   },
 });

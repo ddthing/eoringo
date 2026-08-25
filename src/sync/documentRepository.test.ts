@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createDocumentRepository,
   type DocumentDataSource,
+  type RawDocumentMetadataRow,
   type RawDocumentRow,
 } from "./documentRepository";
 
@@ -23,10 +24,19 @@ const makeRow = (overrides: Partial<RawDocumentRow> = {}): RawDocumentRow => ({
   ...overrides,
 });
 
+const makeMetadataRow = (
+  overrides: Partial<RawDocumentMetadataRow> = {},
+): RawDocumentMetadataRow => {
+  const row = makeRow(overrides);
+  const { payload: _payload, ...metadata } = row;
+  return metadata;
+};
+
 const makeSource = (overrides: Partial<DocumentDataSource> = {}): DocumentDataSource => ({
   getVerifiedUserId: vi.fn().mockResolvedValue(userId),
-  list: vi.fn().mockResolvedValue([]),
+  listMetadata: vi.fn().mockResolvedValue([]),
   find: vi.fn().mockResolvedValue(null),
+  findMany: vi.fn().mockResolvedValue([]),
   insert: vi.fn().mockResolvedValue(makeRow()),
   update: vi.fn().mockResolvedValue(makeRow({ revision: 1 })),
   ...overrides,
@@ -34,7 +44,10 @@ const makeSource = (overrides: Partial<DocumentDataSource> = {}): DocumentDataSo
 
 describe("document repository", () => {
   it("derives ownership from the verified session and decodes server data", async () => {
-    const source = makeSource({ list: vi.fn().mockResolvedValue([makeRow()]) });
+    const source = makeSource({
+      listMetadata: vi.fn().mockResolvedValue([makeMetadataRow()]),
+      findMany: vi.fn().mockResolvedValue([makeRow()]),
+    });
 
     await expect(createDocumentRepository(source).list()).resolves.toEqual([
       {
@@ -47,7 +60,46 @@ describe("document repository", () => {
         updatedAt,
       },
     ]);
-    expect(source.list).toHaveBeenCalledWith(userId);
+    expect(source.listMetadata).toHaveBeenCalledWith(userId);
+    expect(source.findMany).toHaveBeenCalledWith(userId, [documentId]);
+  });
+
+  it("reuses an unchanged remote document without fetching its payload again", async () => {
+    const source = makeSource({
+      listMetadata: vi.fn().mockResolvedValue([makeMetadataRow()]),
+      findMany: vi.fn().mockResolvedValue([makeRow()]),
+    });
+    const previous = {
+      id: documentId,
+      documentType: "memo" as const,
+      characterId: null,
+      payload,
+      schemaVersion: 1,
+      revision: 0,
+      updatedAt,
+    };
+
+    await expect(createDocumentRepository(source).list([previous])).resolves.toEqual([previous]);
+    expect(source.findMany).not.toHaveBeenCalled();
+  });
+
+  it("fetches only a document whose remote revision changed", async () => {
+    const source = makeSource({
+      listMetadata: vi.fn().mockResolvedValue([makeMetadataRow({ revision: 1 })]),
+      findMany: vi.fn().mockResolvedValue([makeRow({ revision: 1 })]),
+    });
+    const previous = {
+      id: documentId,
+      documentType: "memo" as const,
+      characterId: null,
+      payload,
+      schemaVersion: 1,
+      revision: 0,
+      updatedAt,
+    };
+
+    await expect(createDocumentRepository(source).list([previous])).resolves.toHaveLength(1);
+    expect(source.findMany).toHaveBeenCalledWith(userId, [documentId]);
   });
 
   it("validates writes before invoking the data source", async () => {
@@ -67,8 +119,8 @@ describe("document repository", () => {
 
   it("rejects a row whose owner does not match the verified user", async () => {
     const source = makeSource({
-      list: vi.fn().mockResolvedValue([
-        makeRow({ user_id: "00000000-0000-4000-8000-000000000099" }),
+      listMetadata: vi.fn().mockResolvedValue([
+        makeMetadataRow({ user_id: "00000000-0000-4000-8000-000000000099" }),
       ]),
     });
 
@@ -106,7 +158,8 @@ describe("document repository", () => {
 
   it("rejects malformed server payloads instead of hydrating them", async () => {
     const source = makeSource({
-      list: vi.fn().mockResolvedValue([makeRow({ payload: { unexpected: true } })]),
+      listMetadata: vi.fn().mockResolvedValue([makeMetadataRow()]),
+      findMany: vi.fn().mockResolvedValue([makeRow({ payload: { unexpected: true } })]),
     });
 
     await expect(createDocumentRepository(source).list()).rejects.toThrow();

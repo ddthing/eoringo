@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidDateKey } from "../../domain/dateKey";
 
 export type DomainCodec<T> = {
   schemaVersion: number;
@@ -17,7 +18,7 @@ export const idSchema = z
   .refine((value) => !forbiddenRecordKeys.has(value), "Reserved object keys are not allowed.");
 export const shortTextSchema = z.string().max(256);
 export const isoTimestampSchema = z.iso.datetime({ offset: true });
-export const dateKeySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+export const dateKeySchema = z.string().refine(isValidDateKey, "유효한 날짜가 아닙니다.");
 
 export const boundedRecord = <T extends z.ZodType>(valueSchema: T, maxEntries: number) =>
   z

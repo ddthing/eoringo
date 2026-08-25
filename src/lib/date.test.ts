@@ -14,4 +14,8 @@ describe("KST date helpers", () => {
   it("calculates D-day offsets from the KST date key", () => {
     expect(getDaysFromTodayKst("2026-07-20", new Date("2026-07-08T03:00:00+09:00"))).toBe(12);
   });
+
+  it("rejects calendar-impossible date keys before date-fns receives them", () => {
+    expect(() => getDaysFromTodayKst("2026-02-29")).toThrow("유효한 날짜");
+  });
 });

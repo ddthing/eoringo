@@ -78,7 +78,7 @@ const NoticeSection = ({ title, children }: { title: string; children: React.Rea
 );
 
 export const PrivacyNoticePage = () => (
-  <LegalLayout eyebrow="privacy" title="개인정보 안내" updatedAt="2026년 8월 23일">
+  <LegalLayout eyebrow="privacy" title="개인정보 안내" updatedAt="2026년 8월 25일">
     <p>
       에오링고는 사용자가 자신의 루틴을 기록하고 관리할 수 있도록 돕는 서비스입니다. 이 안내는 어떤 정보가 어디에 저장되는지와 Google 로그인 시 요청되는 범위를 쉽게 설명합니다.
     </p>
@@ -89,6 +89,15 @@ export const PrivacyNoticePage = () => (
       </p>
       <p>
         브라우저 데이터를 삭제하거나 다른 기기에서 사용하면 로컬 데이터가 사라질 수 있으므로 중요한 기록은 먼저 백업하세요. 설정의 “모든 데이터 초기화”는 현재 브라우저의 로컬 기록만 삭제하며, Google 계정의 원격 데이터까지 자동으로 삭제하지 않습니다.
+      </p>
+    </NoticeSection>
+
+    <NoticeSection title="게스트 사용과 보존 기간">
+      <p>
+        게스트로 시작하면 계정 연결을 준비하기 위한 익명 Supabase 인증 식별자가 생성될 수 있습니다. 루틴과 메모의 기본 기록은 계속 현재 브라우저에 저장되며, 게스트 상태에서는 다른 사용자가 해당 기록을 읽을 수 없습니다.
+      </p>
+      <p>
+        게스트 인증 식별자는 마지막 활동 후 30일이 지나면 자동 정리됩니다. 이 정리는 브라우저의 로컬 기록을 삭제하지 않지만, 브라우저 데이터를 지운 뒤에는 게스트 기록을 복구할 수 없으므로 중요한 기록은 Google 연결 또는 JSON 백업으로 보관해 주세요.
       </p>
     </NoticeSection>
 
@@ -134,7 +143,7 @@ export const PrivacyNoticePage = () => (
 );
 
 export const TermsNoticePage = () => (
-  <LegalLayout eyebrow="terms" title="서비스 이용 안내" updatedAt="2026년 8월 23일">
+  <LegalLayout eyebrow="terms" title="서비스 이용 안내" updatedAt="2026년 8월 25일">
     <p>
       에오링고는 개인 루틴 기록을 돕는 서비스입니다. 아래 내용은 서비스를 안전하게 이용하기 위한 기본 안내입니다.
     </p>
@@ -151,6 +160,9 @@ export const TermsNoticePage = () => (
     <NoticeSection title="안전한 로그인">
       <p>
         Google 로그인은 Google의 공식 계정 선택 및 동의 화면에서 진행됩니다. 에오링고는 Google 비밀번호를 요구하거나 저장하지 않습니다. 동의 화면에서 요청 항목이 기본 프로필과 이메일인지 확인해 주세요.
+      </p>
+      <p>
+        게스트 인증 식별자는 마지막 활동 후 30일 동안 활동이 없으면 정리될 수 있습니다. 브라우저에만 남은 기록을 잃지 않으려면 기기 변경이나 브라우저 초기화 전에 JSON 백업을 내려받거나 Google 계정을 연결해 주세요.
       </p>
     </NoticeSection>
 

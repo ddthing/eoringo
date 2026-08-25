@@ -215,6 +215,7 @@ export const NotificationSettingsPanel = () => {
           subscription,
           timezone: KST_TIME_ZONE,
           notificationTime: dailyIncompleteTime,
+          deduplicationKey: auth.userId ?? "",
           summary: await getCurrentBackgroundSummary(),
         });
         setBackgroundPushEnabled(true);
@@ -412,19 +413,19 @@ export const AppInfoPanel = () => (
         className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-ink-muted"
         aria-label="서비스 안내"
       >
-        <a className="underline underline-offset-4 hover:text-ink" href="/guide">
+        <a className="inline-flex min-h-11 items-center rounded-ui-sm px-1 py-1 underline underline-offset-4 hover:text-ink focus-visible:ring-2 focus-visible:ring-primary/35" href="/guide">
           사용 가이드
         </a>
-        <a className="underline underline-offset-4 hover:text-ink" href="/about">
+        <a className="inline-flex min-h-11 items-center rounded-ui-sm px-1 py-1 underline underline-offset-4 hover:text-ink focus-visible:ring-2 focus-visible:ring-primary/35" href="/about">
           운영 원칙
         </a>
-        <a className="underline underline-offset-4 hover:text-ink" href="/demo">
+        <a className="inline-flex min-h-11 items-center rounded-ui-sm px-1 py-1 underline underline-offset-4 hover:text-ink focus-visible:ring-2 focus-visible:ring-primary/35" href="/demo">
           로그인 없이 체험
         </a>
-        <a className="underline underline-offset-4 hover:text-ink" href="/privacy">
+        <a className="inline-flex min-h-11 items-center rounded-ui-sm px-1 py-1 underline underline-offset-4 hover:text-ink focus-visible:ring-2 focus-visible:ring-primary/35" href="/privacy">
           개인정보 처리방침
         </a>
-        <a className="underline underline-offset-4 hover:text-ink" href="/terms">
+        <a className="inline-flex min-h-11 items-center rounded-ui-sm px-1 py-1 underline underline-offset-4 hover:text-ink focus-visible:ring-2 focus-visible:ring-primary/35" href="/terms">
           서비스 이용약관
         </a>
       </nav>

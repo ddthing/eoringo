@@ -71,6 +71,26 @@ describe("store sync adapters", () => {
     expect(useAllowanceStore.getState().setValue).toBe(beforeAction);
   });
 
+  it("does not replace a store when the remote payload is unchanged", () => {
+    const document = {
+      id: "00000000-0000-0000-0000-000000000001",
+      documentType: "allowance",
+      characterId: null,
+      payload: {
+        value: useAllowanceStore.getState().value,
+        lastAccrualKey: useAllowanceStore.getState().lastAccrualKey,
+      },
+      schemaVersion: 1,
+      revision: 2,
+      updatedAt: "2026-08-02T08:00:00.000Z",
+    } satisfies RemoteDocument;
+    const before = useAllowanceStore.getState();
+
+    hydrateStoreDocuments([document]);
+
+    expect(useAllowanceStore.getState()).toBe(before);
+  });
+
   it("captures character metadata and image references as a remote document", () => {
     useCharacterStore.setState({
       characters: [{

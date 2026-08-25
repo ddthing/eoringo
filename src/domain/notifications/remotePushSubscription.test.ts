@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getSupabaseClient } from "../../lib/supabase/client";
 import {
   getRemotePushSubscriptionStatus,
@@ -22,6 +22,10 @@ const subscription = {
 };
 
 describe("remote push subscription transport", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -99,6 +103,60 @@ describe("remote push subscription transport", () => {
     expect(invoke).toHaveBeenCalledWith("manage-push-subscription", {
       body: { operation: "status", endpoint: subscription.endpoint },
     });
+  });
+
+  it("coalesces repeated upserts for the same account and snapshot", async () => {
+    vi.useFakeTimers();
+    const invoke = vi.fn().mockResolvedValue({ error: null });
+    getClientMock.mockResolvedValue({ functions: { invoke } } as never);
+    const input = {
+      subscription,
+      timezone: "Asia/Seoul",
+      notificationTime: "21:00",
+      deduplicationKey: "user-1",
+      summary: {
+        summaryDate: "2026-08-15",
+        characters: [],
+        sourceDigest: "b".repeat(64),
+      },
+    };
+
+    await Promise.all([
+      upsertRemotePushSubscription(input),
+      upsertRemotePushSubscription(input),
+    ]);
+
+    expect(invoke).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(999);
+    await upsertRemotePushSubscription(input);
+    expect(invoke).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await upsertRemotePushSubscription(input);
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidates the upsert cache when the subscription is deleted", async () => {
+    const invoke = vi.fn().mockResolvedValue({ error: null });
+    getClientMock.mockResolvedValue({ functions: { invoke } } as never);
+    const input = {
+      subscription,
+      timezone: "Asia/Seoul",
+      notificationTime: "21:00",
+      deduplicationKey: "user-delete-reenable",
+      summary: {
+        summaryDate: "2026-08-15",
+        characters: [],
+        sourceDigest: "c".repeat(64),
+      },
+    };
+
+    await upsertRemotePushSubscription(input);
+    await removeRemotePushSubscription(subscription.endpoint);
+    await upsertRemotePushSubscription(input);
+
+    expect(invoke).toHaveBeenCalledTimes(3);
   });
 
   it("rejects an untrusted server status payload", async () => {

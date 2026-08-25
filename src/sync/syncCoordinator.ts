@@ -19,7 +19,7 @@ export type SyncTrigger =
   | "manual";
 
 type SyncRepository = {
-  list: () => Promise<RemoteDocument[]>;
+  list: (previousDocuments?: RemoteDocument[]) => Promise<RemoteDocument[]>;
   find: (identity: DocumentIdentity) => Promise<RemoteDocument | null>;
   insert: (write: DocumentWrite) => Promise<RemoteDocument>;
   update: (update: {
@@ -79,6 +79,7 @@ export const createSyncCoordinator = ({
   let active = true;
   let inFlight: Promise<void> | null = null;
   let rerunRequested = false;
+  let knownRemoteDocuments: RemoteDocument[] = [];
 
   const setQueueState = (status: SyncStatus, conflictDocumentType: DocumentType | null = null) => {
     setState({
@@ -169,13 +170,19 @@ export const createSyncCoordinator = ({
       }
     }
 
-    const documents = await repository.list();
+    try {
+      const documents = await repository.list(knownRemoteDocuments);
 
-    if (!active) {
+      if (!active) {
+        return;
+      }
+
+      await hydrate(documents);
+      knownRemoteDocuments = documents;
+    } catch {
+      setQueueState(isOnline() ? "error" : "offline");
       return;
     }
-
-    await hydrate(documents);
 
     if (active) {
       setState({
@@ -194,10 +201,16 @@ export const createSyncCoordinator = ({
     }
 
     inFlight = (async () => {
-      do {
-        rerunRequested = false;
-        await runOnce();
-      } while (active && rerunRequested);
+      try {
+        do {
+          rerunRequested = false;
+          await runOnce();
+        } while (active && rerunRequested);
+      } catch {
+        if (active) {
+          setQueueState(isOnline() ? "error" : "offline");
+        }
+      }
     })().finally(() => {
       inFlight = null;
     });

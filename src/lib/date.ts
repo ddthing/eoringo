@@ -1,5 +1,6 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
+import { isValidDateKey } from "../domain/dateKey";
 
 export const KST_TIME_ZONE = "Asia/Seoul";
 
@@ -61,10 +62,18 @@ export const getKstWeekKey = (date: Date = new Date()) => {
   return format(weekStart, "yyyy-MM-dd");
 };
 
+const parseDateKey = (dateKey: string) => {
+  if (!isValidDateKey(dateKey)) {
+    throw new RangeError("유효한 날짜 키가 필요합니다.");
+  }
+
+  return parseISO(dateKey);
+};
+
 export const getDaysFromTodayKst = (targetDateKey: string, today: Date = new Date()) => {
   const todayKey = getKstDateKey(today);
-  return differenceInCalendarDays(parseISO(targetDateKey), parseISO(todayKey));
+  return differenceInCalendarDays(parseDateKey(targetDateKey), parseDateKey(todayKey));
 };
 
 export const addDaysToDateKey = (dateKey: string, days: number) =>
-  format(addDays(parseISO(dateKey), days), "yyyy-MM-dd");
+  format(addDays(parseDateKey(dateKey), days), "yyyy-MM-dd");

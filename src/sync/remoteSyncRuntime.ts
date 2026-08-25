@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { StoreSyncRequest } from "./storeSyncBridge";
 import { remoteSyncEnvironment } from "../lib/supabase/env";
 import { useSyncStore } from "../stores/sync/useSyncStore";
 import {
@@ -11,16 +12,23 @@ import { createStoreSyncBridge } from "./storeSyncBridge";
 import { createSupabaseDocumentDataSource } from "./supabaseDocumentDataSource";
 import { createSyncCoordinator } from "./syncCoordinator";
 
-export const startRemoteSyncRuntime = async (supabase: SupabaseClient) => {
+type RemoteSyncRuntimeOptions = {
+  initialLocalStorageSnapshot?: ReadonlyMap<string, string | null>;
+};
+
+export const startRemoteSyncRuntime = async (
+  supabase: SupabaseClient,
+  options: RemoteSyncRuntimeOptions = {},
+) => {
   const repository = createDocumentRepository(
     createSupabaseDocumentDataSource(supabase),
   );
   const queue = createMutationQueue(localStorage);
-  let requestSync = () => {};
+  let requestSync = (_request: StoreSyncRequest) => {};
   const bridge = createStoreSyncBridge({
     queue,
     deferStart: true,
-    requestSync: () => requestSync(),
+    requestSync: (request) => requestSync(request),
   });
   const coordinator = createSyncCoordinator({
     repository,
@@ -54,16 +62,31 @@ export const startRemoteSyncRuntime = async (supabase: SupabaseClient) => {
 
     return imageInFlight;
   };
-  const syncAll = async (trigger: Parameters<typeof coordinator.sync>[0]) => {
-    await coordinator.sync(trigger);
-    await syncImages();
+  const syncAll = async (
+    trigger: Parameters<typeof coordinator.sync>[0],
+    imageSyncRequired = false,
+  ) => {
+    try {
+      await coordinator.sync(trigger);
+      if (trigger !== "write" || imageSyncRequired) {
+        await syncImages();
+      }
+    } catch {
+      useSyncStore.getState().setSyncState({ status: "error" });
+    }
   };
-  requestSync = () => void syncAll("write");
+  requestSync = ({ imageSyncRequired }) => void syncAll("write", imageSyncRequired);
+
+  options.initialLocalStorageSnapshot &&
+    bridge.capturePersistedChangesSince(options.initialLocalStorageSnapshot);
 
   try {
+    // Subscribe before the first remote read so local edits made during a
+    // slow startup are queued and replayed after hydration instead of being
+    // lost when the remote snapshot is applied.
+    bridge.start();
     await coordinator.sync("startup");
     await syncImages();
-    bridge.start();
   } catch (error) {
     bridge.stop();
     coordinator.stop();

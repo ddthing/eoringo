@@ -43,4 +43,35 @@ describe("Supabase security migrations", () => {
     expect(hardening).toContain("revoke all on function public.rls_auto_enable()");
     expect(hardening).not.toMatch(/grant execute[^;]+\b(?:public|anon)\b/i);
   });
+
+  it("keeps guest activity private and cleanup service-role-only", () => {
+    const retention = readMigration("20260825140157_guest_account_retention.sql");
+
+    expect(retention).toContain(
+      "alter table public.guest_account_activity force row level security;",
+    );
+    expect(retention).toContain(
+      "revoke all on table public.guest_account_activity from public, anon, authenticated;",
+    );
+    expect(retention).toContain(
+      "p_user_id is distinct from (select auth.uid())",
+    );
+    expect(retention).toContain("and is_anonymous is true");
+    expect(retention).toContain("make_interval(days => 30)");
+    expect(retention).toContain(
+      "revoke all on function public.cleanup_expired_anonymous_accounts()",
+    );
+    expect(retention).toContain(
+      "grant execute on function public.cleanup_expired_anonymous_accounts()\n  to service_role;",
+    );
+
+    const rls = readMigration("20260825141459_harden_guest_activity_rls.sql");
+
+    expect(rls).toContain("create policy guest_activity_select_own");
+    expect(rls).toContain("create policy guest_activity_insert_own");
+    expect(rls).toContain("create policy guest_activity_update_own");
+    expect(rls).toContain("security invoker");
+    expect(rls).toContain("((select auth.jwt()) ->> 'is_anonymous')::boolean");
+    expect(rls).not.toMatch(/touch_guest_account_activity[\s\S]*security definer/i);
+  });
 });

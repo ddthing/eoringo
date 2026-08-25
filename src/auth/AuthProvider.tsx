@@ -17,6 +17,10 @@ import {
   type AuthClient,
 } from "./authClient";
 import {
+  guestActivityTouchIntervalMs,
+  touchGuestAccountActivity,
+} from "./guestActivity";
+import {
   clearIdentityConflictRecovery,
   clearPendingAuthTransition,
   markPendingAccountSwitch,
@@ -27,6 +31,7 @@ import type {
   AuthSessionSummary,
   AuthState,
 } from "./authTypes";
+import { getSupabaseClient } from "../lib/supabase/client";
 
 type AuthAction =
   | { type: "disabled" }
@@ -172,6 +177,22 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
       unsubscribe();
     };
   }, [client, retryVersion]);
+
+  useEffect(() => {
+    if (state.mode !== "guest" || !state.userId) {
+      return undefined;
+    }
+
+    const userId = state.userId;
+    const touch = () => {
+      void touchGuestAccountActivity(() => getSupabaseClient(), userId).catch(() => undefined);
+    };
+
+    touch();
+    const intervalId = window.setInterval(touch, guestActivityTouchIntervalMs);
+
+    return () => window.clearInterval(intervalId);
+  }, [state.mode, state.userId]);
 
   const createGuest = useCallback(
     async (captchaToken: string) => {

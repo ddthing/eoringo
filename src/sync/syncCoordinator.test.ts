@@ -144,6 +144,54 @@ describe("sync coordinator", () => {
     );
   });
 
+  it("passes the previous remote snapshot to later syncs", async () => {
+    const queue = makeQueue([]);
+    const repository = makeRepository();
+    const coordinator = createSyncCoordinator({
+      repository,
+      queue,
+      hydrate: vi.fn(),
+      setState: vi.fn(),
+      isOnline: () => true,
+    });
+
+    await coordinator.sync("startup");
+    await coordinator.sync("focus");
+
+    expect(repository.list).toHaveBeenNthCalledWith(1, []);
+    expect(repository.list).toHaveBeenNthCalledWith(2, [document]);
+  });
+
+  it.each([
+    ["remote document listing", "list"],
+    ["store hydration", "hydrate"],
+  ] as const)("converts %s failures into a recoverable sync error", async (_label, failurePoint) => {
+    const queue = makeQueue([]);
+    const repository = makeRepository();
+    const hydrate = vi.fn();
+    const setState = vi.fn();
+
+    if (failurePoint === "list") {
+      repository.list.mockRejectedValue(new RemoteDataFailure("network"));
+    } else {
+      hydrate.mockRejectedValue(new Error("corrupt remote document"));
+    }
+
+    const coordinator = createSyncCoordinator({
+      repository,
+      queue,
+      hydrate,
+      setState,
+      isOnline: () => true,
+    });
+
+    await expect(coordinator.sync("startup")).resolves.toBeUndefined();
+
+    expect(setState).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "error", pendingCount: 0 }),
+    );
+  });
+
   it("treats a replayed insert with identical server data as confirmed", async () => {
     const insertMutation = {
       ...mutation,

@@ -1,4 +1,4 @@
-import { clearCharacterImages, saveCharacterImageById } from "./imageStorage";
+import { getAllCharacterImages, replaceCharacterImages } from "./imageStorage";
 import { storageKeys } from "./storage";
 
 type BackupImagePayload = {
@@ -101,36 +101,81 @@ const dataUrlToBlob = async (image: BackupImagePayload) => {
   return blob.type ? blob : new Blob([await blob.arrayBuffer()], { type: image.type });
 };
 
-export const importBackup = async (payload: unknown) => {
-  const backup = validateBackupPayload(payload);
+const restoreStorageSnapshot = (snapshot: Map<string, string | null>) => {
+  let failed = false;
 
-  Object.entries(backup.data).forEach(([key, value]) => {
-    if (!knownKeys.has(key)) {
-      return;
-    }
-
-    if (value === null) {
-      localStorage.removeItem(key);
-      return;
-    }
-
+  snapshot.forEach((value, key) => {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      if (value === null) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, value);
+      }
     } catch {
-      throw new Error("복원 데이터를 저장할 수 없습니다. 브라우저 저장 공간을 확인해주세요.");
+      failed = true;
     }
   });
 
-  if (!backup.images) {
-    return;
-  }
+  return !failed;
+};
 
-  await clearCharacterImages();
-
-  await Promise.all(
-    Object.entries(backup.images).map(async ([imageId, image]) => {
-      const blob = await dataUrlToBlob(image);
-      await saveCharacterImageById(imageId, blob);
-    }),
+export const importBackup = async (payload: unknown) => {
+  const backup = validateBackupPayload(payload);
+  const storageEntries = Object.entries(backup.data).filter(([key]) => knownKeys.has(key));
+  const storageSnapshot = new Map(
+    storageEntries.map(([key]) => [key, localStorage.getItem(key)] as const),
   );
+  const restoredImages = backup.images
+    ? Object.fromEntries(
+        await Promise.all(
+          Object.entries(backup.images).map(async ([imageId, image]) => [
+            imageId,
+            await dataUrlToBlob(image),
+          ] as const),
+        ),
+      )
+    : undefined;
+  const previousImages = backup.images ? await getAllCharacterImages() : undefined;
+
+  let replacingImages = false;
+
+  try {
+    storageEntries.forEach(([key, value]) => {
+      if (value === null) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+    });
+
+    if (restoredImages && previousImages) {
+      replacingImages = true;
+      await replaceCharacterImages(restoredImages);
+      replacingImages = false;
+    }
+  } catch (error) {
+    const storageRestored = restoreStorageSnapshot(storageSnapshot);
+
+    if (replacingImages && previousImages) {
+      try {
+        await replaceCharacterImages(previousImages);
+      } catch {
+        // Keep the original restore failure as the user-facing error.
+      }
+    }
+
+    if (!storageRestored) {
+      throw new Error("복원 상태를 되돌릴 수 없습니다. 브라우저 저장 공간을 확인해주세요.");
+    }
+
+    if (replacingImages) {
+      throw new Error("캐릭터 사진을 복원할 수 없습니다.");
+    }
+
+    if (error instanceof Error && error.message.includes("저장할 수 없습니다")) {
+      throw error;
+    }
+
+    throw new Error("복원 데이터를 저장할 수 없습니다. 브라우저 저장 공간을 확인해주세요.");
+  }
 };

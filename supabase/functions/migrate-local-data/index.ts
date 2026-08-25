@@ -1,3 +1,4 @@
+import { fetchWithTimeout, withTimeout } from "../_shared/asyncControl.ts";
 import { isAllowedOrigin, resolveAllowedOrigins } from "../_shared/cors.ts";
 import { isSafeJsonTree } from "../_shared/jsonSafety.ts";
 import { isUserId } from "../_shared/imageValidation.ts";
@@ -11,6 +12,7 @@ const allowedDocumentTypes = new Set([
   "history",
 ]);
 const maxRequestBytes = 3 * 1024 * 1024;
+const externalRequestTimeoutMs = 8_000;
 
 const jsonResponse = (status: number, body: unknown, origin: string | null) =>
   new Response(JSON.stringify(body), {
@@ -103,15 +105,33 @@ Deno.serve(async (request) => {
     return jsonResponse(503, { code: "configuration" }, origin);
   }
 
-  const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: anonKey, Authorization: authorization },
-  });
+  let userResponse: Response;
+
+  try {
+    userResponse = await fetchWithTimeout(
+      `${supabaseUrl}/auth/v1/user`,
+      { headers: { apikey: anonKey, Authorization: authorization } },
+      externalRequestTimeoutMs,
+    );
+  } catch {
+    return jsonResponse(503, { code: "authentication_unavailable" }, origin);
+  }
 
   if (!userResponse.ok) {
     return jsonResponse(401, { code: "authentication_required" }, origin);
   }
 
-  const user: unknown = await userResponse.json();
+  let user: unknown;
+
+  try {
+    user = await withTimeout(
+      () => userResponse.json(),
+      externalRequestTimeoutMs,
+      "auth_user_body_read",
+    );
+  } catch {
+    return jsonResponse(503, { code: "authentication_unavailable" }, origin);
+  }
 
   if (!isRecord(user) || !isUserId(user.id) || user.is_anonymous === true) {
     return jsonResponse(403, { code: "permanent_account_required" }, origin);
@@ -123,7 +143,17 @@ Deno.serve(async (request) => {
     return jsonResponse(413, { code: "payload_too_large" }, origin);
   }
 
-  const rawBody = await request.text();
+  let rawBody: string;
+
+  try {
+    rawBody = await withTimeout(
+      () => request.text(),
+      externalRequestTimeoutMs,
+      "migration_request_body_read",
+    );
+  } catch {
+    return jsonResponse(408, { code: "request_timeout" }, origin);
+  }
 
   if (new TextEncoder().encode(rawBody).byteLength > maxRequestBytes) {
     return jsonResponse(413, { code: "payload_too_large" }, origin);
@@ -179,20 +209,30 @@ Deno.serve(async (request) => {
     documentDigests[document.documentType] = computedDigest;
   }
 
-  const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/apply_local_migration`, {
-    method: "POST",
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      p_user_id: user.id,
-      p_migration_id: body.migrationId,
-      p_documents: body.documents,
-      p_document_digests: documentDigests,
-    }),
-  });
+  let rpcResponse: Response;
+
+  try {
+    rpcResponse = await fetchWithTimeout(
+      `${supabaseUrl}/rest/v1/rpc/apply_local_migration`,
+      {
+        method: "POST",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          p_user_id: user.id,
+          p_migration_id: body.migrationId,
+          p_documents: body.documents,
+          p_document_digests: documentDigests,
+        }),
+      },
+      externalRequestTimeoutMs,
+    );
+  } catch {
+    return jsonResponse(503, { code: "migration_unavailable" }, origin);
+  }
 
   if (!rpcResponse.ok) {
     return jsonResponse(
@@ -202,6 +242,17 @@ Deno.serve(async (request) => {
     );
   }
 
-  const result: unknown = await rpcResponse.json();
+  let result: unknown;
+
+  try {
+    result = await withTimeout(
+      () => rpcResponse.json(),
+      externalRequestTimeoutMs,
+      "migration_response_body_read",
+    );
+  } catch {
+    return jsonResponse(502, { code: "migration_response_invalid" }, origin);
+  }
+
   return jsonResponse(200, result, origin);
 });

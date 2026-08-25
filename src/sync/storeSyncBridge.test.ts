@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { storageKeys } from "../lib/storage";
 import { useWeeklyMemoStore } from "../stores/memo/useWeeklyMemoStore";
 import { createStoreSyncBridge } from "./storeSyncBridge";
 import type { DocumentWrite } from "./documentRepository";
@@ -6,6 +7,7 @@ import type { DocumentWrite } from "./documentRepository";
 const originalMemo = useWeeklyMemoStore.getState().memosByCharacter;
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   useWeeklyMemoStore.setState({ memosByCharacter: originalMemo });
 });
 
@@ -112,6 +114,29 @@ describe("store sync bridge", () => {
 
     expect(queue.upsertLatest).toHaveBeenCalledOnce();
     expect(requestSync).toHaveBeenCalledOnce();
+    bridge.stop();
+  });
+
+  it("queues persisted changes made before the remote bridge was created", () => {
+    const queue = { upsertLatest: vi.fn() };
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn((key: string) => (key === storageKeys.weeklyMemo ? "new" : null)),
+    });
+    const bridge = createStoreSyncBridge({
+      queue,
+      requestSync: vi.fn(),
+      deferStart: true,
+    });
+
+    bridge.capturePersistedChangesSince(new Map([[storageKeys.weeklyMemo, "old"]]));
+
+    expect(queue.upsertLatest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: "insert",
+        documentType: "memo",
+        payload: { memosByCharacter: originalMemo },
+      }),
+    );
     bridge.stop();
   });
 });

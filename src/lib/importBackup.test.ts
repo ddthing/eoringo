@@ -1,14 +1,22 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { importBackup, validateBackupPayload } from "./importBackup";
-import { clearCharacterImages, saveCharacterImageById } from "./imageStorage";
+import {
+  getAllCharacterImages,
+  replaceCharacterImages,
+} from "./imageStorage";
 import { storageKeys } from "./storage";
 
 vi.mock("./imageStorage", () => ({
   clearCharacterImages: vi.fn().mockResolvedValue(undefined),
-  saveCharacterImageById: vi.fn().mockResolvedValue("character-image-test"),
+  getAllCharacterImages: vi.fn().mockResolvedValue({}),
+  replaceCharacterImages: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("validateBackupPayload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -94,7 +102,7 @@ describe("validateBackupPayload", () => {
   it("restores History from version 5 backups", async () => {
     const history = { state: { entriesByDate: {} }, version: 1 };
     const setItem = vi.fn();
-    vi.stubGlobal("localStorage", { setItem, removeItem: vi.fn() });
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null), setItem, removeItem: vi.fn() });
 
     await importBackup({
       app: "에오링고",
@@ -109,7 +117,7 @@ describe("validateBackupPayload", () => {
   it("restores allowances from version 6 backups", async () => {
     const allowances = { state: { value: 21, lastAccrualKey: "2026-07-12T12:00:00.000Z" }, version: 1 };
     const setItem = vi.fn();
-    vi.stubGlobal("localStorage", { setItem, removeItem: vi.fn() });
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null), setItem, removeItem: vi.fn() });
 
     await importBackup({
       app: "에오링고",
@@ -127,7 +135,7 @@ describe("validateBackupPayload", () => {
     const values = Object.fromEntries(
       Object.values(storageKeys).map((key, index) => [key, { state: { index }, version: 1 }]),
     );
-    vi.stubGlobal("localStorage", { setItem, removeItem });
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null), setItem, removeItem });
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -151,10 +159,68 @@ describe("validateBackupPayload", () => {
     Object.entries(values).forEach(([key, value]) => {
       expect(setItem).toHaveBeenCalledWith(key, JSON.stringify(value));
     });
-    expect(clearCharacterImages).toHaveBeenCalledOnce();
-    expect(saveCharacterImageById).toHaveBeenCalledWith(
-      "character-image-test",
-      expect.objectContaining({ type: "image/webp" }),
+    expect(replaceCharacterImages).toHaveBeenCalledWith({
+      "character-image-test": expect.objectContaining({ type: "image/webp" }),
+    });
+    expect(vi.mocked(replaceCharacterImages)).toHaveBeenCalledOnce();
+  });
+
+  it("rolls back local storage when a restore write fails", async () => {
+    const existingValues = new Map<string, string>([[storageKeys.history, "old-history"]]);
+    const getItem = vi.fn((key: string) => existingValues.get(key) ?? null);
+    const setItem = vi
+      .fn()
+      .mockImplementationOnce(() => undefined)
+      .mockImplementationOnce(() => {
+        throw new Error("quota exceeded");
+      });
+    const removeItem = vi.fn();
+    vi.stubGlobal("localStorage", { getItem, setItem, removeItem });
+
+    await expect(
+      importBackup({
+        app: "에오링고",
+        version: 7,
+        exportedAt: "",
+        data: {
+          [storageKeys.history]: { state: { entriesByDate: {} }, version: 1 },
+          [storageKeys.weeklyMemo]: { state: { memo: "new" }, version: 1 },
+        },
+      }),
+    ).rejects.toThrow("복원 데이터를 저장할 수 없습니다.");
+
+    expect(setItem).toHaveBeenCalledWith(storageKeys.history, "old-history");
+  });
+
+  it("restores the previous image set when the replacement transaction fails", async () => {
+    const previousImages = { "old-image": new Blob(["old"], { type: "image/webp" }) };
+    vi.mocked(getAllCharacterImages).mockResolvedValue(previousImages);
+    vi.mocked(replaceCharacterImages)
+      .mockRejectedValueOnce(new Error("image quota exceeded"))
+      .mockResolvedValueOnce(undefined);
+    const setItem = vi.fn();
+    const removeItem = vi.fn();
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null), setItem, removeItem });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(new Blob(["new"], { type: "image/webp" }), { status: 200 }),
+      ),
     );
+
+    await expect(
+      importBackup({
+        app: "에오링고",
+        version: 7,
+        exportedAt: "",
+        data: { [storageKeys.history]: { state: { entriesByDate: {} }, version: 1 } },
+        images: {
+          "new-image": { type: "image/webp", dataUrl: "data:image/webp;base64,bmV3" },
+        },
+      }),
+    ).rejects.toThrow("캐릭터 사진을 복원할 수 없습니다.");
+
+    expect(replaceCharacterImages).toHaveBeenNthCalledWith(2, previousImages);
+    expect(removeItem).toHaveBeenCalledWith(storageKeys.history);
   });
 });

@@ -35,6 +35,9 @@ describe("browser Supabase client", () => {
         persistSession: true,
       },
       db: { schema: "public" },
+      global: {
+        fetch: expect.any(Function),
+      },
     });
   });
 

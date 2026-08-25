@@ -40,10 +40,13 @@ export type RawDocumentRow = {
   deleted_at: unknown;
 };
 
+export type RawDocumentMetadataRow = Omit<RawDocumentRow, "payload">;
+
 export type DocumentDataSource = {
   getVerifiedUserId: () => Promise<string>;
-  list: (userId: string) => Promise<RawDocumentRow[]>;
+  listMetadata: (userId: string) => Promise<RawDocumentMetadataRow[]>;
   find: (userId: string, identity: DocumentIdentity) => Promise<RawDocumentRow | null>;
+  findMany: (userId: string, ids: string[]) => Promise<RawDocumentRow[]>;
   insert: (userId: string, write: DocumentWrite) => Promise<RawDocumentRow>;
   update: (
     userId: string,
@@ -73,6 +76,8 @@ const rowEnvelopeSchema = z
     deleted_at: z.iso.datetime({ offset: true }).nullable(),
   })
   .strict();
+
+const rowMetadataEnvelopeSchema = rowEnvelopeSchema.omit({ payload: true });
 
 const assertWrite = (write: DocumentWrite): DocumentWrite => {
   const codec = documentCodecs[write.documentType];
@@ -111,12 +116,72 @@ const decodeRow = (row: RawDocumentRow, expectedUserId: string): RemoteDocument 
   };
 };
 
-export const createDocumentRepository = (source: DocumentDataSource) => ({
-  async list(): Promise<RemoteDocument[]> {
-    const userId = await source.getVerifiedUserId();
-    const rows = await source.list(userId);
+const decodeMetadataRow = (
+  row: RawDocumentMetadataRow,
+  expectedUserId: string,
+): RemoteDocumentMetadata => {
+  const envelope = rowMetadataEnvelopeSchema.parse(row);
 
-    return rows.map((row) => decodeRow(row, userId));
+  if (envelope.user_id !== expectedUserId || envelope.deleted_at !== null) {
+    throw new Error("Document ownership or lifecycle verification failed.");
+  }
+
+  return {
+    id: envelope.id,
+    characterId: envelope.character_id,
+    documentType: envelope.document_type,
+    schemaVersion: envelope.schema_version,
+    revision: envelope.revision,
+    updatedAt: envelope.updated_at,
+  };
+};
+
+type RemoteDocumentMetadata = Omit<RemoteDocument, "payload">;
+
+const identityKey = (document: DocumentIdentity) =>
+  `${document.documentType}:${document.characterId ?? "account"}`;
+
+export const createDocumentRepository = (source: DocumentDataSource) => ({
+  async list(previousDocuments: RemoteDocument[] = []): Promise<RemoteDocument[]> {
+    const userId = await source.getVerifiedUserId();
+    const metadataRows = await source.listMetadata(userId);
+    const previousByIdentity = new Map(
+      previousDocuments.map((document) => [identityKey(document), document]),
+    );
+
+    const metadata = metadataRows.map((row) => decodeMetadataRow(row, userId));
+    const changedMetadata = metadata.filter((document) => {
+      const previous = previousByIdentity.get(identityKey(document));
+
+      return !(
+        previous &&
+        previous.id === document.id &&
+        previous.schemaVersion === document.schemaVersion &&
+        previous.revision === document.revision &&
+        previous.updatedAt === document.updatedAt
+      );
+    });
+    const fullRows = changedMetadata.length
+      ? await source.findMany(userId, changedMetadata.map((document) => document.id))
+      : [];
+    const changedIds = new Set(changedMetadata.map((document) => document.id));
+    const fullDocuments = new Map(
+      fullRows.map((row) => {
+        const document = decodeRow(row, userId);
+        return [document.id, document] as const;
+      }),
+    );
+    const documents = metadata.map((document) => {
+      const previous = previousByIdentity.get(identityKey(document));
+
+      if (!changedIds.has(document.id)) {
+        return previous ?? null;
+      }
+
+      return fullDocuments.get(document.id) ?? null;
+    });
+
+    return documents.filter((document): document is RemoteDocument => document !== null);
   },
 
   async find(identity: DocumentIdentity): Promise<RemoteDocument | null> {

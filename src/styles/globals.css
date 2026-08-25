@@ -625,6 +625,9 @@ a {
 }
 
 .ui-skip-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   position: fixed;
   top: 0.75rem;
   left: 0.75rem;
@@ -783,7 +786,6 @@ input[type="number"] {
   }
 
   .ui-button:disabled {
-    cursor: not-allowed;
     cursor: not-allowed;
     opacity: 0.55;
     transform: none;
@@ -1748,35 +1750,6 @@ input[type="number"] {
     flex-direction: column;
   }
 
-  .home-dashboard-columns,
-  .home-dashboard-column {
-    display: contents;
-  }
-
-  .home-dashboard-hero {
-    order: 1;
-  }
-
-  .home-dashboard-today {
-    order: 2;
-  }
-
-  .home-dashboard-progress {
-    order: 3;
-  }
-
-  .home-dashboard-status {
-    order: 4;
-  }
-
-  .home-dashboard-memo {
-    order: 5;
-  }
-
-  .home-dashboard-dday {
-    order: 6;
-  }
-
   .ui-task-filter-reset {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1786,113 +1759,6 @@ input[type="number"] {
   .ui-task-filter-reset .ui-segmented-option {
     min-width: 0;
     flex: 1 1 auto;
-  }
-}
-
-@media (min-width: 48rem) {
-  .ui-main {
-    padding-inline: 1.25rem;
-  }
-}
-
-@media (min-width: 64rem) {
-  :root {
-    --app-header-height: var(--app-top-bar-height);
-  }
-
-  .ui-app-body {
-    display: grid;
-    grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .ui-main {
-    padding: 2rem 2rem 3.5rem;
-  }
-
-  .ui-bottom-nav {
-    position: sticky;
-    top: var(--app-top-bar-height);
-    min-height: calc(100dvh - var(--app-top-bar-height));
-    border-right: 1px solid rgb(var(--color-outline-variant));
-    background: rgb(var(--color-surface-container-low) / 0.72);
-  }
-
-  .ui-bottom-nav-inner {
-    padding: 1rem 0.75rem 1.5rem;
-  }
-
-  .ui-navigation-shell {
-    display: flex;
-    max-width: none;
-    flex-direction: column;
-    gap: 0.35rem;
-    border: 0;
-    border-radius: var(--shape-lg);
-    padding: 0.5rem;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .ui-nav-item {
-    min-height: 3.25rem;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 0.7rem;
-    border-radius: 999px;
-    padding: 0.55rem 0.75rem;
-    font-size: 0.8125rem;
-  }
-
-  .ui-nav-icon {
-    width: 2rem;
-    height: 2rem;
-  }
-}
-
-@media (min-width: 48rem) {
-  .ui-main {
-    padding-inline: 1.25rem;
-  }
-}
-
-@media (min-width: 64rem) {
-  :root {
-    --app-header-height: 116px;
-  }
-
-  .ui-main {
-    padding: 2rem 2rem 3.5rem;
-  }
-
-  .ui-bottom-nav {
-    position: static;
-    height: 56px;
-  }
-
-  .ui-bottom-nav-inner {
-    height: 100%;
-    padding: 0.35rem 1.5rem 0.45rem;
-  }
-
-  .ui-navigation-shell {
-    height: 100%;
-    max-width: 36rem;
-    margin-left: auto;
-    box-shadow: 0 1px 3px rgb(var(--color-shadow) / 0.05);
-  }
-
-  .ui-nav-item {
-    min-height: 2.5rem;
-    flex-direction: row;
-    gap: 0.45rem;
-    font-size: 0.75rem;
-  }
-
-  .ui-nav-icon {
-    width: 1.65rem;
-    height: 1.5rem;
   }
 }
 
@@ -2119,7 +1985,7 @@ body {
 
 .home-dashboard-columns {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 
@@ -2460,8 +2326,14 @@ body {
     align-items: start;
   }
 
+  .home-dashboard-columns {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
   .ui-app-body {
+    display: grid;
     grid-template-columns: 15.5rem minmax(0, 1fr);
+    align-items: start;
   }
 
   .ui-bottom-nav {
@@ -2470,7 +2342,7 @@ body {
     align-self: start;
     height: calc(100dvh - var(--app-top-bar-height));
     min-height: 0;
-    border-right-color: rgb(var(--color-line-soft) / 0.72);
+    border-right: 1px solid rgb(var(--color-line-soft) / 0.72);
     background: rgb(var(--color-surface-container-low) / 0.76);
     overflow-y: auto;
   }
@@ -2480,11 +2352,16 @@ body {
   }
 
   .ui-navigation-shell {
+    display: flex;
+    max-width: none;
+    flex-direction: column;
     gap: 0.35rem;
     padding: 0;
     border: 0;
+    border-radius: var(--shape-lg);
     background: transparent;
     box-shadow: none;
+    backdrop-filter: none;
   }
 
   .ui-nav-heading {
@@ -2500,6 +2377,8 @@ body {
   .ui-nav-item {
     position: relative;
     min-height: 3.5rem;
+    flex-direction: row;
+    justify-content: flex-start;
     gap: 0.75rem;
     border-radius: var(--shape-md);
     padding: 0.6rem 0.8rem;

@@ -65,6 +65,44 @@ export const deleteCharacterImage = async (imageId: string) =>
 export const clearCharacterImages = async () =>
   withImageStore<undefined>("readwrite", (store) => store.clear());
 
+export const replaceCharacterImages = async (images: Record<string, Blob>) => {
+  const db = await openImageDb();
+
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const transaction = db.transaction(STORE_NAME, "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    const finish = (error?: unknown) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      db.close();
+
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    };
+
+    transaction.oncomplete = () => finish();
+    transaction.onerror = () => finish(transaction.error ?? new Error("Image transaction failed."));
+    transaction.onabort = () => finish(transaction.error ?? new Error("Image transaction aborted."));
+
+    try {
+      store.clear();
+      Object.entries(images).forEach(([imageId, blob]) => {
+        store.put(blob, imageId);
+      });
+    } catch (error) {
+      transaction.abort();
+      finish(error);
+    }
+  });
+};
+
 export const getAllCharacterImages = async () => {
   const keys = await withImageStore<IDBValidKey[]>("readonly", (store) => store.getAllKeys());
   const blobs = await withImageStore<Blob[]>("readonly", (store) => store.getAll());

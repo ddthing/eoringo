@@ -42,4 +42,21 @@ describe("push delivery finalization", () => {
     expect(send).not.toHaveBeenCalled();
     expect(result).toBe("already_claimed");
   });
+
+  it("records a timed out push send as a failed delivery", async () => {
+    const markFailure = vi.fn(async () => undefined);
+
+    const result = await deliverPushNotification({
+      claim: vi.fn(async () => true),
+      send: () => new Promise<void>(() => undefined),
+      finalize: vi.fn(async () => undefined),
+      markFailure,
+      remove: vi.fn(async () => undefined),
+      getStatusCode: () => null,
+      timeoutMs: 5,
+    });
+
+    expect(markFailure).toHaveBeenCalledOnce();
+    expect(result).toBe("failed");
+  });
 });

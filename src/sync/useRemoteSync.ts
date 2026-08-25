@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { getSupabaseClient } from "../lib/supabase/client";
+import { storageKeys } from "../lib/storage";
 import { useSyncStore } from "../stores/sync/useSyncStore";
 import { hasSyncConsent, syncConsentEvent } from "./syncConsent";
 
@@ -29,6 +30,9 @@ export const useRemoteSync = () => {
 
     let active = true;
     let cleanup = () => {};
+    const initialLocalStorageSnapshot = new Map(
+      Object.values(storageKeys).map((key) => [key, localStorage.getItem(key)] as const),
+    );
     setHydrationReady(false);
 
     void (async () => {
@@ -42,7 +46,9 @@ export const useRemoteSync = () => {
           throw new Error("Remote sync unavailable.");
         }
 
-        const stopRuntime = await runtime.startRemoteSyncRuntime(supabase);
+        const stopRuntime = await runtime.startRemoteSyncRuntime(supabase, {
+          initialLocalStorageSnapshot,
+        });
 
         if (!active) {
           stopRuntime();

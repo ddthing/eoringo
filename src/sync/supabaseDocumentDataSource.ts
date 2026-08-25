@@ -5,11 +5,14 @@ import type {
   DocumentIdentity,
   DocumentUpdate,
   DocumentWrite,
+  RawDocumentMetadataRow,
   RawDocumentRow,
 } from "./documentRepository";
 
 const selectedColumns =
   "id,user_id,character_id,document_type,payload,schema_version,revision,updated_at,deleted_at";
+const selectedMetadataColumns =
+  "id,user_id,character_id,document_type,schema_version,revision,updated_at,deleted_at";
 
 type ProviderError = { code?: string; status?: number };
 
@@ -64,12 +67,28 @@ export const createSupabaseDocumentDataSource = (
     return z.uuid().parse(data.user?.id);
   },
 
-  async list(userId) {
+  async listMetadata(userId) {
+    const { data, error } = await supabase
+      .from("user_documents")
+      .select(selectedMetadataColumns)
+      .eq("user_id", userId)
+      .is("deleted_at", null);
+    normalizeProviderError(error);
+
+    return (data ?? []) as unknown as RawDocumentMetadataRow[];
+  },
+
+  async findMany(userId, ids) {
+    if (ids.length === 0) {
+      return [];
+    }
+
     const { data, error } = await supabase
       .from("user_documents")
       .select(selectedColumns)
       .eq("user_id", userId)
-      .is("deleted_at", null);
+      .is("deleted_at", null)
+      .in("id", ids);
     normalizeProviderError(error);
 
     return (data ?? []) as unknown as RawDocumentRow[];

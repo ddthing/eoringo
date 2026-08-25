@@ -22,7 +22,35 @@ export type PushSubscriptionUpsertInput = {
   timezone: string;
   notificationTime: string;
   summary: PushSubscriptionSummary;
+  /** Local-only key used to coalesce an immediate duplicate after settings changes. */
+  deduplicationKey?: string;
 };
+
+const REMOTE_PUSH_UPSERT_DEDUPLICATION_WINDOW_MS = 1_000;
+
+type UpsertCacheEntry = {
+  key: string;
+  promise: Promise<void>;
+  expiresAt: number;
+};
+
+let lastUpsert: UpsertCacheEntry | null = null;
+
+const getUpsertRequestBody = (input: PushSubscriptionUpsertInput) => ({
+  operation: "upsert",
+  subscription: input.subscription,
+  timezone: input.timezone,
+  notificationTime: input.notificationTime,
+  summary: input.summary,
+});
+
+const getUpsertCacheKey = (input: PushSubscriptionUpsertInput) =>
+  input.deduplicationKey
+    ? JSON.stringify({
+        account: input.deduplicationKey,
+        request: getUpsertRequestBody(input),
+      })
+    : null;
 
 const invokePushSubscriptionFunction = async (body: Record<string, unknown>): Promise<unknown> => {
   const client = await getSupabaseClient();
@@ -41,16 +69,46 @@ const invokePushSubscriptionFunction = async (body: Record<string, unknown>): Pr
 };
 
 export const upsertRemotePushSubscription = async (input: PushSubscriptionUpsertInput) => {
-  await invokePushSubscriptionFunction({
-    operation: "upsert",
-    subscription: input.subscription,
-    timezone: input.timezone,
-    notificationTime: input.notificationTime,
-    summary: input.summary,
-  });
+  const cacheKey = getUpsertCacheKey(input);
+  const now = Date.now();
+
+  if (cacheKey && lastUpsert?.key === cacheKey && lastUpsert.expiresAt > now) {
+    await lastUpsert.promise;
+    return;
+  }
+
+  const request = invokePushSubscriptionFunction(getUpsertRequestBody(input)).then(
+    () => undefined,
+  );
+
+  if (!cacheKey) {
+    await request;
+    return;
+  }
+
+  const cacheEntry: UpsertCacheEntry = {
+    key: cacheKey,
+    promise: request,
+    expiresAt: Number.POSITIVE_INFINITY,
+  };
+  lastUpsert = cacheEntry;
+
+  try {
+    await request;
+    if (lastUpsert === cacheEntry) {
+      cacheEntry.expiresAt =
+        Date.now() + REMOTE_PUSH_UPSERT_DEDUPLICATION_WINDOW_MS;
+    }
+  } catch (error) {
+    if (lastUpsert === cacheEntry) {
+      lastUpsert = null;
+    }
+    throw error;
+  }
 };
 
 export const removeRemotePushSubscription = async (endpoint: string) => {
+  lastUpsert = null;
   await invokePushSubscriptionFunction({ operation: "delete", endpoint });
 };
 

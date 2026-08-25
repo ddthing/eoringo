@@ -1,3 +1,4 @@
+import { fetchWithTimeout, withTimeout } from "../_shared/asyncControl.ts";
 import { isAllowedOrigin, resolveAllowedOrigins } from "../_shared/cors.ts";
 import { isUserId } from "../_shared/imageValidation.ts";
 import {
@@ -15,6 +16,7 @@ import {
 
 const maxRequestBytes = 128 * 1024;
 const maxPushSubscriptionsPerUser = 5;
+const externalRequestTimeoutMs = 8_000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -63,15 +65,21 @@ const getPermanentUser = async (
   anonKey: string,
   authorization: string,
 ) => {
-  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: anonKey, Authorization: authorization },
-  });
+  const response = await fetchWithTimeout(
+    `${supabaseUrl}/auth/v1/user`,
+    { headers: { apikey: anonKey, Authorization: authorization } },
+    externalRequestTimeoutMs,
+  );
 
   if (!response.ok) {
     return null;
   }
 
-  const user: unknown = await response.json();
+  const user: unknown = await withTimeout(
+    () => response.json(),
+    externalRequestTimeoutMs,
+    "auth_user_body_read",
+  );
 
   return isRecord(user) && isUserId(user.id) && user.is_anonymous !== true
     ? { id: user.id }
@@ -89,17 +97,25 @@ const invokeServiceRpc = async (
   functionName: string,
   body: Record<string, unknown>,
 ) => {
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${functionName}`, {
-    method: "POST",
-    headers: restHeaders(config.serviceRoleKey),
-    body: JSON.stringify(body),
-  });
+  const response = await fetchWithTimeout(
+    `${config.supabaseUrl}/rest/v1/rpc/${functionName}`,
+    {
+      method: "POST",
+      headers: restHeaders(config.serviceRoleKey),
+      body: JSON.stringify(body),
+    },
+    externalRequestTimeoutMs,
+  );
 
   if (!response.ok) {
     throw new Error("service_rpc_failed");
   }
 
-  return response.json();
+  return withTimeout(
+    () => response.json(),
+    externalRequestTimeoutMs,
+    `${functionName}_body_read`,
+  );
 };
 
 const consumePushSubscriptionRateLimit = async (
@@ -247,7 +263,17 @@ Deno.serve(async (request) => {
     return jsonResponse(413, { code: "payload_too_large" }, origin);
   }
 
-  const rawBody = await request.text();
+  let rawBody: string;
+
+  try {
+    rawBody = await withTimeout(
+      () => request.text(),
+      externalRequestTimeoutMs,
+      "push_request_body_read",
+    );
+  } catch {
+    return jsonResponse(408, { code: "request_timeout" }, origin);
+  }
 
   if (new TextEncoder().encode(rawBody).byteLength > maxRequestBytes) {
     return jsonResponse(413, { code: "payload_too_large" }, origin);
@@ -337,9 +363,10 @@ Deno.serve(async (request) => {
     let response: Response;
 
     try {
-      response = await fetch(
+      response = await fetchWithTimeout(
         `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
         { headers: restHeaders(config.serviceRoleKey) },
+        externalRequestTimeoutMs,
       );
     } catch {
       return jsonResponse(503, { code: "storage_unavailable" }, origin);
@@ -349,7 +376,17 @@ Deno.serve(async (request) => {
       return jsonResponse(502, { code: "storage_rejected" }, origin);
     }
 
-    const rows: unknown = await response.json();
+    let rows: unknown;
+
+    try {
+      rows = await withTimeout(
+        () => response.json(),
+        externalRequestTimeoutMs,
+        "status_body_read",
+      );
+    } catch {
+      return jsonResponse(502, { code: "storage_response_invalid" }, origin);
+    }
 
     if (!Array.isArray(rows)) {
       return jsonResponse(502, { code: "storage_response_invalid" }, origin);

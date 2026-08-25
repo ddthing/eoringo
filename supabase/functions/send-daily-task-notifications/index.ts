@@ -1,8 +1,15 @@
 import webpush from "npm:web-push@3.6.7";
 import {
+  fetchWithTimeout,
+  runWithConcurrency,
+  runWithCursorPagination,
+  withTimeout,
+} from "../_shared/asyncControl.ts";
+import {
   buildNotificationSourceFromDocuments,
   digestNotificationSource,
 } from "../_shared/notificationSource.ts";
+import { isUserId } from "../_shared/imageValidation.ts";
 import {
   buildPushNotificationPayload,
   isValidNotificationTime,
@@ -15,6 +22,8 @@ import {
 import { deliverPushNotification } from "./delivery.ts";
 
 const pageSize = 500;
+const externalRequestTimeoutMs = 8_000;
+const deliveryConcurrency = 8;
 
 type PushSubscriptionRow = {
   id: string;
@@ -26,6 +35,8 @@ type PushSubscriptionRow = {
   notification_time: string;
   task_summary: unknown;
 };
+
+type SubscriptionResult = "sent" | "removed" | "failed" | "invalid" | "skipped";
 
 const jsonResponse = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -71,6 +82,41 @@ const restHeaders = (serviceRoleKey: string) => ({
   "Content-Type": "application/json",
 });
 
+const cleanupExpiredAnonymousAccounts = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+) => {
+  const response = await fetchWithTimeout(
+    `${config.supabaseUrl}/rest/v1/rpc/cleanup_expired_anonymous_accounts`,
+    {
+      method: "POST",
+      headers: restHeaders(config.serviceRoleKey),
+      body: "{}",
+    },
+    externalRequestTimeoutMs,
+  );
+
+  if (!response.ok) {
+    throw new Error("anonymous_account_cleanup_failed");
+  }
+
+  const deletedUsers: unknown = await withTimeout(
+    () => response.json(),
+    externalRequestTimeoutMs,
+    "anonymous_account_cleanup_body_read",
+  );
+
+  if (
+    !Array.isArray(deletedUsers) ||
+    deletedUsers.some(
+      (row) => !isRecord(row) || !isUserId(row.user_id),
+    )
+  ) {
+    throw new Error("anonymous_account_cleanup_response_invalid");
+  }
+
+  return deletedUsers.length;
+};
+
 const getCurrentLocalDateTime = (timezone: string, date: Date) => {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
@@ -103,37 +149,44 @@ const isDue = (currentTime: string, configuredTime: string) => {
 const deliveryKey = (dateKey: string, configuredTime: string) =>
   `${dateKey}:${configuredTime.slice(0, 5)}`;
 
-const fetchSubscriptions = async (config: NonNullable<ReturnType<typeof getConfig>>) => {
-  const subscriptions: PushSubscriptionRow[] = [];
+const fetchSubscriptionPage = async (
+  config: NonNullable<ReturnType<typeof getConfig>>,
+  afterId: string | null,
+) => {
+  // Processing can disable invalid subscriptions, so offset pagination could
+  // shift underneath us and skip rows. Keep the cursor on the immutable id.
+  const params = new URLSearchParams({
+    select: "id,user_id,endpoint,p256dh,auth,timezone,notification_time,task_summary",
+    notification_enabled: "eq.true",
+    order: "id.asc",
+    limit: String(pageSize),
+  });
 
-  for (let offset = 0; ; offset += pageSize) {
-    const params = new URLSearchParams({
-      select: "id,user_id,endpoint,p256dh,auth,timezone,notification_time,task_summary",
-      notification_enabled: "eq.true",
-      limit: String(pageSize),
-      offset: String(offset),
-    });
-    const response = await fetch(
-      `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
-      { headers: restHeaders(config.serviceRoleKey) },
-    );
-
-    if (!response.ok) {
-      throw new Error("subscription_read_failed");
-    }
-
-    const page: unknown = await response.json();
-
-    if (!Array.isArray(page)) {
-      throw new Error("subscription_response_invalid");
-    }
-
-    subscriptions.push(...(page as PushSubscriptionRow[]));
-
-    if (page.length < pageSize) {
-      return subscriptions;
-    }
+  if (afterId) {
+    params.set("id", `gt.${afterId}`);
   }
+
+  const response = await fetchWithTimeout(
+    `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
+    { headers: restHeaders(config.serviceRoleKey) },
+    externalRequestTimeoutMs,
+  );
+
+  if (!response.ok) {
+    throw new Error("subscription_read_failed");
+  }
+
+  const page: unknown = await withTimeout(
+    () => response.json(),
+    externalRequestTimeoutMs,
+    "subscription_read_body",
+  );
+
+  if (!Array.isArray(page)) {
+    throw new Error("subscription_response_invalid");
+  }
+
+  return page as PushSubscriptionRow[];
 };
 
 const updateSubscription = async (
@@ -142,7 +195,7 @@ const updateSubscription = async (
   patch: Record<string, unknown>,
 ) => {
   const params = new URLSearchParams({ id: `eq.${id}` });
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
     {
       method: "PATCH",
@@ -152,6 +205,7 @@ const updateSubscription = async (
       },
       body: JSON.stringify(patch),
     },
+    externalRequestTimeoutMs,
   );
 
   if (!response.ok) {
@@ -164,9 +218,10 @@ const removeSubscription = async (
   id: string,
 ) => {
   const params = new URLSearchParams({ id: `eq.${id}` });
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${config.supabaseUrl}/rest/v1/push_notification_subscriptions?${params.toString()}`,
     { method: "DELETE", headers: restHeaders(config.serviceRoleKey) },
+    externalRequestTimeoutMs,
   );
 
   if (!response.ok) {
@@ -180,17 +235,25 @@ const invokeDeliveryRpc = async (
   body: Record<string, unknown>,
   resultKey: string,
 ) => {
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${functionName}`, {
-    method: "POST",
-    headers: restHeaders(config.serviceRoleKey),
-    body: JSON.stringify(body),
-  });
+  const response = await fetchWithTimeout(
+    `${config.supabaseUrl}/rest/v1/rpc/${functionName}`,
+    {
+      method: "POST",
+      headers: restHeaders(config.serviceRoleKey),
+      body: JSON.stringify(body),
+    },
+    externalRequestTimeoutMs,
+  );
 
   if (!response.ok) {
     throw new Error(`${functionName}_failed`);
   }
 
-  const raw: unknown = await response.json();
+  const raw: unknown = await withTimeout(
+    () => response.json(),
+    externalRequestTimeoutMs,
+    `${functionName}_body_read`,
+  );
   const row = Array.isArray(raw) ? raw[0] : raw;
 
   return isRecord(row) && row[resultKey] === true;
@@ -206,16 +269,21 @@ const fetchRemoteNotificationSourceDigest = async (
     document_type: "in.(characters,tasks)",
     deleted_at: "is.null",
   });
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${config.supabaseUrl}/rest/v1/user_documents?${params.toString()}`,
     { headers: restHeaders(config.serviceRoleKey) },
+    externalRequestTimeoutMs,
   );
 
   if (!response.ok) {
     throw new Error("notification_source_read_failed");
   }
 
-  const documents: unknown = await response.json();
+  const documents: unknown = await withTimeout(
+    () => response.json(),
+    externalRequestTimeoutMs,
+    "notification_source_body_read",
+  );
 
   if (!Array.isArray(documents)) {
     throw new Error("notification_source_response_invalid");
@@ -305,6 +373,7 @@ const deliverSubscription = async (
     },
     remove: () => removeSubscription(config, subscriptionRow.id),
     getStatusCode: getPushStatusCode,
+    timeoutMs: externalRequestTimeoutMs,
   });
 };
 
@@ -330,9 +399,8 @@ Deno.serve(async (request) => {
       config.vapidPrivateKey,
     );
 
-    const subscriptions = await fetchSubscriptions(config);
     const results = {
-      scanned: subscriptions.length,
+      scanned: 0,
       sent: 0,
       skipped: 0,
       removed: 0,
@@ -352,100 +420,133 @@ Deno.serve(async (request) => {
       return pending;
     };
 
-    for (const subscription of subscriptions) {
-      const configuredTime = subscription.notification_time.slice(0, 5);
-
-      if (
-        !isValidTimezone(subscription.timezone) ||
-        !isValidNotificationTime(configuredTime)
-      ) {
-        results.invalid += 1;
-        await updateSubscription(config, subscription.id, {
-          notification_enabled: false,
-          last_error: "invalid_schedule",
-        });
-        continue;
-      }
-
-      let localDateTime: { dateKey: string; timeKey: string };
-
+    const now = new Date();
+    const processSubscription = async (
+      subscription: PushSubscriptionRow,
+    ): Promise<SubscriptionResult> => {
       try {
-        localDateTime = getCurrentLocalDateTime(subscription.timezone, new Date());
+        const configuredTime = subscription.notification_time.slice(0, 5);
+
+        if (
+          !isValidTimezone(subscription.timezone) ||
+          !isValidNotificationTime(configuredTime)
+        ) {
+          await updateSubscription(config, subscription.id, {
+            notification_enabled: false,
+            last_error: "invalid_schedule",
+          });
+          return "invalid";
+        }
+
+        let localDateTime: { dateKey: string; timeKey: string };
+
+        try {
+          localDateTime = getCurrentLocalDateTime(subscription.timezone, now);
+        } catch {
+          await updateSubscription(config, subscription.id, {
+            notification_enabled: false,
+            last_error: "invalid_timezone",
+          });
+          return "invalid";
+        }
+
+        if (!isDue(localDateTime.timeKey, configuredTime)) {
+          return "skipped";
+        }
+
+        const summary = normalizePushSummary(subscription.task_summary);
+
+        if (!summary) {
+          await updateSubscription(config, subscription.id, {
+            notification_enabled: false,
+            last_error: "invalid_task_summary",
+          });
+          return "invalid";
+        }
+
+        if (!summary.sourceDigest) {
+          await updateSubscription(config, subscription.id, {
+            last_error: "stale_task_summary",
+          });
+          return "skipped";
+        }
+
+        let remoteSourceDigest: string | null;
+
+        try {
+          remoteSourceDigest = await getRemoteSourceDigest(subscription.user_id);
+        } catch {
+          await updateSubscription(config, subscription.id, {
+            last_error: "source_read_failed",
+          });
+          return "failed";
+        }
+
+        if (!isPushSummaryFresh(summary, remoteSourceDigest)) {
+          await updateSubscription(config, subscription.id, {
+            last_error: "stale_task_summary",
+          });
+          return "skipped";
+        }
+
+        const result = await deliverSubscription(
+          config,
+          subscription,
+          summary,
+          localDateTime.dateKey,
+          deliveryKey(localDateTime.dateKey, configuredTime),
+        );
+
+        if (result === "sent" || result === "removed" || result === "invalid") {
+          return result;
+        }
+
+        return result === "empty" || result === "already_claimed"
+          ? "skipped"
+          : "failed";
       } catch {
-        results.invalid += 1;
-        await updateSubscription(config, subscription.id, {
-          notification_enabled: false,
-          last_error: "invalid_timezone",
-        });
-        continue;
+        return "failed";
       }
+    };
 
-      if (!isDue(localDateTime.timeKey, configuredTime)) {
-        results.skipped += 1;
-        continue;
-      }
+    const recordResult = (result: SubscriptionResult) => {
+      results[result] += 1;
+    };
 
-      const summary = normalizePushSummary(subscription.task_summary);
+    await runWithCursorPagination(
+      pageSize,
+      (afterId) => fetchSubscriptionPage(config, afterId),
+      (page) => page[page.length - 1]?.id ?? null,
+      async (page) => {
+        results.scanned += page.length;
+        const processed = await runWithConcurrency(
+          page,
+          deliveryConcurrency,
+          processSubscription,
+        );
 
-      if (!summary) {
-        results.invalid += 1;
-        await updateSubscription(config, subscription.id, {
-          notification_enabled: false,
-          last_error: "invalid_task_summary",
-        });
-        continue;
-      }
+        for (const task of processed) {
+          recordResult(task.status === "fulfilled" ? task.value : "failed");
+        }
+      },
+    );
 
-      if (!summary.sourceDigest) {
-        results.skipped += 1;
-        await updateSubscription(config, subscription.id, {
-          last_error: "stale_task_summary",
-        });
-        continue;
-      }
+    let anonymousAccountsDeleted = 0;
 
-      let remoteSourceDigest: string | null;
-
-      try {
-        remoteSourceDigest = await getRemoteSourceDigest(subscription.user_id);
-      } catch {
-        results.failed += 1;
-        await updateSubscription(config, subscription.id, {
-          last_error: "source_read_failed",
-        });
-        continue;
-      }
-
-      if (!isPushSummaryFresh(summary, remoteSourceDigest)) {
-        results.skipped += 1;
-        await updateSubscription(config, subscription.id, {
-          last_error: "stale_task_summary",
-        });
-        continue;
-      }
-
-      const result = await deliverSubscription(
-        config,
-        subscription,
-        summary,
-        localDateTime.dateKey,
-        deliveryKey(localDateTime.dateKey, configuredTime),
-      );
-
-      if (result === "sent") {
-        results.sent += 1;
-      } else if (result === "removed") {
-        results.removed += 1;
-      } else if (["empty", "already_claimed"].includes(result)) {
-        results.skipped += 1;
-      } else if (result === "invalid") {
-        results.invalid += 1;
-      } else {
-        results.failed += 1;
-      }
+    try {
+      anonymousAccountsDeleted = await cleanupExpiredAnonymousAccounts(config);
+    } catch {
+      return jsonResponse(502, {
+        code: "anonymous_account_cleanup_unavailable",
+        ...results,
+      });
     }
 
-    return jsonResponse(200, { ok: true, ...results });
+    return jsonResponse(200, {
+      ok: true,
+      ...results,
+      anonymousAccountsDeleted,
+    });
   } catch {
     return jsonResponse(502, { code: "notification_delivery_unavailable" });
   }

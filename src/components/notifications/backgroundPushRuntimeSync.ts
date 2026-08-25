@@ -94,6 +94,7 @@ export const syncBackgroundPushSubscription = async ({
     subscription: serializedSubscription,
     timezone: KST_TIME_ZONE,
     notificationTime: currentNotificationState.dailyIncompleteTime,
+    deduplicationKey: initialAuth.userId,
     summary: {
       summaryDate,
       characters: getBackgroundNotificationTaskSummaries(characters, taskSource, summaryDate),

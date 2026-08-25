@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
     createDocumentRepository: vi.fn(() => ({})),
     createMutationQueue: vi.fn(() => ({})),
     createStoreSyncBridge: vi.fn(() => ({
+      capturePersistedChangesSince: vi.fn(),
       hydrate: vi.fn(),
       start: bridgeStart,
       stop: bridgeStop,
@@ -46,9 +47,15 @@ afterEach(() => {
 });
 
 describe("remote sync runtime", () => {
-  it("hydrates once before starting store subscriptions", async () => {
+  it("starts store subscriptions before startup hydration completes", async () => {
     const unsubscribe = vi.fn();
-    mocks.sync.mockResolvedValue(undefined);
+    let resolveStartup: (() => void) | undefined;
+    mocks.sync.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveStartup = resolve;
+        }),
+    );
     mocks.createSyncCoordinator.mockReturnValue({
       sync: mocks.sync,
       stop: mocks.coordinatorStop,
@@ -64,7 +71,8 @@ describe("remote sync runtime", () => {
       },
     } as unknown as SupabaseClient;
 
-    const stop = await startRemoteSyncRuntime(supabase);
+    const runtime = startRemoteSyncRuntime(supabase);
+    await Promise.resolve();
 
     expect(mocks.createStoreSyncBridge).toHaveBeenCalledOnce();
     expect(mocks.createStoreSyncBridge).toHaveBeenCalledWith(
@@ -72,10 +80,11 @@ describe("remote sync runtime", () => {
     );
     expect(mocks.sync).toHaveBeenCalledTimes(1);
     expect(mocks.sync).toHaveBeenCalledWith("startup");
-    expect(mocks.createStoreSyncBridge.mock.invocationCallOrder[0])
+    expect(mocks.bridgeStart.mock.invocationCallOrder[0])
       .toBeLessThan(mocks.sync.mock.invocationCallOrder[0]);
-    expect(mocks.sync.mock.invocationCallOrder[0])
-      .toBeLessThan(mocks.bridgeStart.mock.invocationCallOrder[0]);
+
+    resolveStartup?.();
+    const stop = await runtime;
 
     stop();
 
@@ -103,7 +112,7 @@ describe("remote sync runtime", () => {
 
     await expect(startRemoteSyncRuntime(supabase)).rejects.toThrow(startupError);
 
-    expect(mocks.bridgeStart).not.toHaveBeenCalled();
+    expect(mocks.bridgeStart).toHaveBeenCalledOnce();
     expect(mocks.bridgeStop).toHaveBeenCalledOnce();
     expect(mocks.coordinatorStop).toHaveBeenCalledOnce();
     expect(supabase.auth.onAuthStateChange).not.toHaveBeenCalled();
