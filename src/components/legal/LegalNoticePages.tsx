@@ -1,35 +1,26 @@
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import { useEffect } from "react";
+import { getDocumentTitle, publicPageDefinitions } from "../../lib/publicPageMetadata";
 import { setPageMetadata } from "../../lib/seo";
-
-type LegalNoticePageProps = {
-  kind: "privacy" | "terms";
-};
 
 const supportUrl = "https://coner.luv3r.me/";
 
 const LegalLayout = ({
-  eyebrow,
-  title,
-  updatedAt,
+  page,
   children,
 }: {
-  eyebrow: string;
-  title: string;
-  updatedAt: string;
+  page: (typeof publicPageDefinitions)["privacy"] | (typeof publicPageDefinitions)["terms"];
   children: React.ReactNode;
 }) => {
   useEffect(() => {
     setPageMetadata({
-      title: `${title} | 에오링고`,
-      description:
-        eyebrow === "privacy"
-          ? "에오링고의 브라우저 저장, Google 연결, Supabase 동기화와 개인정보 처리 범위를 안내합니다."
-          : "에오링고의 데이터 관리, 로그인, 백업과 서비스 이용 기준을 안내합니다.",
-      canonicalPath: `/${eyebrow}`,
-      robots: "index,follow",
+      title: getDocumentTitle(page),
+      description: page.description,
+      canonicalPath: page.path,
+      robots: page.robots,
+      ogType: page.ogType,
     });
-  }, [eyebrow, title]);
+  }, [page]);
 
   return (
     <div className="min-h-dvh bg-bg px-4 py-6 sm:py-10">
@@ -37,34 +28,54 @@ const LegalLayout = ({
         본문으로 바로가기
       </a>
       <main id="main-content" className="mx-auto max-w-2xl space-y-4" tabIndex={-1}>
-      <header className="flex items-center justify-between gap-3 px-1">
-        <a className="ui-brand-mark shrink-0 no-underline" href="/" aria-label="에오링고 홈으로">
-          에오링고
-        </a>
-        <p className="text-xs font-bold text-ink-muted">최종 업데이트 {updatedAt}</p>
-      </header>
-
-      <section className="ui-card p-5 sm:p-7" data-legal-notice={eyebrow}>
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-            <ShieldCheck aria-hidden size={20} />
-          </span>
-          <div>
-            <p className="muted-label">{eyebrow === "privacy" ? "개인정보" : "이용약관"}</p>
-            <h1 className="mt-1 text-xl font-black tracking-[-0.03em] text-ink sm:text-2xl">{title}</h1>
+        <header className="flex items-center justify-between gap-3 px-1">
+          <a className="ui-brand-mark shrink-0 no-underline" href="/" aria-label="에오링고 홈으로">
+            에오링고
+          </a>
+          <div className="text-right text-xs font-bold text-ink-muted">
+            <p>최종 업데이트 {page.reviewedAt}</p>
+            <p className="mt-1">작성: 에오링고 운영팀</p>
           </div>
-        </div>
-        <div className="mt-6 space-y-6 text-sm font-medium leading-7 text-ink-muted">{children}</div>
-      </section>
+        </header>
 
-      <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-2 text-xs font-bold text-ink-muted" aria-label="법적 안내">
-        <a className="underline underline-offset-4 hover:text-ink" href="/guide">사용 가이드</a>
-        <a className="underline underline-offset-4 hover:text-ink" href="/privacy">개인정보 안내</a>
-        <a className="underline underline-offset-4 hover:text-ink" href="/terms">서비스 이용 안내</a>
-        <a className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-ink" href={supportUrl} target="_blank" rel="noreferrer" aria-label="문의하기, 새 탭에서 열림">
-          문의하기 <ExternalLink aria-hidden size={13} />
-        </a>
-      </nav>
+        <section className="ui-card p-5 sm:p-7" data-legal-notice={page.path.slice(1)}>
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+              <ShieldCheck aria-hidden size={20} />
+            </span>
+            <div>
+              <p className="muted-label">{page.path === "/privacy" ? "개인정보" : "이용약관"}</p>
+              <h1 className="mt-1 text-xl font-black tracking-[-0.03em] text-ink sm:text-2xl">
+                {page.title}
+              </h1>
+            </div>
+          </div>
+          <div className="mt-6 space-y-6 text-sm font-medium leading-7 text-ink-muted">{children}</div>
+        </section>
+
+        <nav
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-2 text-xs font-bold text-ink-muted"
+          aria-label="법적 안내"
+        >
+          <a className="underline underline-offset-4 hover:text-ink" href="/guide">
+            사용 가이드
+          </a>
+          <a className="underline underline-offset-4 hover:text-ink" href="/privacy">
+            개인정보 안내
+          </a>
+          <a className="underline underline-offset-4 hover:text-ink" href="/terms">
+            서비스 이용 안내
+          </a>
+          <a
+            className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-ink"
+            href={supportUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="문의하기, 새 탭에서 열림"
+          >
+            문의하기 <ExternalLink aria-hidden size={13} />
+          </a>
+        </nav>
       </main>
     </div>
   );
@@ -78,7 +89,7 @@ const NoticeSection = ({ title, children }: { title: string; children: React.Rea
 );
 
 export const PrivacyNoticePage = () => (
-  <LegalLayout eyebrow="privacy" title="개인정보 안내" updatedAt="2026년 8월 25일">
+  <LegalLayout page={publicPageDefinitions.privacy}>
     <p>
       에오링고는 사용자가 자신의 루틴을 기록하고 관리할 수 있도록 돕는 서비스입니다. 이 안내는 어떤 정보가 어디에 저장되는지와 Google 로그인 시 요청되는 범위를 쉽게 설명합니다.
     </p>
@@ -143,7 +154,7 @@ export const PrivacyNoticePage = () => (
 );
 
 export const TermsNoticePage = () => (
-  <LegalLayout eyebrow="terms" title="서비스 이용 안내" updatedAt="2026년 8월 25일">
+  <LegalLayout page={publicPageDefinitions.terms}>
     <p>
       에오링고는 개인 루틴 기록을 돕는 서비스입니다. 아래 내용은 서비스를 안전하게 이용하기 위한 기본 안내입니다.
     </p>

@@ -111,6 +111,7 @@ pnpm dev
 | `VITE_SUPABASE_URL` | 비어 있음 | 원격 동기화가 켜졌을 때의 Supabase URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | 비어 있음 | 브라우저에 노출 가능한 publishable key |
 | `VITE_TURNSTILE_SITE_KEY` | 비어 있음 | 게스트 가입 CAPTCHA의 공개 site key |
+| `VITE_PUBLIC_SITE_ORIGIN` | `https://eoringo.pages.dev` | 사전 렌더링 canonical·JSON-LD에 사용할 공개 origin |
 | `VITE_WEB_PUSH_PUBLIC_KEY` | 비어 있음 | 브라우저에 노출 가능한 Web Push VAPID 공개 키 |
 
 `VITE_*` 변수에는 service-role key, OAuth secret, DB 비밀번호, CAPTCHA secret, VAPID private key를 넣지 않습니다. 서버 전용 값은 `supabase/functions/.env.example`을 참고해 Supabase secrets로 관리합니다.
@@ -202,6 +203,15 @@ Google 소유권 확인과 AdSense 준비 파일도 `public/`에서 관리합니
 
 - `https://eoringo.pages.dev/google96c42eb007c2a9a8.html`
 - `https://eoringo.pages.dev/ads.txt`
+
+저장소의 정적 자산과 운영 URL을 자동으로 확인하려면 다음 명령을 사용합니다.
+
+```bash
+pnpm run verify:public-assets
+pnpm run verify:public-deployment
+```
+
+AdSense에 커스텀 도메인을 등록했다면 그 호스트가 실제 검사 대상입니다. PowerShell에서는 `$env:PUBLIC_SITE_ORIGIN = "https://example.com"`을 설정한 뒤 `pnpm run verify:public-deployment`를 실행하고, 빌드 시에는 `VITE_PUBLIC_SITE_ORIGIN`도 같은 origin으로 설정합니다.
 
 Supabase Edge Function과 데이터베이스 마이그레이션은 Cloudflare Pages 정적 배포와 별도의 운영 작업입니다. 운영 비밀값과 provider 설정은 Git에 커밋하지 않습니다.
 

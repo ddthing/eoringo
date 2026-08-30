@@ -11,19 +11,18 @@ import {
 } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { setJsonLd, setPageMetadata } from "../../lib/seo";
-
-const SITE_ORIGIN = "https://eoringo.pages.dev";
-const GUIDE_UPDATED_AT = "2026년 8월 23일";
-const GUIDE_UPDATED_ISO = "2026-08-23";
+import {
+  getDocumentTitle,
+  publicPageDefinitions,
+  type PublicPageDefinition,
+} from "../../lib/publicPageMetadata";
+import { getRuntimeSiteOrigin } from "../../lib/siteOrigin";
 
 type GuideLayoutProps = {
-  path: string;
+  page: PublicPageDefinition;
   eyebrow: string;
-  title: string;
-  description: string;
   readingTime?: string;
   children: ReactNode;
-  schemaType?: "Article" | "CollectionPage" | "AboutPage";
 };
 
 const guideCards = [
@@ -68,50 +67,54 @@ const InternalLink = ({ to, children }: { to: string; children: ReactNode }) => 
 );
 
 const GuideLayout = ({
-  path,
+  page,
   eyebrow,
-  title,
-  description,
   readingTime,
   children,
-  schemaType = "Article",
 }: GuideLayoutProps) => {
   useEffect(() => {
+    const siteOrigin = getRuntimeSiteOrigin();
+
     setPageMetadata({
-      title: `${title} | 에오링고`,
-      description,
-      canonicalPath: path,
-      ogType: schemaType === "Article" ? "article" : "website",
-      publishedAt: GUIDE_UPDATED_ISO,
-      modifiedAt: GUIDE_UPDATED_ISO,
+      title: getDocumentTitle(page),
+      description: page.description,
+      canonicalPath: page.path,
+      robots: page.robots,
+      ogType: page.ogType,
+      publishedAt: page.publishedAt,
+      modifiedAt: page.modifiedAt,
     });
+
+    if (!page.schemaType) {
+      return;
+    }
 
     setJsonLd("eoringo-guide-jsonld", {
       "@context": "https://schema.org",
-      "@type": schemaType,
-      headline: title,
-      description,
-      url: `${SITE_ORIGIN}${path}`,
+      "@type": page.schemaType,
+      headline: page.title,
+      description: page.description,
+      url: `${siteOrigin}${page.path}`,
       inLanguage: "ko-KR",
-      datePublished: GUIDE_UPDATED_ISO,
-      dateModified: GUIDE_UPDATED_ISO,
+      datePublished: page.publishedAt,
+      dateModified: page.modifiedAt,
       author: {
         "@type": "Organization",
         name: "에오링고 운영팀",
-        url: SITE_ORIGIN,
+        url: siteOrigin,
       },
       publisher: {
         "@type": "Organization",
         name: "에오링고",
-        url: SITE_ORIGIN,
+        url: siteOrigin,
       },
       isPartOf: {
         "@type": "WebSite",
         name: "에오링고",
-        url: SITE_ORIGIN,
+        url: siteOrigin,
       },
     });
-  }, [description, path, schemaType, title]);
+  }, [page]);
 
   return (
     <div className="public-content-shell">
@@ -144,10 +147,10 @@ const GuideLayout = ({
         <article className="public-article">
           <header className="public-article-header">
             <p className="public-eyebrow">{eyebrow}</p>
-            <h1>{title}</h1>
-            <p className="public-article-lead">{description}</p>
+            <h1>{page.title}</h1>
+            <p className="public-article-lead">{page.description}</p>
             <div className="public-article-meta" aria-label="문서 정보">
-              <span>최종 검토 {GUIDE_UPDATED_AT}</span>
+              {page.reviewedAt ? <span>최종 검토 {page.reviewedAt}</span> : null}
               {readingTime ? <span>{readingTime}</span> : null}
               <span>에오링고 운영팀</span>
             </div>
@@ -233,11 +236,8 @@ const GuideCard = ({
 
 export const GuideIndexPage = () => (
   <GuideLayout
-    path="/guide"
+    page={publicPageDefinitions.guide}
     eyebrow="에오링고 편집 가이드"
-    title="파이널판타지14 루틴을, 오늘 해야 할 일로 바꾸는 법"
-    description="에오링고는 일일·주간 숙제와 전장·하우징 일정을 캐릭터별로 정리하는 로컬 우선 도구입니다. 이 가이드는 기능 소개를 넘어, 무엇을 왜 기록하는지와 기록을 오래 유지하는 방법을 설명합니다."
-    schemaType="CollectionPage"
   >
     <GuideSection title="기록보다 중요한 것은 판단입니다">
       <p>
@@ -319,10 +319,8 @@ export const GuideIndexPage = () => (
 
 export const RoutineGuidePage = () => (
   <GuideLayout
-    path="/guide/routine"
+    page={publicPageDefinitions.routine}
     eyebrow="루틴 설계"
-    title="일일·주간 숙제를 덜 놓치는 정리법"
-    description="모든 숙제를 같은 무게로 보지 않고, 리셋 규칙과 실제 플레이 시간을 기준으로 오늘의 우선순위를 정하는 방법입니다."
     readingTime="6분 읽기"
   >
     <GuideCallout icon={<Clock3 aria-hidden size={19} />} title="완료율보다 다음 행동을 선명하게 만드는 것이 목표입니다.">
@@ -395,10 +393,8 @@ export const RoutineGuidePage = () => (
 
 export const GettingStartedGuidePage = () => (
   <GuideLayout
-    path="/guide/getting-started"
+    page={publicPageDefinitions.gettingStarted}
     eyebrow="처음 사용하기"
-    title="10분 만에 나에게 맞는 루틴 만들기"
-    description="에오링고를 처음 열었을 때 무엇을 입력하고, 어떤 데이터가 어디에 저장되며, 언제 Google 계정을 연결하면 좋은지 단계별로 안내합니다."
     readingTime="5분 읽기"
   >
     <GuideCallout icon={<Database aria-hidden size={19} />} title="처음부터 계정을 만들 필요는 없습니다.">
@@ -461,10 +457,8 @@ export const GettingStartedGuidePage = () => (
 
 export const CalendarGuidePage = () => (
   <GuideLayout
-    path="/guide/calendar"
+    page={publicPageDefinitions.calendar}
     eyebrow="일정 해석"
-    title="전장·하우징 달력을 읽는 방법"
-    description="에오링고의 월간 달력이 어떤 기준으로 날짜를 계산하는지, 커뮤니티 기반 하우징 정보와 개인 일정을 어떻게 구분해 봐야 하는지 설명합니다."
     readingTime="4분 읽기"
   >
     <GuideCallout icon={<CalendarDays aria-hidden size={19} />} title="달력은 계획 도구이지 확정 공지가 아닙니다.">
@@ -556,10 +550,8 @@ const taskCatalogRows = [
 
 export const TaskCatalogGuidePage = () => (
   <GuideLayout
-    path="/guide/task-catalog"
+    page={publicPageDefinitions.taskCatalog}
     eyebrow="숙제 항목 사전"
-    title="에오링고 숙제 항목의 리셋·횟수 기준표"
-    description="에오링고 기본 목록이 어떤 주기, 횟수, 캐릭터 범위로 동작하는지 실제 코드에 기록된 모델과 사용자의 판단 기준을 함께 설명합니다."
     readingTime="7분 읽기"
   >
     <GuideCallout icon={<Database aria-hidden size={19} />} title="이 표는 게임 공지가 아니라 에오링고의 기록 모델입니다.">
@@ -647,12 +639,9 @@ export const TaskCatalogGuidePage = () => (
 
 export const AboutPage = () => (
   <GuideLayout
-    path="/about"
+    page={publicPageDefinitions.about}
     eyebrow="운영 원칙"
-    title="에오링고는 무엇을 기록하고, 무엇을 주장하지 않는가"
-    description="에오링고의 제작 목적, 데이터 계산 방식, 출처를 다루는 방법과 수정 요청 경로를 공개합니다. 기능 소개보다 먼저 서비스의 경계를 확인할 수 있는 페이지입니다."
     readingTime="6분 읽기"
-    schemaType="AboutPage"
   >
     <GuideCallout icon={<ShieldCheck aria-hidden size={19} />} title="파이널판타지14 공식 서비스가 아닌 팬 메이드 도구입니다.">
       에오링고는 Square Enix와 제휴하거나 게임 계정에 접근하지 않습니다. 게임을 대신 플레이하지 않고, 이용자가 직접 정한 캐릭터와 루틴을 기억하기 쉽게 정리하는 데 목적이 있습니다.

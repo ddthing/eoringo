@@ -76,6 +76,20 @@ Google의 공식 안내에서 확인한 핵심은 다음과 같습니다.
 
 현재 저장소에는 Google 광고 태그를 넣지 않았습니다. `ads.txt`는 광고 판매자 선언 파일일 뿐 광고 태그나 콘텐츠 품질을 대신하지 않으므로, 실제 광고 재개 시에는 공개 콘텐츠 페이지·개인정보·지역별 동의 설계를 별도로 검증합니다.
 
+정적 파일이 저장소에만 있고 실제 배포에서 빠지는 회귀를 막기 위해 빌드 후 다음 검사를 실행합니다.
+
+```bash
+pnpm run verify:public-assets
+```
+
+운영 호스트가 기본 `eoringo.pages.dev`가 아니라면 AdSense에 등록한 호스트를 직접 검사합니다.
+
+```bash
+PUBLIC_SITE_ORIGIN=https://example.com pnpm run verify:public-deployment
+```
+
+PowerShell에서는 `$env:PUBLIC_SITE_ORIGIN = "https://example.com"` 설정 후 같은 명령을 실행합니다. AdSense에 등록한 프로토콜·호스트와 검사 URL이 다르면, `eoringo.pages.dev/ads.txt`가 정상이어도 AdSense 경고가 해소되지 않습니다.
+
 ## 재신청 전 체크리스트
 
 - [ ] 운영 주소에서 `/guide`, 네 개의 하위 가이드, `/about`이 새 탭·모바일에서도 열리는가

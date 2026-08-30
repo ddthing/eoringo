@@ -1,5 +1,6 @@
 import { Check, CheckCircle2, Clock3, Info, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { getDocumentTitle, publicPageDefinitions } from "../../lib/publicPageMetadata";
 import { setPageMetadata } from "../../lib/seo";
 
 const demoTasks = [
@@ -30,17 +31,18 @@ const demoTasks = [
 ] as const;
 
 export const DemoPage = () => {
+  const page = publicPageDefinitions.demo;
   const [completed, setCompleted] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     setPageMetadata({
-      title: "로그인 없이 체험 | 에오링고",
-      description:
-        "샘플 캐릭터와 루틴으로 에오링고의 오늘 화면을 로그인 없이 체험합니다. 샘플 체크는 저장되지 않습니다.",
-      canonicalPath: "/demo",
-      robots: "noindex,nofollow",
+      title: getDocumentTitle(page),
+      description: page.description,
+      canonicalPath: page.path,
+      robots: page.robots,
+      ogType: page.ogType,
     });
-  }, []);
+  }, [page]);
 
   const completedCount = useMemo(() => completed.size, [completed]);
   const progress = Math.round((completedCount / demoTasks.length) * 100);

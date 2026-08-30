@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build --configLoader runner && node scripts/prerender-public-pages.mjs",
-    "check": "pnpm run test && pnpm run orchestrator:typecheck && pnpm run orchestrator:test && pnpm run orchestrator:build && pnpm run verify:security && pnpm run verify:free-tier && pnpm run build && pnpm run verify:bundle",
+    "check": "pnpm run test && pnpm run orchestrator:typecheck && pnpm run orchestrator:test && pnpm run orchestrator:build && pnpm run verify:security && pnpm run verify:free-tier && pnpm run build && pnpm run verify:public-assets && pnpm run verify:bundle",
     "preview": "vite preview",
     "supabase:reset": "supabase db reset --local",
     "supabase:start": "supabase start",
@@ -20,6 +20,8 @@
     "orchestrator:mock": "pnpm --dir tools/codex-orchestrator run test:mock",
     "orchestrator:doctor": "pnpm --dir tools/codex-orchestrator run cli -- doctor",
     "test": "vitest run --configLoader runner",
+    "verify:public-assets": "node scripts/verify-public-assets.mjs",
+    "verify:public-deployment": "node scripts/verify-public-deployment.mjs",
     "verify:bundle": "node scripts/verify-no-secrets.mjs dist",
     "verify:free-tier": "node scripts/verify-no-paid-features.mjs",
     "verify:security": "node scripts/verify-no-secrets.mjs src supabase scripts tools docs .env.example"
