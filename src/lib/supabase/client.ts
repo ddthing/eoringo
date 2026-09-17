@@ -59,7 +59,10 @@ let browserClientPromise: Promise<SupabaseClient | null> | undefined;
 
 export const getSupabaseClient = () => {
   if (!browserClientPromise) {
-    browserClientPromise = createBrowserSupabaseClient(remoteSyncEnvironment);
+    browserClientPromise = createBrowserSupabaseClient(remoteSyncEnvironment).catch((error) => {
+      browserClientPromise = undefined;
+      throw error;
+    });
   }
 
   return browserClientPromise;

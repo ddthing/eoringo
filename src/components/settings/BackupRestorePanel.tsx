@@ -198,7 +198,7 @@ export const DataSettingsPanel = ({ embedded = false }: DataSettingsPanelProps =
       {embedded ? null : (
         <SectionHeader
           title="데이터"
-          description="이 브라우저의 데이터를 백업하거나 안전하게 초기화합니다."
+          description="이 브라우저에 저장된 기록을 백업하거나 초기화합니다."
         />
       )}
       <div id="backup" className="scroll-mt-[calc(var(--app-header-height)+0.75rem)] space-y-4">

@@ -148,18 +148,24 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
     let active = true;
 
     const cancelScheduledLoad = scheduleAfterFirstPaint(() => {
-      void getBrowserAuthClient().then((loadedClient) => {
-        if (active) {
-          setClient(loadedClient);
-        }
-      });
+      void getBrowserAuthClient()
+        .then((loadedClient) => {
+          if (active) {
+            setClient(loadedClient);
+          }
+        })
+        .catch((error) => {
+          if (active) {
+            dispatch({ type: "error", code: normalizeAuthFailure(error).code });
+          }
+        });
     });
 
     return () => {
       active = false;
       cancelScheduledLoad();
     };
-  }, [providedClient]);
+  }, [providedClient, retryVersion]);
 
   useEffect(() => {
     if (client === undefined) {

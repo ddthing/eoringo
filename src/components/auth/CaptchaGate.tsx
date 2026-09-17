@@ -191,7 +191,7 @@ export const CaptchaGate = ({ siteKey, onVerified, onFailure }: CaptchaGateProps
   return (
     <div className="space-y-2">
       <p className="text-sm text-ink-muted">
-        게스트 계정을 만들기 전에 자동 가입 방지를 위한 보안 확인을 진행합니다.
+        자동 가입을 막기 위해 게스트 계정을 만들기 전에 보안 확인이 필요합니다.
       </p>
       <div ref={containerRef} className="min-h-16 w-full" aria-label="보안 확인" />
     </div>

@@ -219,9 +219,12 @@ export const getBrowserAuthClient = () => {
     return browserAuthClientPromise;
   }
 
-  browserAuthClientPromise = getSupabaseClient().then((supabase) =>
-    supabase ? createAuthClient(supabase.auth) : null,
-  );
+  browserAuthClientPromise = getSupabaseClient()
+    .then((supabase) => supabase ? createAuthClient(supabase.auth) : null)
+    .catch((error) => {
+      browserAuthClientPromise = undefined;
+      throw error;
+    });
 
   return browserAuthClientPromise;
 };
