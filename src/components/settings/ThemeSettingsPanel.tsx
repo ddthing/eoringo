@@ -34,7 +34,7 @@ export const ThemeSettingsPanel = () => {
     <Card className="space-y-4 p-5">
       <SectionHeader
         title="테마"
-        description="대표 컬러 하나를 고르면 체크, 버튼, 스티커 색이 같은 계열로 정리됩니다."
+        description="선택한 색을 체크 표시와 버튼에 적용합니다."
         icon={<Palette size={18} strokeWidth={2.2} />}
       />
 

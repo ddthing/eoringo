@@ -17,26 +17,50 @@ const openImageDb = () =>
     request.onerror = () => reject(request.error);
   });
 
-const withImageStore = async <T>(
+const runImageTransaction = async <T>(
   mode: IDBTransactionMode,
-  callback: (store: IDBObjectStore) => IDBRequest<T>,
+  enqueue: (store: IDBObjectStore) => () => T,
 ) => {
   const db = await openImageDb();
 
   return new Promise<T>((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, mode);
-    const store = transaction.objectStore(STORE_NAME);
-    const request = callback(store);
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => {
+    let transaction: IDBTransaction | undefined;
+    let settled = false;
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
       db.close();
-      reject(transaction.error);
+      reject(error);
     };
+    try {
+      transaction = db.transaction(STORE_NAME, mode);
+      transaction.onerror = () => fail(transaction?.error ?? new Error("Image transaction failed."));
+      transaction.onabort = () => fail(transaction?.error ?? new Error("Image transaction aborted."));
+      const readResult = enqueue(transaction.objectStore(STORE_NAME));
+      transaction.oncomplete = () => {
+        if (settled) return;
+        try {
+          const result = readResult();
+          settled = true;
+          db.close();
+          resolve(result);
+        } catch (error) {
+          fail(error);
+        }
+      };
+    } catch (error) {
+      // A synchronous enqueue failure must not commit earlier queued writes.
+      try { transaction?.abort(); } catch { /* Already inactive. */ }
+      fail(error);
+    }
   });
 };
+
+const withImageStore = <T>(mode: IDBTransactionMode, callback: (store: IDBObjectStore) => IDBRequest<T>) =>
+  runImageTransaction(mode, (store) => {
+    const request = callback(store);
+    return () => request.result;
+  });
 
 const createImageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -65,51 +89,20 @@ export const deleteCharacterImage = async (imageId: string) =>
 export const clearCharacterImages = async () =>
   withImageStore<undefined>("readwrite", (store) => store.clear());
 
-export const replaceCharacterImages = async (images: Record<string, Blob>) => {
-  const db = await openImageDb();
-
-  await new Promise<void>((resolve, reject) => {
-    let settled = false;
-    const transaction = db.transaction(STORE_NAME, "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
-    const finish = (error?: unknown) => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-      db.close();
-
-      if (error) {
-        reject(error);
-      } else {
-        resolve();
-      }
-    };
-
-    transaction.oncomplete = () => finish();
-    transaction.onerror = () => finish(transaction.error ?? new Error("Image transaction failed."));
-    transaction.onabort = () => finish(transaction.error ?? new Error("Image transaction aborted."));
-
-    try {
-      store.clear();
-      Object.entries(images).forEach(([imageId, blob]) => {
-        store.put(blob, imageId);
-      });
-    } catch (error) {
-      transaction.abort();
-      finish(error);
-    }
+export const replaceCharacterImages = (images: Record<string, Blob>) =>
+  runImageTransaction("readwrite", (store) => {
+    store.clear();
+    Object.entries(images).forEach(([imageId, blob]) => store.put(blob, imageId));
+    return () => undefined;
   });
-};
 
-export const getAllCharacterImages = async () => {
-  const keys = await withImageStore<IDBValidKey[]>("readonly", (store) => store.getAllKeys());
-  const blobs = await withImageStore<Blob[]>("readonly", (store) => store.getAll());
-
-  return Object.fromEntries(
-    keys
-      .map((key, index) => [String(key), blobs[index]] as const)
-      .filter((entry): entry is readonly [string, Blob] => entry[1] instanceof Blob),
-  );
-};
+export const getAllCharacterImages = () =>
+  runImageTransaction("readonly", (store) => {
+    const keys = store.getAllKeys();
+    const blobs = store.getAll();
+    return () => Object.fromEntries(
+      keys.result
+        .map((key, index) => [String(key), blobs.result[index]] as const)
+        .filter((entry): entry is readonly [string, Blob] => entry[1] instanceof Blob),
+    );
+  });

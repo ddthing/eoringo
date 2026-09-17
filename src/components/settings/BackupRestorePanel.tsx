@@ -3,11 +3,13 @@ import { Database, Download, RotateCcw, Upload } from "lucide-react";
 import { useConfirmDialog } from "../common/ConfirmDialog";
 import { exportBackup } from "../../lib/exportBackup";
 import { clearCharacterImages } from "../../lib/imageStorage";
-import { importBackup } from "../../lib/importBackup";
+import { importBackup, validateBackupPayload } from "../../lib/importBackup";
+import { readBackupFile } from "../../lib/backupSafety";
 import { storageKeys } from "../../lib/storage";
 import { Button, Card, SectionHeader, StatusMessage } from "../ui";
 
 const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean }) => {
+  const confirm = useConfirmDialog();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [message, setMessage] = useState<{
     text: string;
@@ -31,7 +33,7 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
       anchor.click();
       URL.revokeObjectURL(url);
       setMessage({
-        text: "백업 파일을 만들었습니다. 캐릭터 사진도 함께 포함됩니다.",
+        text: "캐릭터 사진을 포함한 백업 파일을 만들었습니다.",
         variant: "success",
       });
     } catch (error) {
@@ -55,8 +57,15 @@ const BackupRestoreActions = ({ showHeading = true }: { showHeading?: boolean })
     setMessage(null);
 
     try {
-      const text = await file.text();
-      await importBackup(JSON.parse(text));
+      const payload = validateBackupPayload(await readBackupFile(file));
+      const confirmed = await confirm({
+        title: "백업으로 복원할까요?",
+        description: "현재 기록을 백업 파일의 내용으로 바꿉니다. 필요한 기록은 먼저 백업해주세요.",
+        confirmLabel: "복원",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+      await importBackup(payload);
       setMessage({
         text: "복원이 끝났습니다. 화면을 새로고침합니다.",
         variant: "success",
@@ -158,7 +167,7 @@ const DataManagementActions = () => {
       <SectionHeader
         headingLevel="h3"
         title="데이터 초기화"
-        description="이 브라우저에 저장된 모든 앱 데이터를 삭제합니다. 먼저 백업을 권장합니다."
+        description="이 브라우저의 앱 데이터를 모두 삭제합니다. 필요한 기록은 먼저 백업해주세요."
       />
       <Button
         variant="destructive"

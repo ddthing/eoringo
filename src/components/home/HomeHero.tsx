@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { ChevronDown, Clock3 } from "lucide-react";
 import {
-  formatDurationKo,
   getNextKstDailyReset,
   getTimeUntil,
 } from "../../lib/date";
@@ -9,8 +8,10 @@ import { selectActiveCharacter } from "../../stores/character/selectors";
 import { useCharacterStore } from "../../stores/useCharacterStore";
 import { useMinuteNow } from "../../hooks/useMinuteNow";
 import { CharacterAvatar } from "../characters/CharacterAvatar";
-import { CharacterBottomSheet } from "../characters/CharacterBottomSheet";
 import { useHomeDashboardTasks } from "./useHomeDashboardTasks";
+
+const CharacterBottomSheet = lazy(() => import("../characters/CharacterBottomSheet")
+  .then((module) => ({ default: module.CharacterBottomSheet })));
 
 export const HomeHero = () => {
   const now = useMinuteNow();
@@ -28,7 +29,6 @@ export const HomeHero = () => {
           onClick={() => setIsCharacterSheetOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={isCharacterSheetOpen}
-          aria-label={`${character?.name ?? "나의 모험가"} 캐릭터 전환 열기`}
         >
           <CharacterAvatar
             imageId={character?.profileImageId}
@@ -45,6 +45,7 @@ export const HomeHero = () => {
               <ChevronDown aria-hidden size={14} />
             </span>
           </div>
+          <span className="sr-only">캐릭터 전환 열기</span>
         </button>
         <div className="home-hero-completion">
           <p className="home-panel-kicker">오늘 완료율</p>
@@ -57,7 +58,7 @@ export const HomeHero = () => {
             aria-valuemax={100}
             aria-valuenow={progress.daily.percent}
           >
-            <span style={{ width: `${progress.daily.percent}%` }} />
+            <span style={{ transform: `scaleX(${progress.daily.percent / 100})` }} />
           </div>
         </div>
       </div>
@@ -78,13 +79,17 @@ export const HomeHero = () => {
         </div>
         <span className="home-reset-countdown">
           <Clock3 aria-hidden size={15} />
-          초기화까지 {formatDurationKo(remaining)}
+          초기화까지 {remaining.hours > 0 ? `${remaining.hours}시간 ` : ""}{remaining.minutes}분
         </span>
       </div>
-      <CharacterBottomSheet
-        isOpen={isCharacterSheetOpen}
-        onClose={() => setIsCharacterSheetOpen(false)}
-      />
+      {isCharacterSheetOpen ? (
+        <Suspense fallback={<p role="status" className="text-sm text-ink-muted">캐릭터를 불러오는 중…</p>}>
+          <CharacterBottomSheet
+            isOpen
+            onClose={() => setIsCharacterSheetOpen(false)}
+          />
+        </Suspense>
+      ) : null}
     </section>
   );
 };

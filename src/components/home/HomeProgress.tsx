@@ -27,8 +27,8 @@ const ProgressRow = ({
       aria-valuenow={percent}
     >
       <div
-        className="home-progress-fill h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
-        style={{ width: `${percent}%` }}
+        className="home-progress-fill h-full rounded-full bg-primary"
+        style={{ transform: `scaleX(${percent / 100})` }}
       />
     </div>
   </div>

@@ -6,6 +6,29 @@ afterEach(() => {
 });
 
 describe("minute clock", () => {
+  it("refreshes immediately after returning to a throttled tab and cleans up", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-17T14:59:30Z"));
+    const visibilitySource = Object.assign(new EventTarget(), { visibilityState: "visible" as DocumentVisibilityState });
+    const clock = createMinuteClock({ visibilitySource });
+    const listener = vi.fn();
+    const unsubscribe = clock.subscribe(listener);
+    visibilitySource.visibilityState = "hidden";
+    visibilitySource.dispatchEvent(new Event("visibilitychange"));
+    expect(listener).not.toHaveBeenCalled();
+    vi.setSystemTime(new Date("2026-09-18T00:15:20Z"));
+    visibilitySource.visibilityState = "visible";
+    visibilitySource.dispatchEvent(new Event("visibilitychange"));
+    expect(clock.getSnapshot()).toEqual(new Date("2026-09-18T00:15:20Z"));
+    expect(listener).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(1);
+    vi.advanceTimersByTime(40_000);
+    expect(clock.getSnapshot()).toEqual(new Date("2026-09-18T00:16:00Z"));
+    unsubscribe();
+    expect(vi.getTimerCount()).toBe(0);
+    visibilitySource.dispatchEvent(new Event("visibilitychange"));
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
   it("uses one aligned timer while subscribers exist and stops after the last unsubscribe", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-09T12:00:30.000Z"));

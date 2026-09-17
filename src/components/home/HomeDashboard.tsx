@@ -13,7 +13,7 @@ export const HomeDashboard = () => (
       <header className="home-dashboard-header lg:col-span-12">
         <div className="home-dashboard-header-copy">
           <h1 className="home-dashboard-title">오늘의 루틴</h1>
-          <p className="home-dashboard-description">먼저 끝낼 숙제와 중요한 일정을 한눈에 확인하세요.</p>
+          <p className="home-dashboard-description">오늘 남은 숙제와 다가오는 일정</p>
         </div>
         <div className="home-dashboard-header-note" aria-label="시간 기준">
           <span className="home-dashboard-header-note-dot" aria-hidden />

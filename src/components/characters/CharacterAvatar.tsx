@@ -78,6 +78,9 @@ export const CharacterAvatar = ({ imageId, name, size = "md" }: CharacterAvatarP
           draggable={false}
           onLoad={() => setIsLoading(false)}
           onError={() => {
+            if (imageUrl) {
+              URL.revokeObjectURL(imageUrl);
+            }
             setImageUrl(null);
             setIsLoading(false);
           }}

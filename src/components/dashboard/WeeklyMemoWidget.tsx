@@ -5,6 +5,10 @@ import { useCharacterStore } from "../../stores/useCharacterStore";
 
 export const WeeklyMemoWidget = () => {
   const activeCharacterId = useCharacterStore((state) => state.activeCharacterId);
+  return <CharacterMemo key={activeCharacterId} activeCharacterId={activeCharacterId} />;
+};
+
+const CharacterMemo = ({ activeCharacterId }: { activeCharacterId: string }) => {
   const memo = useWeeklyMemoStore((state) => state.memosByCharacter[activeCharacterId] ?? "");
   const setMemo = useWeeklyMemoStore((state) => state.setMemo);
   const [isEditing, setIsEditing] = useState(false);
@@ -56,15 +60,16 @@ export const WeeklyMemoWidget = () => {
       </div>
 
       {isEditing ? (
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit} className="memo-editor space-y-2">
           <textarea
             className="field min-h-28 resize-none leading-relaxed"
             name="weekly-memo"
             aria-label="이번 주 메모"
             autoComplete="off"
+            autoFocus
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="이번 주 목표를 적어보세요…"
+            placeholder="이번 주에 할 일, 잊지 말아야 할 것"
           />
           <button type="submit" className="primary-button home-touch-target gap-1.5">
             <Check aria-hidden size={15} />
@@ -82,7 +87,7 @@ export const WeeklyMemoWidget = () => {
       ) : (
         <div className="home-empty-state min-h-20">
           <Pencil aria-hidden size={16} />
-          <p>이번 주 목표를 적어보세요.</p>
+          <p>아직 작성한 메모가 없어요.</p>
         </div>
       )}
     </section>

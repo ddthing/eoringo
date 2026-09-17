@@ -4,6 +4,11 @@ import { useConfirmDialog } from "../common/ConfirmDialog";
 import { saveCharacterImage } from "../../lib/imageStorage";
 import { CharacterAvatar } from "./CharacterAvatar";
 import { CharacterImageEditor } from "./CharacterImageEditor";
+import {
+  isSupportedCharacterImageType,
+  maxCharacterImageFileBytes,
+  supportedCharacterImageTypes,
+} from "../../domain/characters/characterImageValidation";
 
 type CharacterImagePickerProps = {
   imageId?: string;
@@ -33,8 +38,14 @@ export const CharacterImagePicker = ({
 
     setErrorMessage("");
 
-    if (!file.type.startsWith("image/")) {
-      setErrorMessage("이미지 파일만 업로드할 수 있습니다.");
+    if (!isSupportedCharacterImageType(file.type)) {
+      setErrorMessage("JPG, PNG, WEBP, GIF 이미지만 업로드할 수 있습니다.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > maxCharacterImageFileBytes) {
+      setErrorMessage("20MB 이하의 사진을 선택해주세요.");
       event.target.value = "";
       return;
     }
@@ -51,10 +62,8 @@ export const CharacterImagePicker = ({
       const nextImageId = await saveCharacterImage(imageBlob);
       onChange(nextImageId);
       setEditingFile(null);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "이미지를 저장할 수 없습니다.",
-      );
+    } catch {
+      setErrorMessage("사진을 저장하지 못했습니다. 브라우저 저장 공간을 확인해주세요.");
     } finally {
       setIsSaving(false);
     }
@@ -107,7 +116,7 @@ export const CharacterImagePicker = ({
             ) : null}
           </div>
           {errorMessage ? (
-            <p className="mt-1.5 text-[11px] font-bold text-[rgb(var(--color-danger))]">
+            <p role="alert" className="mt-1.5 text-[11px] font-bold text-[rgb(var(--color-danger))]">
               {errorMessage}
             </p>
           ) : null}
@@ -115,7 +124,7 @@ export const CharacterImagePicker = ({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept={supportedCharacterImageTypes.join(",")}
           className="hidden"
           onChange={handleChange}
         />

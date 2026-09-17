@@ -1,5 +1,6 @@
-import { getAllCharacterImages, replaceCharacterImages } from "./imageStorage";
+import { replaceCharacterImages } from "./imageStorage";
 import { storageKeys } from "./storage";
+import { isSafeBackupData } from "./backupSafety";
 
 type BackupImagePayload = {
   type: string;
@@ -56,6 +57,10 @@ const normalizeImages = (images: unknown) => {
     throw new Error("백업 이미지 데이터가 올바르지 않습니다.");
   }
 
+  if (entries.reduce((size, [, image]) => size + (image as BackupImagePayload).dataUrl.length, 0) > 48 * 1024 * 1024) {
+    throw new Error("백업 이미지의 전체 크기가 너무 큽니다.");
+  }
+
   return Object.fromEntries(entries) as Record<string, BackupImagePayload>;
 };
 
@@ -76,6 +81,10 @@ export const validateBackupPayload = (payload: unknown): SupportedBackupPayload 
     throw new Error("백업 파일에 복원할 데이터가 없습니다.");
   }
 
+  if (!isSafeBackupData(payload.data)) {
+    throw new Error("백업 데이터의 구조나 크기가 올바르지 않습니다.");
+  }
+
   return {
     app: payload.app as SupportedBackupPayload["app"],
     version: Number(payload.version) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
@@ -86,19 +95,20 @@ export const validateBackupPayload = (payload: unknown): SupportedBackupPayload 
 };
 
 const dataUrlToBlob = async (image: BackupImagePayload) => {
-  const response = await fetch(image.dataUrl);
-
-  if (!response.ok) {
+  let decoded: string;
+  try {
+    // Decode locally: fetch(data:) is blocked by the production connect-src
+    // policy and needlessly sends an in-memory image through the fetch stack.
+    decoded = atob(image.dataUrl.slice(image.dataUrl.indexOf(",") + 1));
+  } catch {
     throw new Error("백업 이미지를 읽을 수 없습니다.");
   }
-
-  const blob = await response.blob();
-
-  if (!supportedImageTypes.has(blob.type || image.type) || blob.size > maxDecodedImageBytes) {
+  if (decoded.length === 0 || decoded.length > maxDecodedImageBytes) {
     throw new Error("백업 이미지의 형식 또는 크기가 올바르지 않습니다.");
   }
-
-  return blob.type ? blob : new Blob([await blob.arrayBuffer()], { type: image.type });
+  const bytes = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
+  return new Blob([bytes], { type: image.type });
 };
 
 const restoreStorageSnapshot = (snapshot: Map<string, string | null>) => {
@@ -119,12 +129,18 @@ const restoreStorageSnapshot = (snapshot: Map<string, string | null>) => {
   return !failed;
 };
 
+const captureStorageSnapshot = (entries: Array<[string, unknown]>) => {
+  try {
+    return new Map(entries.map(([key]) => [key, localStorage.getItem(key)] as const));
+  } catch {
+    throw new Error("저장된 기록을 읽지 못해 복원을 시작할 수 없습니다.");
+  }
+};
+
 export const importBackup = async (payload: unknown) => {
   const backup = validateBackupPayload(payload);
   const storageEntries = Object.entries(backup.data).filter(([key]) => knownKeys.has(key));
-  const storageSnapshot = new Map(
-    storageEntries.map(([key]) => [key, localStorage.getItem(key)] as const),
-  );
+  const storageSnapshot = captureStorageSnapshot(storageEntries);
   const restoredImages = backup.images
     ? Object.fromEntries(
         await Promise.all(
@@ -135,7 +151,6 @@ export const importBackup = async (payload: unknown) => {
         ),
       )
     : undefined;
-  const previousImages = backup.images ? await getAllCharacterImages() : undefined;
 
   let replacingImages = false;
 
@@ -148,7 +163,7 @@ export const importBackup = async (payload: unknown) => {
       }
     });
 
-    if (restoredImages && previousImages) {
+    if (restoredImages) {
       replacingImages = true;
       await replaceCharacterImages(restoredImages);
       replacingImages = false;
@@ -156,13 +171,8 @@ export const importBackup = async (payload: unknown) => {
   } catch (error) {
     const storageRestored = restoreStorageSnapshot(storageSnapshot);
 
-    if (replacingImages && previousImages) {
-      try {
-        await replaceCharacterImages(previousImages);
-      } catch {
-        // Keep the original restore failure as the user-facing error.
-      }
-    }
+    // Image replacement is one atomic IndexedDB transaction. An abort keeps
+    // the original images; rewriting a stale snapshot could overwrite another tab.
 
     if (!storageRestored) {
       throw new Error("복원 상태를 되돌릴 수 없습니다. 브라우저 저장 공간을 확인해주세요.");

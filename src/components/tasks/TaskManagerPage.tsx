@@ -113,6 +113,7 @@ export const TaskManagerPage = () => {
                   view === item ? "bg-card text-primary shadow-sm" : "text-ink-muted",
                 ].join(" ")}
                 onClick={() => setView(item)}
+                aria-pressed={view === item}
                 disabled={isOrderEditing}
               >
                 {item === "daily" ? "오늘" : "주간"}
@@ -124,6 +125,8 @@ export const TaskManagerPage = () => {
           <Search aria-hidden size={16} className="text-ink-muted" />
           <input
             type="search"
+            id="task-search"
+            name="task-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             disabled={isOrderEditing}

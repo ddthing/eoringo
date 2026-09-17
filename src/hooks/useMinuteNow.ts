@@ -4,6 +4,7 @@ type MinuteClockOptions = {
   getNow?: () => Date;
   setTimeoutFn?: typeof globalThis.setTimeout;
   clearTimeoutFn?: typeof globalThis.clearTimeout;
+  visibilitySource?: Pick<Document, "visibilityState" | "addEventListener" | "removeEventListener">;
 };
 
 const getMillisecondsUntilNextMinute = (date: Date) =>
@@ -13,6 +14,7 @@ export const createMinuteClock = ({
   getNow = () => new Date(),
   setTimeoutFn = globalThis.setTimeout,
   clearTimeoutFn = globalThis.clearTimeout,
+  visibilitySource = typeof document === "undefined" ? undefined : document,
 }: MinuteClockOptions = {}) => {
   const listeners = new Set<() => void>();
   let snapshot = getNow();
@@ -29,12 +31,22 @@ export const createMinuteClock = ({
     }, getMillisecondsUntilNextMinute(getNow()));
   };
 
+  const refreshOnReturn = () => {
+    if (visibilitySource?.visibilityState !== "visible" || listeners.size === 0) return;
+    if (timerId !== undefined) clearTimeoutFn(timerId);
+    timerId = undefined;
+    snapshot = getNow();
+    listeners.forEach((listener) => listener());
+    schedule();
+  };
+
   return {
     getSnapshot: () => snapshot,
     subscribe(listener: () => void) {
       listeners.add(listener);
 
       if (listeners.size === 1) {
+        visibilitySource?.addEventListener("visibilitychange", refreshOnReturn);
         snapshot = getNow();
         schedule();
       }
@@ -42,8 +54,9 @@ export const createMinuteClock = ({
       return () => {
         listeners.delete(listener);
 
-        if (listeners.size === 0 && timerId !== undefined) {
-          clearTimeoutFn(timerId);
+        if (listeners.size === 0) {
+          visibilitySource?.removeEventListener("visibilitychange", refreshOnReturn);
+          if (timerId !== undefined) clearTimeoutFn(timerId);
           timerId = undefined;
         }
       };

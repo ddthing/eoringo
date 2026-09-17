@@ -20,7 +20,16 @@ export const AllowanceCard = () => {
         </button>
         <label>
           <span className="sr-only">수주권 수량</span>
-          <input type="number" min={0} max={100} value={value} onChange={(event) => setValue(Number(event.target.value))} className="w-16 bg-transparent text-center text-2xl font-black tabular-nums" />
+          <input
+            id="leve-allowance-value"
+            name="leve-allowance-value"
+            type="number"
+            min={0}
+            max={100}
+            value={value}
+            onChange={(event) => setValue(Number(event.target.value))}
+            className="w-16 bg-transparent text-center text-2xl font-black tabular-nums"
+          />
           <span className="text-sm text-ink-muted">/100</span>
         </label>
         <button type="button" aria-label="수주권 1장 늘리기" className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary" onClick={() => setValue(value + 1)}>

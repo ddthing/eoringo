@@ -6,6 +6,7 @@ import {
 } from "./navigation";
 import { HomeDashboard } from "../components/home/HomeDashboard";
 import { App } from "./App";
+import { RouteErrorPage } from "../components/common/RouteErrorPage";
 
 const CharactersCompatibilityRedirect = () => (
   <Navigate to={charactersSettingsTarget} replace />
@@ -18,6 +19,7 @@ const routeFallback = (
 );
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
+  { errorElement: <RouteErrorPage />, children: [
   {
     path: "/guide",
     hydrateFallbackElement: routeFallback,
@@ -138,4 +140,5 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
       },
     ],
   },
+  ] },
 ]);

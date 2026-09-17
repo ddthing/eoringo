@@ -77,7 +77,6 @@ export const HomeTodayCheck = () => {
           <h2 className="home-heading text-base font-bold tracking-[-0.02em] text-ink">
             오늘 할 일
           </h2>
-          <p className="mt-1 text-xs font-medium text-ink-muted">먼저 보이는 항목부터 체크하세요.</p>
         </div>
         <span className="sticker tabular-nums">{completed}/{total}</span>
       </div>

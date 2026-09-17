@@ -1,5 +1,5 @@
 import { useEffect, useRef, type PropsWithChildren } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigation } from "react-router-dom";
 import { formatKoreanDate } from "../../lib/date";
 import { useMinuteNow } from "../../hooks/useMinuteNow";
 import { BottomNav } from "./BottomNav";
@@ -67,6 +67,15 @@ const getPageContext = (pathname: string) => {
   return { label: "에오링고", copy: "루틴 대시보드", title: "에오링고" };
 };
 
+const NavigationProgress = () => {
+  const navigation = useNavigation();
+  return navigation.state !== "idle" ? (
+    <div className="ui-navigation-progress" role="status" aria-label="화면을 불러오는 중">
+      <span />
+    </div>
+  ) : null;
+};
+
 export const AppShell = ({ children }: PropsWithChildren) => {
   const location = useLocation();
   const pageContext = getPageContext(location.pathname);
@@ -95,6 +104,7 @@ export const AppShell = ({ children }: PropsWithChildren) => {
           본문으로 바로가기
         </a>
         <header className="ui-top-app-bar sticky top-0 z-20">
+          <NavigationProgress />
           <div className="ui-top-app-bar-row">
             <div className="ui-top-app-bar-brand">
               <p className="ui-brand-mark">에오링고</p>

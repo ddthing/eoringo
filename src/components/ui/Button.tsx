@@ -28,23 +28,26 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const iconOnly = size === "icon";
-
     return (
       <button
+        {...props}
         ref={ref}
         type={type ?? "button"}
         className={cn("ui-button", `ui-button-${size}`, className)}
         data-variant={variant}
         data-loading={loading || undefined}
         aria-busy={loading || undefined}
+        aria-label={loading ? loadingLabel : props["aria-label"]}
         disabled={disabled || loading}
-        {...props}
       >
         {loading ? (
           <>
-            <LoaderCircle className="ui-button-spinner" aria-hidden size={16} />
-            {!iconOnly ? <span>{loadingLabel}</span> : null}
+            <span className="ui-button-loading-placeholder" aria-hidden>
+              {children}
+            </span>
+            <span className="ui-button-loading-indicator" aria-hidden>
+              <LoaderCircle className="ui-button-spinner" size={16} />
+            </span>
           </>
         ) : (
           children

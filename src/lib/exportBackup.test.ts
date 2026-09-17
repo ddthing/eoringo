@@ -13,6 +13,10 @@ afterEach(() => {
 });
 
 describe("exportBackup", () => {
+  it("refuses to turn unreadable stored data into an empty backup", async () => {
+    vi.stubGlobal("localStorage", { getItem: () => "{broken" });
+    await expect(exportBackup()).rejects.toThrow("백업");
+  });
   it("exports version 7 payloads with persisted History and allowances", async () => {
     const history = { state: { entriesByDate: { "2026-07-01": { date: "2026-07-01" } } }, version: 1 };
     const allowances = { state: { value: 12, lastAccrualKey: "2026-07-12T12:00:00.000Z" }, version: 1 };
@@ -71,5 +75,18 @@ describe("exportBackup", () => {
       storageKeyCount: Object.keys(storageKeys).length,
       imageCount: 1,
     });
+  });
+
+  it("refuses oversized or unsupported local images before converting them", async () => {
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null) });
+    vi.mocked(getAllCharacterImages).mockResolvedValueOnce({
+      "too-large": new Blob([new Uint8Array(20 * 1024 * 1024 + 1)], { type: "image/webp" }),
+    });
+    await expect(exportBackup()).rejects.toThrow("사진의 크기");
+
+    vi.mocked(getAllCharacterImages).mockResolvedValueOnce({
+      "unsupported": new Blob(["svg"], { type: "image/svg+xml" }),
+    });
+    await expect(exportBackup()).rejects.toThrow("지원하지 않는 사진 형식");
   });
 });

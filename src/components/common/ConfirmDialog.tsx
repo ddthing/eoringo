@@ -9,6 +9,7 @@ import {
   type PropsWithChildren,
 } from "react";
 import { AlertTriangle, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { Button, IconButton } from "../ui";
 
 type ConfirmTone = "default" | "danger";
@@ -53,6 +54,11 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
   const resolverRef = useRef<((confirmed: boolean) => void) | null>(null);
   const [request, setRequest] = useState<ConfirmRequest | null>(null);
 
+  useEffect(() => () => {
+    resolverRef.current?.(false);
+    resolverRef.current = null;
+  }, []);
+
   const closeDialog = useCallback((confirmed: boolean) => {
     resolverRef.current?.(confirmed);
     resolverRef.current = null;
@@ -83,14 +89,19 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
     const previouslyFocusedElement =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const originalOverflow = document.body.style.overflow;
+    const appRoot = document.getElementById("root");
+    const originalInert = appRoot?.inert ?? false;
+    if (appRoot) appRoot.inert = true;
 
     document.body.style.overflow = "hidden";
-    window.setTimeout(() => {
+    const focusTimer = window.setTimeout(() => {
       getFocusableElements(dialogRef.current ?? document.body)[0]?.focus();
     }, 0);
 
     return () => {
+      window.clearTimeout(focusTimer);
       document.body.style.overflow = originalOverflow;
+      if (appRoot) appRoot.inert = originalInert;
       previouslyFocusedElement?.focus();
     };
   }, [request]);
@@ -134,17 +145,17 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
   return (
     <ConfirmDialogContext.Provider value={{ confirm }}>
       {children}
-      {request ? (
+      {request ? createPortal(
         <div
           ref={dialogRef}
-          className="fixed inset-0 z-[70] grid place-items-end overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[3px] sm:place-items-center"
+          className="confirm-dialog-backdrop fixed inset-0 z-[70] grid place-items-center overflow-y-auto overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] p-3 backdrop-blur-[3px]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
           aria-describedby={request.description ? "confirm-dialog-description" : undefined}
           onKeyDown={handleKeyDown}
         >
-          <div className="w-full max-w-[360px] rounded-ui-xl border border-[rgb(var(--color-line-soft))] bg-card p-3 shadow-ui-2">
+          <div className="confirm-dialog-panel w-full max-w-[360px] rounded-ui-xl border border-[rgb(var(--color-line-soft))] bg-card p-3 shadow-ui-2">
             <div className="flex items-start gap-3">
               <div
                 className={[
@@ -197,7 +208,8 @@ export const ConfirmDialogProvider = ({ children }: PropsWithChildren) => {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </ConfirmDialogContext.Provider>
   );

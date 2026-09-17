@@ -10,6 +10,10 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
+import {
+  isSafeCharacterImageDimensions,
+  maxCharacterImagePixels,
+} from "../../domain/characters/characterImageValidation";
 import { createPortal } from "react-dom";
 import {
   useCallback,
@@ -128,12 +132,16 @@ export const CharacterImageEditor = ({
     const previouslyFocusedElement =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const originalOverflow = document.body.style.overflow;
+    const appRoot = document.getElementById("root");
+    const originalInert = appRoot?.inert ?? false;
 
+    if (appRoot) appRoot.inert = true;
     document.body.style.overflow = "hidden";
     dialogRef.current?.focus();
 
     return () => {
       document.body.style.overflow = originalOverflow;
+      if (appRoot) appRoot.inert = originalInert;
       previouslyFocusedElement?.focus();
     };
   }, []);
@@ -153,11 +161,15 @@ export const CharacterImageEditor = ({
       return;
     }
 
-    if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+    if (!isSafeCharacterImageDimensions(image.naturalWidth, image.naturalHeight)) {
       setNaturalSize(null);
       setIsImageLoading(false);
       setImageLoadFailed(true);
-      setErrorMessage(IMAGE_LOAD_ERROR_MESSAGE);
+      setErrorMessage(
+        image.naturalWidth * image.naturalHeight > maxCharacterImagePixels
+          ? "사진 해상도가 너무 큽니다. 2,500만 픽셀 이하의 사진을 선택해 주세요."
+          : IMAGE_LOAD_ERROR_MESSAGE,
+      );
       return;
     }
 

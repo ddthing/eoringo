@@ -129,7 +129,7 @@ describe("validateBackupPayload", () => {
     expect(setItem).toHaveBeenCalledWith(storageKeys.allowances, JSON.stringify(allowances));
   });
 
-  it("restores every known storage key and character image", async () => {
+  it("restores every known storage key and character image without network access", async () => {
     const setItem = vi.fn();
     const removeItem = vi.fn();
     const values = Object.fromEntries(
@@ -138,9 +138,7 @@ describe("validateBackupPayload", () => {
     vi.stubGlobal("localStorage", { getItem: vi.fn(() => null), setItem, removeItem });
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(new Blob(["image"], { type: "image/webp" }), { status: 200 }),
-      ),
+      vi.fn().mockRejectedValue(new Error("Blocked by connect-src")),
     );
 
     await importBackup({
@@ -163,6 +161,9 @@ describe("validateBackupPayload", () => {
       "character-image-test": expect.objectContaining({ type: "image/webp" }),
     });
     expect(vi.mocked(replaceCharacterImages)).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+    const restored = vi.mocked(replaceCharacterImages).mock.calls[0][0];
+    expect(await restored["character-image-test"].text()).toBe("image");
   });
 
   it("rolls back local storage when a restore write fails", async () => {
@@ -192,7 +193,28 @@ describe("validateBackupPayload", () => {
     expect(setItem).toHaveBeenCalledWith(storageKeys.history, "old-history");
   });
 
-  it("restores the previous image set when the replacement transaction fails", async () => {
+  it("stops before writing when the existing local record cannot be read", async () => {
+    const setItem = vi.fn();
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn(() => {
+        throw new Error("storage blocked");
+      }),
+      setItem,
+      removeItem: vi.fn(),
+    });
+
+    await expect(
+      importBackup({
+        app: "에오링고",
+        version: 7,
+        exportedAt: "",
+        data: { [storageKeys.history]: { state: { entriesByDate: {} }, version: 1 } },
+      }),
+    ).rejects.toThrow("복원을 시작할 수 없습니다");
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it("keeps the atomic image rollback and restores local records without rewriting old images", async () => {
     const previousImages = { "old-image": new Blob(["old"], { type: "image/webp" }) };
     vi.mocked(getAllCharacterImages).mockResolvedValue(previousImages);
     vi.mocked(replaceCharacterImages)
@@ -220,7 +242,8 @@ describe("validateBackupPayload", () => {
       }),
     ).rejects.toThrow("캐릭터 사진을 복원할 수 없습니다.");
 
-    expect(replaceCharacterImages).toHaveBeenNthCalledWith(2, previousImages);
+    expect(replaceCharacterImages).toHaveBeenCalledOnce();
+    expect(getAllCharacterImages).not.toHaveBeenCalled();
     expect(removeItem).toHaveBeenCalledWith(storageKeys.history);
   });
 });

@@ -11,7 +11,7 @@ import { SectionHeader } from "../ui";
 const PageTitle = () => (
   <SectionHeader
     title="앱 설정"
-    description="캐릭터와 테마, 계정 데이터를 한곳에서 관리하세요."
+    description="캐릭터, 화면, 알림과 계정 설정"
     icon={<Settings2 size={18} strokeWidth={2.2} />}
     headingLevel="h1"
     variant="page"

@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { Settings, UserPlus, X } from "lucide-react";
 import { charactersSettingsTarget } from "../../app/navigation";
 import { useCharacterStore } from "../../stores/useCharacterStore";
@@ -38,6 +39,9 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
     const previouslyFocusedElement =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const originalOverflow = document.body.style.overflow;
+    const appRoot = document.getElementById("root");
+    const originalInert = appRoot?.inert ?? false;
+    if (appRoot) appRoot.inert = true;
     document.body.style.overflow = "hidden";
     const focusTimerId = window.setTimeout(() => {
       getFocusableElements(dialogRef.current ?? document.body)[0]?.focus();
@@ -46,6 +50,7 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
     return () => {
       window.clearTimeout(focusTimerId);
       document.body.style.overflow = originalOverflow;
+      if (appRoot) appRoot.inert = originalInert;
       previouslyFocusedElement?.focus();
     };
   }, [isOpen]);
@@ -90,7 +95,7 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
     }
   };
 
-  return (
+  return createPortal(
     <div
       ref={dialogRef}
       className="character-sheet-backdrop fixed inset-0 z-[60] flex items-end overscroll-contain bg-[rgb(var(--color-overlay)/0.58)] backdrop-blur-[3px]"
@@ -162,6 +167,7 @@ export const CharacterBottomSheet = ({ isOpen, onClose }: CharacterBottomSheetPr
           </Link>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

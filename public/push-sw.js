@@ -4,14 +4,15 @@ self.addEventListener("push", (event) => {
   let payload = {};
 
   try {
-    payload = event.data ? event.data.json() : {};
+    const value = event.data ? event.data.json() : {};
+    payload = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   } catch {
     payload = {};
   }
 
-  const title = typeof payload.title === "string" ? payload.title : "에오링고 알림";
-  const body = typeof payload.body === "string" ? payload.body : "확인할 숙제가 있어요.";
-  const url = typeof payload.url === "string" ? payload.url : "/tasks";
+  const title = typeof payload.title === "string" ? payload.title.slice(0, 120) : "에오링고 알림";
+  const body = typeof payload.body === "string" ? payload.body.slice(0, 1000) : "확인할 숙제가 있어요.";
+  const url = typeof payload.url === "string" && payload.url.length <= 2048 ? payload.url : "/tasks";
 
   event.waitUntil(
     self.registration.showNotification(title, {

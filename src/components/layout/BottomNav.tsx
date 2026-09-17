@@ -22,8 +22,8 @@ export const BottomNav = () => (
               key={item.to}
               to={item.to}
               end={item.to === "/"}
-              className={({ isActive }) =>
-                `ui-nav-item ${isActive ? "is-active" : ""}`
+              className={({ isActive, isPending }) =>
+                `ui-nav-item ${isActive ? "is-active" : ""} ${isPending ? "is-pending" : ""}`
               }
             >
               {({ isActive }) => (
