@@ -82,6 +82,13 @@
 - 운영 응답에서 CSP, HSTS, Referrer-Policy, X-Content-Type-Options, X-Frame-Options, Permissions-Policy가 적용된 것을 확인했다.
 - `pnpm run verify:public-deployment`가 운영 주소에서 통과했다. 이 검증은 공개 정적 자산과 응답 상태를 확인하며, 운영 DB·인증 계정·실기기 알림은 포함하지 않는다.
 
+## 초기 로딩 추가 최적화
+
+- 테마 부트스트랩을 별도 요청에서 CSP 해시가 적용된 인라인 스크립트로 옮겨 초기 렌더 차단 요청을 하나 줄였다. `script-src`에는 계산된 SHA-256 해시만 추가했고 `unsafe-inline`은 허용하지 않았다. 소스 HTML과 헤더의 해시가 일치하는 회귀 테스트를 추가했다.
+- 인증 초기화는 첫 페인트 뒤 다음 프레임에서 시작하도록 예약하고, 백그라운드 탭에서는 3초 안전 제한을 둔다. Supabase SDK 청크가 첫 화면을 막지 않으면서 기존 세션 복원과 동기화 동작은 유지된다.
+- 운영 주소의 Fast 3G·CPU 4배 모바일 추적에서 LCP가 1.98초에서 1.48초로 감소했다. 최신 배포에서 재측정한 LCP는 1.57초, CLS는 0.00이었고, Supabase SDK 요청은 첫 콘텐츠 페인트 이후로 이동했다. 측정값은 실사용자 데이터가 아닌 합성 환경 수치다.
+- 최신 변경 후 `pnpm run check` 전체 통과: 앱 테스트 420개, 보조 도구 테스트 22개, 조건부 테스트 2개 건너뜀. 빌드·비밀정보·무료 기능·공개 자산 검사를 통과했고, 운영 CSP 위반 콘솔 메시지는 없었다.
+
 ## 참고 자료
 
 - [MDN Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
