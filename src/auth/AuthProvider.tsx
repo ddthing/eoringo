@@ -99,6 +99,34 @@ type AuthContextValue = AuthState & {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+const scheduleAfterFirstPaint = (callback: () => void) => {
+  let settled = false;
+  let timeoutId: number | undefined;
+
+  const run = () => {
+    if (settled) {
+      return;
+    }
+
+    settled = true;
+    callback();
+  };
+
+  const frameId = window.requestAnimationFrame(() => {
+    timeoutId = window.setTimeout(run, 0);
+  });
+  const fallbackId = window.setTimeout(run, 3_000);
+
+  return () => {
+    settled = true;
+    window.cancelAnimationFrame(frameId);
+    window.clearTimeout(fallbackId);
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+    }
+  };
+};
+
 type AuthProviderProps = PropsWithChildren<{
   client?: AuthClient | null;
 }>;
@@ -119,14 +147,17 @@ export const AuthProvider = ({ children, client: providedClient }: AuthProviderP
 
     let active = true;
 
-    void getBrowserAuthClient().then((loadedClient) => {
-      if (active) {
-        setClient(loadedClient);
-      }
+    const cancelScheduledLoad = scheduleAfterFirstPaint(() => {
+      void getBrowserAuthClient().then((loadedClient) => {
+        if (active) {
+          setClient(loadedClient);
+        }
+      });
     });
 
     return () => {
       active = false;
+      cancelScheduledLoad();
     };
   }, [providedClient]);
 
